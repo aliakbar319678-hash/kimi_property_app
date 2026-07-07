@@ -74,192 +74,195 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: w * 0.06),
-          child: Column(
-            children: [
-              SizedBox(height: h * 0.06),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.06),
+            child: Column(
+              children: [
+                SizedBox(height: h * 0.06),
 
-              // ── Lock icon ────────────────────────────
-              Container(
-                width: w * 0.22,
-                height: w * 0.22,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
+                // ── Lock icon ────────────────────────────
+                Container(
+                  width: w * 0.22,
+                  height: w * 0.22,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Icon(
+                          Icons.lock_outline_rounded,
+                          color: AppColors.white,
+                          size: w * 0.1,
+                        ),
+                        Positioned(
+                          bottom: w * 0.03,
+                          right: w * 0.03,
+                          child: Container(
+                            width: w * 0.06,
+                            height: w * 0.06,
+                            decoration: const BoxDecoration(
+                              color: AppColors.secondary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.check_rounded,
+                              color: AppColors.white,
+                              size: w * 0.035,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Center(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Icon(
-                        Icons.lock_outline_rounded,
-                        color: AppColors.white,
-                        size: w * 0.1,
+
+                SizedBox(height: h * 0.03),
+
+                // ── Title ────────────────────────────────
+                Text(
+                  'Verify Your Account',
+                  style: TextStyle(
+                    fontSize: w * 0.07,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+
+                SizedBox(height: h * 0.01),
+
+                Text(
+                  'Enter Code Sent to Email',
+                  style: TextStyle(
+                    fontSize: w * 0.038,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+
+                SizedBox(height: h * 0.045),
+
+                // ── White card ───────────────────────────
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(w * 0.06),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.06),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
                       ),
-                      Positioned(
-                        bottom: w * 0.03,
-                        right: w * 0.03,
-                        child: Container(
-                          width: w * 0.06,
-                          height: w * 0.06,
-                          decoration: const BoxDecoration(
-                            color: AppColors.secondary,
-                            shape: BoxShape.circle,
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // ── OTP boxes ─────────────────────
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: List.generate(
+                          4,
+                          (i) => _OtpBox(
+                            controller: _controllers[i],
+                            focusNode: _focusNodes[i],
+                            onChanged: (v) => _onChanged(i, v),
+                            w: w,
                           ),
-                          child: Icon(
-                            Icons.check_rounded,
-                            color: AppColors.white,
-                            size: w * 0.035,
+                        ),
+                      ),
+
+                      SizedBox(height: h * 0.03),
+
+                      // ── Verify button ─────────────────
+                      TLPrimaryButton(
+                        label: 'Verify',
+                        isLoading: state.isLoading,
+                        onTap: () async {
+                          await notif.verify();
+                        },
+                      ),
+
+                      SizedBox(height: h * 0.022),
+
+                      // ── Resend ────────────────────────
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: w * 0.035,
+                            color: AppColors.textSecondary,
                           ),
+                          children: [
+                            const TextSpan(text: "Didn't receive the code? "),
+                            WidgetSpan(
+                              child: GestureDetector(
+                                onTap: () async {
+                                  for (final c in _controllers) {
+                                    c.clear();
+                                  }
+                                  _focusNodes[0].requestFocus();
+                                  await notif.resend();
+                                  if (context.mounted && ref.read(otpProvider).errorMessage == null) {
+                                    ScaffoldMessenger.of(context).clearSnackBars();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Verification code resent successfully!'),
+                                        backgroundColor: Colors.blue,
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: Text(
+                                  'Resend\nCode',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: w * 0.035,
+                                    color: AppColors.secondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
 
-              SizedBox(height: h * 0.03),
+                SizedBox(height: h * 0.05),
 
-              // ── Title ────────────────────────────────
-              Text(
-                'Verify Your Account',
-                style: TextStyle(
-                  fontSize: w * 0.07,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.3,
-                ),
-              ),
-
-              SizedBox(height: h * 0.01),
-
-              Text(
-                'Enter Code Sent to Email',
-                style: TextStyle(
-                  fontSize: w * 0.038,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-
-              SizedBox(height: h * 0.045),
-
-              // ── White card ───────────────────────────
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(w * 0.06),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.06),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    // ── OTP boxes ─────────────────────
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: List.generate(
-                        4,
-                        (i) => _OtpBox(
-                          controller: _controllers[i],
-                          focusNode: _focusNodes[i],
-                          onChanged: (v) => _onChanged(i, v),
-                          w: w,
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: h * 0.03),
-
-                    // ── Verify button ─────────────────
-                    TLPrimaryButton(
-                      label: 'Verify',
-                      isLoading: state.isLoading,
-                      onTap: () async {
-                        await notif.verify();
-                      },
-                    ),
-
-                    SizedBox(height: h * 0.022),
-
-                    // ── Resend ────────────────────────
-                    RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: w * 0.035,
-                          color: AppColors.textSecondary,
-                        ),
-                        children: [
-                          const TextSpan(text: "Didn't receive the code? "),
-                          WidgetSpan(
-                            child: GestureDetector(
-                              onTap: () async {
-                                for (final c in _controllers) {
-                                  c.clear();
-                                }
-                                await notif.resend();
-                                if (context.mounted && ref.read(otpProvider).errorMessage == null) {
-                                  ScaffoldMessenger.of(context).clearSnackBars();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Verification code resent successfully!'),
-                                      backgroundColor: Colors.blue,
-                                    ),
-                                  );
-                                }
-                              },
-                              child: Text(
-                                'Resend\nCode',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: w * 0.035,
-                                  color: AppColors.secondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const Spacer(),
-
-              // ── Back to Login ────────────────────────
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.arrow_back_rounded,
-                      size: w * 0.04,
-                      color: AppColors.textSecondary,
-                    ),
-                    SizedBox(width: w * 0.015),
-                    Text(
-                      'Back to Login',
-                      style: TextStyle(
-                        fontSize: w * 0.037,
+                // ── Back to Login ────────────────────────
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.arrow_back_rounded,
+                        size: w * 0.04,
                         color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: w * 0.015),
+                      Text(
+                        'Back to Login',
+                        style: TextStyle(
+                          fontSize: w * 0.037,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
 
-              SizedBox(height: h * 0.04),
-            ],
+                SizedBox(height: h * 0.04),
+              ],
+            ),
           ),
         ),
       ),
