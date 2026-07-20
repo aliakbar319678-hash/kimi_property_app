@@ -346,7 +346,6 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
   // ─── Create Lease Bottom Sheet ──────────────────────────────────────────────
   void _showCreateLeaseSheet(BuildContext context) {
     final state = ref.read(landlordProvider);
-    final unitIdCtrl = TextEditingController();
     final rentCtrl = TextEditingController();
     final depositCtrl = TextEditingController();
     DateTime? startDate;
@@ -356,8 +355,10 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
     bool isLoading = false;
 
     // Build dropdown lists from state
+    final properties = state.properties;
     final units = state.units;
     final tenants = state.tenants;
+    String? selectedPropertyId;
     String? selectedUnitId;
     String? selectedTenantId;
 
@@ -405,27 +406,63 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                   const SizedBox(height: 16),
                 ],
 
-                // Unit selection
-                const Text('Unit *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
-                if (units.isNotEmpty)
+                // Property Selection
+                if (properties.isEmpty) ...[
+                  const Text('Property *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  const Text('No properties found. Please create a property first.', style: TextStyle(color: AppColors.error, fontSize: 13)),
+                  const SizedBox(height: 16),
+                ] else ...[
+                  const Text('Property *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    initialValue: selectedUnitId,
-                    hint: const Text('Select Unit'),
+                    initialValue: selectedPropertyId,
+                    hint: const Text('Select Property'),
                     decoration: _sheetFieldDeco(),
-                    items: units.map((u) => DropdownMenuItem(value: u.id, child: Text('${u.name} — \$${u.rent.toStringAsFixed(0)}/mo'))).toList(),
+                    items: properties.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(),
                     onChanged: (v) {
-                      setSheetState(() => selectedUnitId = v);
-                      // Auto-fill rent
-                      if (v != null) {
-                        final u = units.firstWhere((u) => u.id == v);
-                        rentCtrl.text = u.rent.toStringAsFixed(0);
-                      }
+                      setSheetState(() {
+                        selectedPropertyId = v;
+                        selectedUnitId = null; // reset unit selection when property changes
+                        rentCtrl.clear();
+                      });
                     },
-                  )
-                else
-                  TextField(controller: unitIdCtrl, decoration: _sheetFieldDeco(hint: 'Paste unit UUID')),
-                const SizedBox(height: 16),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Unit Selection
+                  const Text('Unit *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  Builder(
+                    builder: (context) {
+                      final propertyUnits = selectedPropertyId == null 
+                          ? <Unit>[] 
+                          : units.where((u) => u.propertyId == selectedPropertyId && u.status == 'vacant').toList();
+                          
+                      if (selectedPropertyId == null) {
+                        return const Text('Please select a property first.', style: TextStyle(color: AppColors.textSecondary, fontSize: 13));
+                      } else if (propertyUnits.isEmpty) {
+                        return const Text('No vacant units found for this property.', style: TextStyle(color: AppColors.error, fontSize: 13));
+                      }
+                      
+                      return DropdownButtonFormField<String>(
+                        value: selectedUnitId,
+                        hint: const Text('Select Unit'),
+                        decoration: _sheetFieldDeco(),
+                        items: propertyUnits.map((u) => DropdownMenuItem(value: u.id, child: Text('${u.name} — \$${u.rent.toStringAsFixed(0)}/mo'))).toList(),
+                        onChanged: (v) {
+                          setSheetState(() => selectedUnitId = v);
+                          // Auto-fill rent
+                          if (v != null) {
+                            final u = propertyUnits.firstWhere((u) => u.id == v);
+                            rentCtrl.text = u.rent.toStringAsFixed(0);
+                          }
+                        },
+                      );
+                    }
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 // Dates
                 Row(
@@ -553,8 +590,9 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                         ? null
                         : () async {
                             final tId = selectedTenantId ?? '';
-                            final uId = selectedUnitId ?? unitIdCtrl.text.trim();
-                            if (tId.isEmpty || uId.isEmpty || startDate == null || endDate == null || rentCtrl.text.trim().isEmpty) {
+                            final uId = selectedUnitId ?? '';
+                            final pId = selectedPropertyId ?? '';
+                            if (tId.isEmpty || uId.isEmpty || pId.isEmpty || startDate == null || endDate == null || rentCtrl.text.trim().isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all required fields'), backgroundColor: AppColors.error));
                               return;
                             }
@@ -562,11 +600,6 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                             try {
                               final sd = '${startDate!.year}-${startDate!.month.toString().padLeft(2, '0')}-${startDate!.day.toString().padLeft(2, '0')}';
                               final ed = '${endDate!.year}-${endDate!.month.toString().padLeft(2, '0')}-${endDate!.day.toString().padLeft(2, '0')}';
-                              
-                              String pId = '';
-                              if (selectedUnitId != null) {
-                                pId = units.firstWhere((u) => u.id == selectedUnitId).propertyId;
-                              }
 
                               await ref.read(landlordProvider.notifier).createLease(
                                     tenantId: tId,
