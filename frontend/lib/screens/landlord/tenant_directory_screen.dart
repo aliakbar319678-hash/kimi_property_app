@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
@@ -174,9 +174,11 @@ class _TenantDirectoryScreenState extends ConsumerState<TenantDirectoryScreen> {
                                 shape: BoxShape.circle,
                                 image: DecorationImage(
                                   image: NetworkImage(
-                                    tenant.id == 't1'
-                                        ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80'
-                                        : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80',
+                                    tenant.avatarUrl.isNotEmpty
+                                        ? tenant.avatarUrl
+                                        : (tenant.id == 't1'
+                                            ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80'
+                                            : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80'),
                                   ),
                                   fit: BoxFit.cover,
                                 ),

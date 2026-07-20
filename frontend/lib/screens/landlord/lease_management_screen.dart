@@ -420,12 +420,16 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                     hint: const Text('Select Property'),
                     decoration: _sheetFieldDeco(),
                     items: properties.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(),
-                    onChanged: (v) {
+                    onChanged: (v) async {
                       setSheetState(() {
                         selectedPropertyId = v;
                         selectedUnitId = null; // reset unit selection when property changes
                         rentCtrl.clear();
                       });
+                      if (v != null) {
+                        await ref.read(landlordProvider.notifier).loadUnits(v);
+                        setSheetState(() {});
+                      }
                     },
                   ),
                   const SizedBox(height: 16),
@@ -435,12 +439,15 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                   const SizedBox(height: 6),
                   Builder(
                     builder: (context) {
+                      final currentUnits = ref.read(landlordProvider).units;
                       final propertyUnits = selectedPropertyId == null 
                           ? <Unit>[] 
-                          : units.where((u) => u.propertyId == selectedPropertyId && u.status == 'vacant').toList();
+                          : currentUnits.where((u) => u.propertyId == selectedPropertyId && u.status.toLowerCase() == 'vacant').toList();
                           
                       if (selectedPropertyId == null) {
                         return const Text('Please select a property first.', style: TextStyle(color: AppColors.textSecondary, fontSize: 13));
+                      } else if (ref.read(landlordProvider).isUnitsLoading) {
+                        return const Text('Loading units...', style: TextStyle(color: AppColors.textSecondary, fontSize: 13));
                       } else if (propertyUnits.isEmpty) {
                         return const Text('No vacant units found for this property.', style: TextStyle(color: AppColors.error, fontSize: 13));
                       }

@@ -60,9 +60,11 @@ class LandlordTenantDetailsScreen extends ConsumerWidget {
                       shape: BoxShape.circle,
                       image: DecorationImage(
                         image: NetworkImage(
-                          updatedTenant.id == 't1'
-                              ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80'
-                              : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80',
+                          updatedTenant.avatarUrl.isNotEmpty
+                              ? updatedTenant.avatarUrl
+                              : (updatedTenant.id == 't1'
+                                  ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80'
+                                  : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80'),
                         ),
                         fit: BoxFit.cover,
                       ),

@@ -1,28 +1,89 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
-class WorkOrderDetailsScreen extends ConsumerWidget {
+class WorkOrderDetailsScreen extends ConsumerStatefulWidget {
   const WorkOrderDetailsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WorkOrderDetailsScreen> createState() => _WorkOrderDetailsScreenState();
+}
+
+class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen> {
+  WorkOrder? _order;
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_order == null) {
+      final argOrder = ModalRoute.of(context)?.settings.arguments as WorkOrder?;
+      if (argOrder != null) {
+        _fetchFreshData(argOrder.id);
+      } else {
+        // Fallback if no arg is passed
+        final fallback = ref.read(landlordProvider).workOrders.firstOrNull;
+        if (fallback != null) {
+          _fetchFreshData(fallback.id);
+        } else {
+          setState(() {
+            _isLoading = false;
+            _error = "No work order provided.";
+          });
+        }
+      }
+    }
+  }
+
+  Future<void> _fetchFreshData(String id) async {
+    try {
+      final freshOrder = await ref.read(landlordProvider.notifier).fetchWorkOrderById(id);
+      if (mounted) {
+        setState(() {
+          _order = freshOrder;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = e.toString();
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(landlordProvider);
     final notifier = ref.read(landlordProvider.notifier);
-
-    // Retreive the order from arguments
-    final WorkOrder order = ModalRoute.of(context)!.settings.arguments as WorkOrder? ??
-        state.workOrders.first;
-
-    // Refresh the order details from state to reflect updates dynamically
-    final updatedOrder = state.workOrders.firstWhere((wo) => wo.id == order.id, orElse: () => order);
 
     final size = MediaQuery.of(context).size;
     final w = size.width;
     final h = size.height;
     final pad = w * 0.05;
+
+    // Stages matching the mockup: Request, Assigned, In-Progress, Completed
+    final stages = ['Request', 'Assigned', 'In-Progress', 'Completed'];
+
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null || _order == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Error')),
+        body: Center(child: Text(_error ?? 'Unknown error')),
+      );
+    }
+
+    final updatedOrder = _order!;
 
     // Stages matching the mockup: Request, Assigned, In-Progress, Completed
     final stages = ['Request', 'Assigned', 'In-Progress', 'Completed'];

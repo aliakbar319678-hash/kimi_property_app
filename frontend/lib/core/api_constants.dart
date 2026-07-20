@@ -64,6 +64,7 @@ class ApiConstants {
   static const String notificationsUnread = '/notifications/unread';
   static const String notificationsUnreadCount = '/notifications/unread-count';
   static const String notificationsReadAll = '/notifications/read-all';
+  static String notificationRead(String id) => '/notifications/$id/read';
 
   // ── Chat ─────────────────────────────────────────────────────────────────────
   static const String chatRooms = '/chat/rooms';

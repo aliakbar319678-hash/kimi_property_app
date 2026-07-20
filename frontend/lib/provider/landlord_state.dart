@@ -62,6 +62,7 @@ abstract class Tenant with _$Tenant {
     @Default('') String propertyName,
     @Default('') String leaseEndDate,
     @Default(0.0) double rentAmount,
+    @Default('') String avatarUrl,
   }) = _Tenant;
 }
 
@@ -141,6 +142,18 @@ abstract class UrgentAlert with _$UrgentAlert {
 }
 
 @freezed
+abstract class NotificationItem with _$NotificationItem {
+  const factory NotificationItem({
+    required String id,
+    required String title,
+    required String body,
+    required String type,
+    required bool isRead,
+    required String createdAt,
+  }) = _NotificationItem;
+}
+
+@freezed
 abstract class LandlordState with _$LandlordState {
   const factory LandlordState({
     // ── Profile ────────────────────────────────────────────────
@@ -175,6 +188,7 @@ abstract class LandlordState with _$LandlordState {
     @Default([]) List<UrgentAlert> urgentAlerts,
 
     // ── Notifications ─────────────────────────────────────────
+    @Default([]) List<NotificationItem> notifications,
     @Default(0) int unreadNotifications,
 
     // ── Loading ────────────────────────────────────────────────

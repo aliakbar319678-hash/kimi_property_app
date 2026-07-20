@@ -1,24 +1,52 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
-class BidsReceivedScreen extends ConsumerWidget {
+class BidsReceivedScreen extends ConsumerStatefulWidget {
   const BidsReceivedScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BidsReceivedScreen> createState() => _BidsReceivedScreenState();
+}
+
+class _BidsReceivedScreenState extends ConsumerState<BidsReceivedScreen> {
+  WorkOrder? _order;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_order == null) {
+      final order = ModalRoute.of(context)?.settings.arguments as WorkOrder?;
+      if (order != null) {
+        _order = order;
+        Future.microtask(() {
+          ref.read(landlordProvider.notifier).fetchBidsForWorkOrder(order.id);
+        });
+      } else {
+        _order = ref.read(landlordProvider).workOrders.firstOrNull;
+        if (_order != null) {
+          Future.microtask(() {
+            ref.read(landlordProvider.notifier).fetchBidsForWorkOrder(_order!.id);
+          });
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(landlordProvider);
     final size = MediaQuery.of(context).size;
     final w = size.width;
     final h = size.height;
     final pad = w * 0.05;
 
-    // Retrieve selected work order from arguments
-    final WorkOrder order =
-        ModalRoute.of(context)!.settings.arguments as WorkOrder? ??
-        state.workOrders.first;
+    final order = _order;
+    if (order == null) {
+      return const Scaffold(body: Center(child: Text('No work order provided')));
+    }
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -166,15 +194,26 @@ class BidsReceivedScreen extends ConsumerWidget {
             SizedBox(height: h * 0.015),
 
             // Bids Card List
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: state.bids.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 16),
-              itemBuilder: (context, idx) {
-                final bid = state.bids[idx];
+            if (state.isBidsLoading)
+              const Center(child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: CircularProgressIndicator(),
+              ))
+            else if (state.bids.isEmpty)
+              const Center(child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: Text('No bids yet.'),
+              ))
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: state.bids.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 16),
+                itemBuilder: (context, idx) {
+                  final bid = state.bids[idx];
 
-                return Container(
+                  return Container(
                   padding: EdgeInsets.all(w * 0.045),
                   decoration: BoxDecoration(
                     color: AppColors.white,

@@ -378,6 +378,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
           propertyName: m['property_name']?.toString() ?? m['propertyName']?.toString() ?? '',
           leaseEndDate: leaseEnd,
           rentAmount: rentAmt,
+          avatarUrl: tenantData['avatar_url']?.toString() ?? '',
         );
       }).toList();
 
@@ -810,6 +811,109 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       await loadWorkOrders();
     } catch (e) {
       debugPrint('Error updating work order status: $e');
+      rethrow;
+    }
+  }
+
+  // ── Notifications ──────────────────────────────────────────────────────────────
+  Future<void> fetchNotifications() async {
+    try {
+      final resp = await ApiClient().dio.get(ApiConstants.notifications);
+      final rawList = (resp.data['data'] ?? []) as List<dynamic>;
+      final notifications = rawList.map((m) => NotificationItem(
+        id: m['id'].toString(),
+        title: m['title']?.toString() ?? 'Notification',
+        body: m['body']?.toString() ?? '',
+        type: m['type']?.toString() ?? 'system',
+        isRead: m['is_read'] == true,
+        createdAt: m['created_at']?.toString() ?? DateTime.now().toIso8601String(),
+      )).toList();
+      
+      final unreadCountResp = await ApiClient().dio.get(ApiConstants.notificationsUnreadCount);
+      final unreadCount = (unreadCountResp.data['data'] as num?)?.toInt() ?? 0;
+      
+      state = state.copyWith(notifications: notifications, unreadNotifications: unreadCount);
+    } catch (e) {
+      debugPrint('[LandlordProvider] fetchNotifications error: $e');
+    }
+  }
+
+  Future<void> markNotificationRead(String id) async {
+    try {
+      await ApiClient().dio.put(ApiConstants.notificationRead(id));
+      await fetchNotifications();
+    } catch (e) {
+      debugPrint('[LandlordProvider] markNotificationRead error: $e');
+    }
+  }
+
+  Future<void> markAllNotificationsRead() async {
+    try {
+      await ApiClient().dio.put(ApiConstants.notificationsReadAll);
+      await fetchNotifications();
+    } catch (e) {
+      debugPrint('[LandlordProvider] markAllNotificationsRead error: $e');
+    }
+  }
+
+  // ── Work Order details & Bids ────────────────────────────────────────────────
+  Future<WorkOrder> fetchWorkOrderById(String id) async {
+    try {
+      final resp = await ApiClient().dio.get(ApiConstants.workOrderById(id));
+      final m = resp.data['data'] as Map<String, dynamic>;
+      
+      // We parse the work order similarly to loadWorkOrders.
+      final w = WorkOrder(
+        id: m['id']?.toString() ?? '',
+        title: m['title']?.toString() ?? 'Work Order',
+        description: m['description']?.toString() ?? '',
+        propertyName: m['property_name']?.toString() ?? 'Property',
+        unitName: m['unit_name']?.toString() ?? 'Unit',
+        category: _capitalize(m['category']?.toString() ?? 'repair'),
+        priority: _capitalize(m['priority']?.toString() ?? 'medium'),
+        status: _formatStatus(m['status']?.toString() ?? 'request'),
+        createdAt: m['created_at']?.toString() ?? '',
+        vendorName: m['vendor_name']?.toString() ?? 'Unassigned',
+      );
+      
+      return w;
+    } catch (e) {
+      debugPrint('[LandlordProvider] fetchWorkOrderById error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> fetchBidsForWorkOrder(String workOrderId) async {
+    state = state.copyWith(isBidsLoading: true);
+    try {
+      // The bids are returned in the work order details endpoint (bids array)
+      final resp = await ApiClient().dio.get(ApiConstants.workOrderById(workOrderId));
+      final m = resp.data['data'] as Map<String, dynamic>;
+      final rawBids = (m['bids'] ?? []) as List<dynamic>;
+      
+      final bids = rawBids.map((b) => Bid(
+        id: b['id']?.toString() ?? '',
+        vendorName: b['vendor_name']?.toString() ?? 'Vendor',
+        vendorAvatar: b['vendor_avatar']?.toString() ?? 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=50&q=80',
+        amount: ((b['amount'] ?? 0) as num).toDouble(),
+        description: b['message']?.toString() ?? '',
+        rating: 4.8, // backend doesn't provide rating yet
+        jobsCompleted: 12,
+        estimatedTime: '${b['estimated_hours']} hours',
+      )).toList();
+      
+      state = state.copyWith(bids: bids, isBidsLoading: false);
+    } catch (e) {
+      debugPrint('[LandlordProvider] fetchBidsForWorkOrder error: $e');
+      state = state.copyWith(isBidsLoading: false);
+    }
+  }
+
+  Future<void> acceptBid(String bidId) async {
+    try {
+      await ApiClient().dio.post('${ApiConstants.maintenanceBids}/$bidId/accept');
+    } catch (e) {
+      debugPrint('[LandlordProvider] acceptBid error: $e');
       rethrow;
     }
   }
