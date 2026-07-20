@@ -39,7 +39,13 @@ export async function generatePDF(template: string, data: any): Promise<Buffer> 
       <p>Vendor: ${data.vendorName || 'Vendor'}</p>
       <p>Amount: ${data.amount || 0} ${data.currency || 'USD'}</p>
       <table><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Total</th></tr>
-      ${(data.items || []).map((i: any) => `<tr><td>${i.description}</td><td>${i.quantity}</td><td>${i.rate}</td><td>${i.quantity * i.rate}</td></tr>`).join('')}
+      ${(data.items || []).map((i: any) => {
+        const qty = Number(i.quantity ?? i.qty ?? 1);
+        const rate = Number(i.rate ?? i.unitPrice ?? i.unit_price ?? i.price ?? i.amount ?? 0);
+        const quantity = isNaN(qty) ? 1 : qty;
+        const rateVal = isNaN(rate) ? 0 : rate;
+        return `<tr><td>${i.description || 'Service Item'}</td><td>${quantity}</td><td>${rateVal}</td><td>${quantity * rateVal}</td></tr>`;
+      }).join('')}
       </table>
     </body>
     </html>`;

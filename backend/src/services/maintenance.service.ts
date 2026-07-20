@@ -26,7 +26,7 @@ export class MaintenanceService {
 
     if (role === 'landlord') { sql += ` AND wo.landlord_id = $${idx++}`; params.push(userId); }
     else if (role === 'tenant') { sql += ` AND wo.tenant_id = $${idx++}`; params.push(userId); }
-    else if (role === 'vendor') { sql += ` AND wo.assigned_vendor_id = $${idx++}`; params.push(userId); }
+    else if (role === 'vendor') { sql += ` AND (wo.assigned_vendor_id = $${idx++} OR wo.status = 'open')`; params.push(userId); }
 
     if (filters.status) { sql += ` AND wo.status = $${idx++}`; params.push(filters.status); }
     if (filters.priority) { sql += ` AND wo.priority = $${idx++}`; params.push(filters.priority); }

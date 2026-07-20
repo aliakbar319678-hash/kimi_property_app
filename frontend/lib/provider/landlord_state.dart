@@ -14,6 +14,14 @@ abstract class Property with _$Property {
     required int occupiedUnits,
     required int vacantUnits,
     required double monthlyRent,
+    // Extra backend fields
+    @Default('apartment') String type,
+    @Default([]) List<String> amenities,
+    @Default('') String description,
+    @Default('active') String status,
+    // Approval workflow fields
+    @Default('pending') String verificationStatus, // 'pending' | 'approved' | 'rejected'
+    @Default(null) String? rejectionReason,
   }) = _Property;
 }
 
@@ -22,10 +30,17 @@ abstract class Unit with _$Unit {
   const factory Unit({
     required String id,
     required String name,
-    required String status, // 'Occupied', 'Vacant', 'Maintenance'
+    required String status, // 'occupied', 'vacant', 'maintenance', 'reserved'
     required String tenantName,
     required double rent,
     required List<String> amenities,
+    // Extra backend fields
+    @Default(0) int bedrooms,
+    @Default(0) int bathrooms,
+    @Default(0) int squareFeet,
+    @Default(0.0) double depositAmount,
+    @Default('') String availableDate,
+    @Default('') String propertyId,
   }) = _Unit;
 }
 
@@ -43,6 +58,10 @@ abstract class Tenant with _$Tenant {
     required double balance,
     required String status, // 'Active', 'Late Payment'
     required String dateJoined,
+    // Extra lease-linked fields
+    @Default('') String propertyName,
+    @Default('') String leaseEndDate,
+    @Default(0.0) double rentAmount,
   }) = _Tenant;
 }
 
@@ -93,18 +112,79 @@ abstract class ChatMessage with _$ChatMessage {
   }) = _ChatMessage;
 }
 
+/// A single lease record from the backend.
+@freezed
+abstract class Lease with _$Lease {
+  const factory Lease({
+    required String id,
+    required String unitName,
+    required String tenantName,
+    required String propertyName,
+    required double rentAmount,
+    required String startDate,
+    required String endDate,
+    required String status, // 'active', 'expired', 'pending'
+    @Default(0) int daysLeft,
+  }) = _Lease;
+}
+
+/// Represents an urgent alert item shown on the dashboard home page.
+@freezed
+abstract class UrgentAlert with _$UrgentAlert {
+  const factory UrgentAlert({
+    required String id,
+    required String title,
+    required String description,
+    required String type, // 'maintenance' | 'lease'
+    String? priority,
+  }) = _UrgentAlert;
+}
+
 @freezed
 abstract class LandlordState with _$LandlordState {
   const factory LandlordState({
+    // ── Profile ────────────────────────────────────────────────
+    @Default('') String userName,
+    @Default('') String userAvatarUrl,
+
+    // ── Core Lists ─────────────────────────────────────────────
     @Default([]) List<Property> properties,
     @Default([]) List<Unit> units,
     @Default([]) List<Tenant> tenants,
     @Default([]) List<WorkOrder> workOrders,
     @Default([]) List<Bid> bids,
     @Default([]) List<ChatMessage> chatMessages,
-    @Default(24500.0) double totalCollected,
-    @Default(3200.0) double totalOutstanding,
-    @Default(0.94) double occupancyRate,
+    @Default([]) List<Lease> leases,
+
+    // ── Finance ────────────────────────────────────────────────
+    @Default(0.0) double totalCollected,
+    @Default(0.0) double totalOutstanding,
+    @Default(0.0) double occupancyRate,
+    @Default(0.0) double rentCollectionPercent, // 0.0 to 1.0
+
+    // ── Maintenance Summary ────────────────────────────────────
+    @Default(0) int maintenanceEmergency,
+    @Default(0) int maintenanceInProgress,
+    @Default(0) int maintenanceCompleted,
+
+    // ── Lease Summary ─────────────────────────────────────────
+    @Default(0) int activeLeaseCount,
+    @Default(0) int expiringLeaseCount,
+
+    // ── Urgent Alerts (home dashboard) ────────────────────────
+    @Default([]) List<UrgentAlert> urgentAlerts,
+
+    // ── Notifications ─────────────────────────────────────────
+    @Default(0) int unreadNotifications,
+
+    // ── Loading ────────────────────────────────────────────────
     @Default(false) bool isLoading,
+    @Default(false) bool isTenantsLoading,
+    @Default(false) bool isLeasesLoading,
+    @Default(false) bool isUnitsLoading,
+    @Default(false) bool isBidsLoading,
+
+    // ── Error ──────────────────────────────────────────────────
+    @Default('') String errorMessage,
   }) = _LandlordState;
 }

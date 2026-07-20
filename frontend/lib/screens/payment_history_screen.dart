@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/payment_maintenance_provider.dart';
+import 'package:tenant_and_landlord_application/provider/tenant_lease_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
 class PaymentHistoryScreen extends ConsumerWidget {
@@ -9,6 +10,17 @@ class PaymentHistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(paymentHistoryProvider);
+    final leaseAsync = ref.watch(tenantLeaseProvider);
+    final financeAsync = ref.watch(tenantFinanceProvider);
+    final lease = leaseAsync.asData?.value ?? TenantLeaseData.empty();
+    final finance = financeAsync.asData?.value ?? {};
+    final totalPaid = (finance['total_collected'] ?? finance['totalCollected'] ?? 0).toDouble();
+    final totalPaidDisplay = totalPaid > 0
+        ? '\$${totalPaid.toStringAsFixed(2)}'
+        : '\$0.00';
+    final rentDisplay = lease.rentAmount > 0
+        ? '\$${lease.rentAmount.toStringAsFixed(2)}'
+        : '\$—';
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
     final pad = w * 0.05;
@@ -117,7 +129,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                             ),
                             SizedBox(height: h * 0.008),
                             Text(
-                              '\$14,400.00',
+                              totalPaidDisplay,
                               style: TextStyle(
                                 fontSize: w * 0.1,
                                 fontWeight: FontWeight.w800,
@@ -188,7 +200,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                               ),
                             ),
                             Text(
-                              'Amount: \$1,200.00',
+                              'Amount: $rentDisplay',
                               style: TextStyle(
                                 fontSize: w * 0.033,
                                 color: AppColors.white.withValues(alpha: 0.7),

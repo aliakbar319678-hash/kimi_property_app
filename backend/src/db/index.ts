@@ -1,4 +1,4 @@
-import { Pool, PoolClient, QueryResult } from 'pg';
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { config } from '../config';
 
 export const pool = new Pool({
@@ -8,12 +8,12 @@ export const pool = new Pool({
   connectionTimeoutMillis: 2000,
 });
 
-pool.on('error', (err: any) => {
+pool.on('error', (err: Error) => {
   console.error('Unexpected DB error', err);
   process.exit(-1);
 });
 
-export async function query<T extends import('pg').QueryResultRow = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
+export async function query<T extends QueryResultRow = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
   const start = Date.now();
   const res = await pool.query<T>(text, params);
   const duration = Date.now() - start;
@@ -42,13 +42,13 @@ export async function initPostGIS() {
   try {
     await query('CREATE EXTENSION IF NOT EXISTS postgis');
     console.log('✅ PostGIS extension ready');
-  } catch (err: any) {
-    console.warn('⚠️  PostGIS extension not available (spatial features disabled):', err.message);
+  } catch (e) {
+    console.warn('⚠️  PostGIS not installed - skipping (install via StackBuilder if needed)');
   }
   try {
     await query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
     console.log('✅ uuid-ossp extension ready');
-  } catch (err: any) {
-    console.warn('⚠️  uuid-ossp extension not available:', err.message);
+  } catch (e) {
+    console.warn('⚠️  uuid-ossp not available - skipping');
   }
 }

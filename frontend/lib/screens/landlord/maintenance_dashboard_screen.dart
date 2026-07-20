@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
@@ -72,26 +72,28 @@ class _MaintenanceDashboardScreenState
 
                   SizedBox(height: h * 0.02),
 
+
                   // Tickets stats cards row
                   Row(
                     children: [
                       _buildTicketStatCard(
-                        '2',
+                        state.maintenanceEmergency.toString(),
                         'Emergency',
                         AppColors.error,
                         w,
                       ),
                       SizedBox(width: w * 0.03),
                       _buildTicketStatCard(
-                        '3',
+                        state.maintenanceInProgress.toString(),
                         'In-Progress',
                         AppColors.secondary,
                         w,
                       ),
                       SizedBox(width: w * 0.03),
-                      _buildTicketStatCard('10', 'Completed', Colors.green, w),
+                      _buildTicketStatCard(state.maintenanceCompleted.toString(), 'Completed', Colors.green, w),
                     ],
                   ),
+
 
                   SizedBox(height: h * 0.03),
 

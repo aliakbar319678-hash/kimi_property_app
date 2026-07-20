@@ -97,18 +97,20 @@ class PreferencesScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _FieldLabel('Insurance provider/details', w),
+                        _FieldLabel('Insurance provider/details *', w),
                         SizedBox(height: h * 0.01),
                         _InputField(
-                          hint: 'e.g. State Farm, Policy #12345',
+                          hint: 'e.g. State Farm, Policy #12345 (or "None")',
                           onChanged: notif.updateInsurance,
+                          errorText: state.fieldErrors['insurance'],
                         ),
                         SizedBox(height: h * 0.018),
-                        _FieldLabel('Utilities Provider', w),
+                        _FieldLabel('Utilities Provider *', w),
                         SizedBox(height: h * 0.01),
                         _InputField(
-                          hint: 'e.g. National Grid, ConEd',
+                          hint: 'e.g. National Grid, ConEd (or "None")',
                           onChanged: notif.updateUtilities,
+                          errorText: state.fieldErrors['utilities'],
                         ),
                       ],
                     ),
@@ -169,16 +171,27 @@ class PreferencesScreen extends ConsumerWidget {
                       color: AppColors.white,
                       size: 16,
                     ),
-                    onTap: () async {
-                      await notif.next();
-                      if (context.mounted) {
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          '/home',
-                          (r) => false,
-                        );
-                      }
-                    },
+                    onTap: state.isLoading
+                        ? null
+                        : () async {
+                            final success = await notif.next();
+                            if (!context.mounted) return;
+                            if (success) {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/home',
+                                (r) => false,
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(state.errorMessage ?? 'Failed to complete onboarding.'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
+                          },
                   ),
 
                   SizedBox(height: h * 0.03),
@@ -358,15 +371,16 @@ class _FieldLabel extends StatelessWidget {
 class _InputField extends StatelessWidget {
   final String hint;
   final ValueChanged<String>? onChanged;
+  final String? errorText;
 
-  const _InputField({required this.hint, this.onChanged});
+  const _InputField({required this.hint, this.onChanged, this.errorText});
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       onChanged: onChanged,
       style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
-      decoration: InputDecoration(hintText: hint),
+      decoration: InputDecoration(hintText: hint, errorText: errorText),
     );
   }
 }

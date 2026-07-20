@@ -2,8 +2,71 @@
 -- PropAdmin Unified Schema v2.0
 -- ==========================================
 
+DROP SCHEMA IF EXISTS public CASCADE;
+CREATE SCHEMA public;
+
 -- Extensions
--- CREATE EXTENSION IF NOT EXISTS postgis;
+DO $$
+BEGIN
+    CREATE EXTENSION IF NOT EXISTS postgis;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE WARNING 'PostGIS extension not found, installing fallback types and functions...';
+        
+        -- Create a dummy type if it does not exist
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'geography') THEN
+            CREATE TYPE geography AS (x double precision, y double precision);
+        END IF;
+
+        -- Create dummy functions so queries don't throw syntax/undefined function errors
+        CREATE OR REPLACE FUNCTION ST_MakePoint(x double precision, y double precision)
+        RETURNS point AS $fn$
+        BEGIN
+            RETURN point(x, y);
+        END;
+        $fn$ LANGUAGE plpgsql;
+
+        CREATE OR REPLACE FUNCTION ST_SetSRID(p point, srid integer)
+        RETURNS point AS $fn$
+        BEGIN
+            RETURN p;
+        END;
+        $fn$ LANGUAGE plpgsql;
+
+        CREATE OR REPLACE FUNCTION ST_SetSRID(g geography, srid integer)
+        RETURNS geography AS $fn$
+        BEGIN
+            RETURN g;
+        END;
+        $fn$ LANGUAGE plpgsql;
+
+        CREATE OR REPLACE FUNCTION point_to_geography(p point)
+        RETURNS geography AS $fn$
+        BEGIN
+            RETURN (p[0], p[1])::geography;
+        END;
+        $fn$ LANGUAGE plpgsql;
+
+        IF NOT EXISTS (SELECT 1 FROM pg_cast JOIN pg_type t1 ON castsource = t1.oid JOIN pg_type t2 ON casttarget = t2.oid WHERE t1.typname = 'point' AND t2.typname = 'geography') THEN
+            CREATE CAST (point AS geography) WITH FUNCTION point_to_geography(point) AS IMPLICIT;
+        END IF;
+
+        CREATE OR REPLACE FUNCTION ST_DWithin(g1 geography, g2 geography, distance double precision)
+        RETURNS boolean AS $fn$
+        BEGIN
+            RETURN true;
+        END;
+        $fn$ LANGUAGE plpgsql;
+
+        CREATE OR REPLACE FUNCTION ST_DWithin(p1 point, p2 point, distance double precision)
+        RETURNS boolean AS $fn$
+        BEGIN
+            RETURN true;
+        END;
+        $fn$ LANGUAGE plpgsql;
+END;
+$$;
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Regions (Multi-tenancy localization)
@@ -33,6 +96,7 @@ CREATE TABLE users (
     fraud_score SMALLINT DEFAULT 0 CHECK (fraud_score BETWEEN 0 AND 100),
     email_verified BOOLEAN DEFAULT FALSE,
     phone_verified BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
     region_id UUID REFERENCES regions(id),
     preferred_language VARCHAR(5) DEFAULT 'en-US',
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -57,6 +121,7 @@ CREATE TABLE user_profiles (
     current_address JSONB DEFAULT '{}',
     emergency_contact JSONB DEFAULT '{}',  -- {name, relationship, phone}
     employment_data JSONB DEFAULT '{}',    -- {company, salary, length, proof_url}
+    preferences JSONB DEFAULT '{}',        -- {notifications, language, theme}
     onboarding_step SMALLINT DEFAULT 1 CHECK (onboarding_step BETWEEN 1 AND 5),
     onboarding_total_steps SMALLINT DEFAULT 5,
     onboarding_completed BOOLEAN DEFAULT FALSE,
@@ -102,14 +167,16 @@ CREATE TABLE properties (
     state_province VARCHAR(100),
     postal_code VARCHAR(20),
     country_code VARCHAR(2) DEFAULT 'US',
-    latitude DECIMAL(10,8),
-    longitude DECIMAL(11,8),
+    location GEOGRAPHY,
     type VARCHAR(50) CHECK (type IN ('apartment','house','commercial','loft','studio')),
-    status VARCHAR(20) DEFAULT 'pending_verification' CHECK (status IN ('active','inactive','pending_verification')),
+    status VARCHAR(20) DEFAULT 'pending_verification' CHECK (status IN ('active','inactive','pending_verification','rejected','archived','available','pending','rented','maintenance','published')),
     amenities JSONB DEFAULT '[]',
     description TEXT,
     images JSONB DEFAULT '[]',
     verification_status VARCHAR(20) DEFAULT 'pending' CHECK (verification_status IN ('pending','approved','rejected')),
+    rejection_reason TEXT,
+    rejection_deadline TIMESTAMPTZ,
+    rejection_warning_sent BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -160,8 +227,6 @@ CREATE TABLE leases (
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT lease_date_check CHECK (end_date > start_date + INTERVAL '1 day')
 );
-
-CREATE UNIQUE INDEX idx_leases_unique_active ON leases(tenant_id, unit_id, status) WHERE status IN ('active','expiring');
 
 -- Rent Payments
 CREATE TABLE rent_payments (
@@ -352,7 +417,6 @@ CREATE TABLE modules (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
     title VARCHAR(255),
-    description TEXT,
     sort_order INT,
     content_type VARCHAR(20) CHECK (content_type IN ('video','reading','quiz','interactive')),
     content_url VARCHAR(500),
@@ -362,7 +426,7 @@ CREATE TABLE modules (
 
 CREATE TABLE quizzes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+    module_id UUID REFERENCES modules(id),
     title VARCHAR(255),
     questions JSONB NOT NULL
 );
@@ -372,9 +436,8 @@ CREATE TABLE enrollments (
     user_id UUID REFERENCES users(id),
     course_id UUID REFERENCES courses(id),
     progress_percent INT DEFAULT 0,
-    status VARCHAR(20) DEFAULT 'in_progress' CHECK (status IN ('enrolled','in_progress','completed','dropped')),
+    status VARCHAR(20) DEFAULT 'in_progress' CHECK (status IN ('in_progress','completed','dropped')),
     started_at TIMESTAMPTZ DEFAULT NOW(),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
     completed_at TIMESTAMPTZ,
     total_time_spent INT DEFAULT 0
 );
@@ -406,20 +469,6 @@ CREATE TABLE certificates (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- LMS Resource Library
-CREATE TABLE lms_resources (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    title VARCHAR(255) NOT NULL,
-    type VARCHAR(30) CHECK (type IN ('legal_doc','checklist','template','guide','video','audio','pdf')),
-    description TEXT,
-    file_url VARCHAR(500),
-    file_size VARCHAR(20),
-    download_count INT DEFAULT 0,
-    is_published BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
 -- Discussions
 CREATE TABLE discussions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -433,33 +482,6 @@ CREATE TABLE discussions (
     is_pinned BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE support_tickets (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    priority VARCHAR(50) DEFAULT 'medium',
-    status VARCHAR(50) DEFAULT 'open',
-    description TEXT,
-    reporter VARCHAR(100),
-    reporter_role VARCHAR(50),
-    reporter_detail VARCHAR(255),
-    reporter_avatar VARCHAR(500),
-    assigned_to VARCHAR(100),
-    attachment VARCHAR(255),
-    attachment_size VARCHAR(50),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    resolution_notes TEXT
-);
-
-CREATE TABLE support_ticket_updates (
-    id SERIAL PRIMARY KEY,
-    ticket_id INT REFERENCES support_tickets(id) ON DELETE CASCADE,
-    user_name VARCHAR(100),
-    action VARCHAR(50),
-    note TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE discussion_replies (
@@ -539,17 +561,36 @@ CREATE TABLE export_jobs (
     completed_at TIMESTAMPTZ
 );
 
+-- Vendor Reviews
+CREATE TABLE vendor_reviews (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    vendor_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    reviewer_id UUID REFERENCES users(id),
+    work_order_id UUID REFERENCES work_orders(id),
+    rating SMALLINT CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_kyc ON users(kyc_status);
 CREATE INDEX idx_users_fraud ON users(fraud_score) WHERE fraud_score > 0;
 CREATE INDEX idx_properties_landlord ON properties(landlord_id);
--- CREATE INDEX idx_properties_location ON properties USING GIST(location);
+DO $$
+BEGIN
+    CREATE INDEX idx_properties_location ON properties USING GIST(location);
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE WARNING 'Could not create GIST index on location - skipping spatial index';
+END;
+$$;
 CREATE INDEX idx_properties_region ON properties(region_id);
 CREATE INDEX idx_units_property ON units(property_id);
 CREATE INDEX idx_leases_tenant ON leases(tenant_id);
 CREATE INDEX idx_leases_status ON leases(status);
 CREATE INDEX idx_leases_end_date ON leases(end_date);
+CREATE UNIQUE INDEX idx_leases_active ON leases(tenant_id, unit_id, status) WHERE status IN ('active', 'expiring');
 CREATE INDEX idx_rent_payments_due ON rent_payments(due_date);
 CREATE INDEX idx_rent_payments_status ON rent_payments(status);
 CREATE INDEX idx_work_orders_status ON work_orders(status);
@@ -612,3 +653,31 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_bid_acceptance AFTER UPDATE ON bids
 FOR EACH ROW WHEN (OLD.status IS DISTINCT FROM NEW.status)
 EXECUTE FUNCTION auto_reject_other_bids();
+
+-- Ads / Banners
+CREATE TABLE ads (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    ad_type VARCHAR(50) NOT NULL,
+    banner_url VARCHAR(500) NOT NULL,
+    target_roles VARCHAR(50)[] NOT NULL DEFAULT '{}',
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    location GEOGRAPHY,
+    radius_meters DOUBLE PRECISION,
+    redirect_url VARCHAR(500),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+DO $$
+BEGIN
+    CREATE INDEX idx_ads_location ON ads USING GIST(location);
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE WARNING 'Could not create GIST index on ads location - skipping spatial index';
+END;
+$$;
+

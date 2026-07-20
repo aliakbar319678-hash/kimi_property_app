@@ -1,0 +1,59 @@
+{
+  "missing_apis": {
+    "totally_missing_tables": [
+      "move_in_checklists",
+      "move_out_inspections",
+      "renewal_notices",
+      "scheduled_tasks",
+      "vendor_insurances",
+      "vendor_ratings"
+    ],
+    "webhook_only_tables": [
+      "transactions"
+    ],
+    "partially_missing_tables": [
+      "ads",
+      "audit_logs",
+      "chat_participants",
+      "chat_rooms",
+      "discussion_replies",
+      "discussions",
+      "email_templates",
+      "export_jobs",
+      "inventory_items",
+      "job_assignments",
+      "kyc_documents",
+      "late_payment_notices",
+      "leases",
+      "notifications",
+      "property_marketing",
+      "quiz_attempts",
+      "quizzes",
+      "regions",
+      "rent_payments",
+      "saved_properties",
+      "screening_applications",
+      "sms_logs",
+      "system_health",
+      "user_profiles",
+      "user_roles",
+      "vendor_reviews",
+      "verification_cases",
+      "work_order_parts",
+      "work_orders"
+    ],
+    "fully_integrated_tables": [
+      "bids",
+      "certificates",
+      "courses",
+      "enrollments",
+      "invoices",
+      "messages",
+      "modules",
+      "properties",
+      "showings",
+      "units",
+      "users"
+    ]
+  }
+}

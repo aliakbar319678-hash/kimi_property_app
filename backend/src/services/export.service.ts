@@ -40,12 +40,12 @@ export class ExportService {
         extension = 'xlsx';
       } else if (job.job_type === 'pdf') {
         const { buffer } = await this.generatePDFReport(job.entity_type, JSON.parse(job.query_params));
-        fileBuffer = Buffer.from(buffer as any);
+        fileBuffer = buffer;
         contentType = 'application/pdf';
         extension = 'pdf';
       } else if (job.job_type === 'certificate_pdf') {
-        const { buffer } = await generatePDF('certificate', JSON.parse(job.query_params));
-        fileBuffer = Buffer.from(buffer as any);
+        const pdfResult = await generatePDF('certificate', JSON.parse(job.query_params));
+        fileBuffer = Buffer.from(pdfResult);
         contentType = 'application/pdf';
         extension = 'pdf';
       } else {
@@ -57,7 +57,7 @@ export class ExportService {
       const url = await getSignedUrl(key, 86400); // 24 hours
 
       await query(
-        "UPDATE export_jobs SET status = $1, file_url = $2, completed_at = NOW(), expires_at = NOW() + INTERVAL '24 hours' WHERE id = $3",
+        `UPDATE export_jobs SET status = $1, file_url = $2, completed_at = NOW(), expires_at = NOW() + INTERVAL '24 hours' WHERE id = $3`,
         ['completed', url, jobId]
       );
     } catch (err) {

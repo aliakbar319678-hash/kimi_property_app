@@ -1,7 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/payment_maintenance_provider.dart';
 import 'package:tenant_and_landlord_application/provider/payment_maintenance_state.dart';
+import 'package:tenant_and_landlord_application/provider/tenant_lease_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_bottom_navigation_bar.dart';
 
@@ -12,9 +13,17 @@ class PayRentScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(payRentProvider);
     final notif = ref.read(payRentProvider.notifier);
+    final leaseAsync = ref.watch(tenantLeaseProvider);
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
     final pad = w * 0.05;
+
+    // Extract lease data once available
+    final lease = leaseAsync.asData?.value ?? TenantLeaseData.empty();
+    final rentAmount = lease.rentAmount;
+    final rentDisplay = rentAmount > 0
+        ? '\$${rentAmount.toStringAsFixed(0)}'
+        : '\$—';
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -142,7 +151,7 @@ class PayRentScreen extends ConsumerWidget {
                           ),
                           SizedBox(height: h * 0.008),
                           Text(
-                            '\$1,200',
+                            rentDisplay,
                             style: TextStyle(
                               fontSize: w * 0.14,
                               fontWeight: FontWeight.w800,
@@ -172,21 +181,21 @@ class PayRentScreen extends ConsumerWidget {
                           Divider(color: AppColors.border, height: h * 0.03),
                           _AmountRow(
                             'Base Rent',
-                            '\$1,150.00',
+                            rentAmount > 0 ? '\$${rentAmount.toStringAsFixed(2)}' : '\$—',
                             w,
                             isBold: false,
                           ),
                           SizedBox(height: h * 0.008),
                           _AmountRow(
                             'Utilities (Fixed)',
-                            '\$50.00',
+                            '\$0.00',
                             w,
                             isBold: false,
                           ),
                           Divider(color: AppColors.border, height: h * 0.025),
                           _AmountRow(
                             'Total Payable',
-                            '\$1,200.00',
+                            rentAmount > 0 ? '\$${rentAmount.toStringAsFixed(2)}' : '\$—',
                             w,
                             isBold: true,
                           ),
@@ -321,7 +330,40 @@ class PayRentScreen extends ConsumerWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: state.isLoading ? null : notif.payNow,
+                         onPressed: state.isLoading
+                             ? null
+                             : () async {
+                                 try {
+                                   final success = await notif.payNow(
+                                     leaseId: lease.leaseId,
+                                     amount: lease.rentAmount,
+                                   );
+                                   if (success && context.mounted) {
+                                     ScaffoldMessenger.of(context).showSnackBar(
+                                       const SnackBar(
+                                         content: Text('Payment submitted successfully!'),
+                                         backgroundColor: Colors.green,
+                                       ),
+                                     );
+                                   } else if (!success && context.mounted) {
+                                     ScaffoldMessenger.of(context).showSnackBar(
+                                       const SnackBar(
+                                         content: Text('No active lease found. Cannot process payment.'),
+                                         backgroundColor: AppColors.error,
+                                       ),
+                                     );
+                                   }
+                                 } catch (e) {
+                                   if (context.mounted) {
+                                     ScaffoldMessenger.of(context).showSnackBar(
+                                       SnackBar(
+                                         content: Text(e.toString().replaceFirst('Exception: ', '')),
+                                         backgroundColor: AppColors.error,
+                                       ),
+                                     );
+                                   }
+                                 }
+                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           elevation: 0,
@@ -363,7 +405,7 @@ class PayRentScreen extends ConsumerWidget {
 
                     SizedBox(height: h * 0.01),
                     Text(
-                      'By clicking Pay Now, you authorize T&L to initiate a one-time transaction of \$1,200.00.',
+                      'By clicking Pay Now, you authorize T&L to initiate a payment of $rentDisplay.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: w * 0.029,

@@ -123,22 +123,51 @@ class _ReportsAnalyticsScreenState extends ConsumerState<ReportsAnalyticsScreen>
                 children: [
                   const Text('Avg Repair Cost', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                   const SizedBox(height: 6),
-                  Text('\$210', style: TextStyle(fontSize: w * 0.08, fontWeight: FontWeight.w800, color: AppColors.secondary)),
+                  Builder(
+                    builder: (context) {
+                      final completedWithBids = state.workOrders.where((wo) => wo.bidAmount != null && wo.bidAmount! > 0);
+                      final avgRepairCost = completedWithBids.isEmpty ? 0.0 : (completedWithBids.fold(0.0, (sum, wo) => sum + wo.bidAmount!) / completedWithBids.length);
+                      return Text('\$${avgRepairCost.toStringAsFixed(0)}', style: TextStyle(fontSize: w * 0.08, fontWeight: FontWeight.w800, color: AppColors.secondary));
+                    }
+                  ),
                   const SizedBox(height: 10),
-                  // Mock Graph Representation
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [40, 60, 30, 80, 50, 90, 70].map((hVal) {
-                      return Container(
-                        width: w * 0.08,
-                        height: hVal.toDouble(),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: hVal == 90 ? 1 : 0.2),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
+                  // Dynamic Graph Representation
+                  Builder(
+                    builder: (context) {
+                      if (state.properties.isEmpty) {
+                        return const SizedBox(
+                          height: 90,
+                          child: Center(
+                            child: Text(
+                              'Not enough data to display graph',
+                              style: TextStyle(color: AppColors.textHint, fontSize: 12),
+                            ),
+                          ),
+                        );
+                      }
+                      
+                      // We'll display up to 7 bars based on property occupancy
+                      final displayProps = state.properties.take(7).toList();
+                      
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: displayProps.map((p) {
+                          // Scale occupancy (0.0 - 1.0) to a height between 20 and 90
+                          final hVal = 20.0 + (p.occupancyRate * 70.0);
+                          final isMax = p.occupancyRate >= 0.8;
+                          
+                          return Container(
+                            width: w * 0.08,
+                            height: hVal,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: isMax ? 1 : 0.3),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          );
+                        }).toList(),
                       );
-                    }).toList(),
+                    }
                   ),
                 ],
               ),
@@ -177,11 +206,20 @@ class _ReportsAnalyticsScreenState extends ConsumerState<ReportsAnalyticsScreen>
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
-                children: [
-                  _buildBreakdownRow('Sunset Apartments', '\$12,450', '92%', w),
-                  const Divider(color: AppColors.border, height: 24),
-                  _buildBreakdownRow('Maple Residency', '\$9,380', '100%', w),
-                ],
+                children: state.properties.isEmpty
+                  ? [const Text('No properties available.', style: TextStyle(color: AppColors.textSecondary))]
+                  : List.generate(state.properties.length, (index) {
+                      final p = state.properties[index];
+                      final occ = '${(p.occupancyRate * 100).toInt()}%';
+                      final rev = '\$${p.monthlyRent.toStringAsFixed(0)}/mo';
+                      return Column(
+                        children: [
+                          _buildBreakdownRow(p.name, rev, occ, w),
+                          if (index != state.properties.length - 1)
+                            const Divider(color: AppColors.border, height: 24),
+                        ],
+                      );
+                    }),
               ),
             ),
           ],

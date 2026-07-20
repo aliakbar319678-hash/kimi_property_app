@@ -15,6 +15,19 @@ class PortfolioDashboardScreen extends ConsumerWidget {
     final h = size.height;
     final pad = w * 0.05;
 
+    // ── Derived display values ──────────────────────────────────────────────
+    final displayName = state.userName.isNotEmpty ? state.userName : 'Landlord';
+    final totalProperties = state.properties.length;
+    final rentPct = state.rentCollectionPercent; // 0.0–1.0
+    final rentPctDisplay = '${(rentPct * 100).toInt()}%';
+    final unread = state.unreadNotifications;
+    final alerts = state.urgentAlerts;
+
+    // Pick next upcoming activity from urgent alerts (lease type first)
+    final leaseAlert = alerts.where((a) => a.type == 'lease').isNotEmpty
+        ? alerts.firstWhere((a) => a.type == 'lease')
+        : null;
+
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       body: SafeArea(
@@ -44,7 +57,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                                 ),
                                 ElevatedButton(
                                   onPressed: () async {
-                                    Navigator.pop(context); // Close dialog
+                                    Navigator.pop(context);
                                     await ApiClient().clearToken();
                                     if (context.mounted) {
                                       Navigator.pushNamedAndRemoveUntil(context, '/role_selection', (route) => false);
@@ -62,16 +75,18 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                           height: w * 0.12,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.secondary,
-                              width: 2,
-                            ),
-                            image: const DecorationImage(
-                              image: NetworkImage(
-                                'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80',
-                              ),
-                              fit: BoxFit.cover,
-                            ),
+                            border: Border.all(color: AppColors.secondary, width: 2),
+                            image: state.userAvatarUrl.isNotEmpty
+                                ? DecorationImage(
+                                    image: NetworkImage(state.userAvatarUrl),
+                                    fit: BoxFit.cover,
+                                  )
+                                : const DecorationImage(
+                                    image: NetworkImage(
+                                      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80',
+                                    ),
+                                    fit: BoxFit.cover,
+                                  ),
                           ),
                         ),
                       ),
@@ -81,13 +96,10 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                         children: [
                           Text(
                             'Welcome Back,',
-                            style: TextStyle(
-                              fontSize: w * 0.032,
-                              color: AppColors.textSecondary,
-                            ),
+                            style: TextStyle(fontSize: w * 0.032, color: AppColors.textSecondary),
                           ),
                           Text(
-                            'John',
+                            displayName,
                             style: TextStyle(
                               fontSize: w * 0.05,
                               fontWeight: FontWeight.w700,
@@ -106,9 +118,10 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                         color: AppColors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: const Badge(
-                        label: Text('2'),
-                        child: Icon(
+                      child: Badge(
+                        label: Text(unread > 0 ? '$unread' : ''),
+                        isLabelVisible: unread > 0,
+                        child: const Icon(
                           Icons.notifications_none_rounded,
                           color: AppColors.textPrimary,
                         ),
@@ -154,10 +167,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                           children: [
                             Text(
                               'Total Properties',
-                              style: TextStyle(
-                                fontSize: w * 0.032,
-                                color: AppColors.textSecondary,
-                              ),
+                              style: TextStyle(fontSize: w * 0.032, color: AppColors.textSecondary),
                             ),
                             SizedBox(height: h * 0.005),
                             Row(
@@ -165,27 +175,29 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                               textBaseline: TextBaseline.alphabetic,
                               children: [
                                 Text(
-                                  '12',
+                                  '$totalProperties',
                                   style: TextStyle(
                                     fontSize: w * 0.075,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.textPrimary,
                                   ),
                                 ),
-                                SizedBox(width: w * 0.015),
-                                Text(
-                                  '▲ 8.4%',
-                                  style: TextStyle(
-                                    fontSize: w * 0.03,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.green,
+                                if (totalProperties > 0) ...[
+                                  SizedBox(width: w * 0.015),
+                                  Text(
+                                    totalProperties == 1 ? '1 Property' : '$totalProperties Properties',
+                                    style: TextStyle(
+                                      fontSize: w * 0.03,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.green,
+                                    ),
                                   ),
-                                ),
+                                ],
                               ],
                             ),
                           ],
                         ),
-                        // Occupancy Progress Indicator
+                        // Real occupancy progress ring
                         Stack(
                           alignment: Alignment.center,
                           children: [
@@ -193,7 +205,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                               width: w * 0.16,
                               height: w * 0.16,
                               child: CircularProgressIndicator(
-                                value: state.occupancyRate,
+                                value: state.occupancyRate.clamp(0.0, 1.0),
                                 strokeWidth: 8,
                                 color: AppColors.primary,
                                 backgroundColor: AppColors.scaffoldBg,
@@ -221,10 +233,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                           children: [
                             Text(
                               'Total Rent Collected',
-                              style: TextStyle(
-                                fontSize: w * 0.032,
-                                color: AppColors.textSecondary,
-                              ),
+                              style: TextStyle(fontSize: w * 0.032, color: AppColors.textSecondary),
                             ),
                             SizedBox(height: h * 0.005),
                             Text(
@@ -253,54 +262,35 @@ class PortfolioDashboardScreen extends ConsumerWidget {
 
               SizedBox(height: h * 0.02),
 
-              // Quick Buttons (+ Add Lease, - Post Expense)
+              // Quick Buttons
               Row(
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => Navigator.pushNamed(
-                        context,
-                        '/landlord_lease_management',
-                      ),
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_lease_management'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
                       ),
                       icon: const Icon(Icons.add_rounded, size: 20),
-                      label: const Text(
-                        'Add Lease',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
+                      label: const Text('Add Lease', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
                   SizedBox(width: w * 0.04),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pushNamed(
-                        context,
-                        '/landlord_financial_overview',
-                      ),
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_financial_overview'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.textPrimary,
-                        side: const BorderSide(
-                          color: AppColors.border,
-                          width: 1.5,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
+                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       icon: const Icon(Icons.show_chart_rounded, size: 20),
-                      label: const Text(
-                        'Finances',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
+                      label: const Text('Finances', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -308,7 +298,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
 
               SizedBox(height: h * 0.03),
 
-              // ── Rent Status Circular Chart Card ─────────────────────────
+              // ── Rent Collection Card (real %) ───────────────────────────
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(w * 0.05),
@@ -324,8 +314,8 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                         SizedBox(
                           width: w * 0.22,
                           height: w * 0.22,
-                          child: const CircularProgressIndicator(
-                            value: 0.80,
+                          child: CircularProgressIndicator(
+                            value: rentPct.clamp(0.0, 1.0),
                             strokeWidth: 10,
                             color: AppColors.secondary,
                             backgroundColor: AppColors.border,
@@ -333,7 +323,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                           ),
                         ),
                         Text(
-                          '80%',
+                          rentPctDisplay,
                           style: TextStyle(
                             fontSize: w * 0.05,
                             fontWeight: FontWeight.w700,
@@ -357,19 +347,21 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                           ),
                           SizedBox(height: h * 0.005),
                           Text(
-                            '80% of rent has been collected for May.',
-                            style: TextStyle(
-                              fontSize: w * 0.032,
-                              color: AppColors.textSecondary,
-                            ),
+                            rentPct > 0
+                                ? '$rentPctDisplay of rent has been collected this month.'
+                                : 'No rent payments recorded yet.',
+                            style: TextStyle(fontSize: w * 0.032, color: AppColors.textSecondary),
                           ),
                           SizedBox(height: h * 0.012),
-                          Text(
-                            'View Details →',
-                            style: TextStyle(
-                              fontSize: w * 0.032,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.secondary,
+                          GestureDetector(
+                            onTap: () => Navigator.pushNamed(context, '/landlord_financial_overview'),
+                            child: Text(
+                              'View Details →',
+                              style: TextStyle(
+                                fontSize: w * 0.032,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.secondary,
+                              ),
                             ),
                           ),
                         ],
@@ -381,7 +373,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
 
               SizedBox(height: h * 0.03),
 
-              // ── Urgent Alerts ───────────────────────────────────────────
+              // ── Urgent Alerts (real from API) ───────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -393,100 +385,118 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  Text(
-                    'View All',
-                    style: TextStyle(
-                      fontSize: w * 0.032,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.secondary,
+                  GestureDetector(
+                    onTap: () => Navigator.pushNamed(context, '/landlord_maintenance_dashboard'),
+                    child: Text(
+                      'View All',
+                      style: TextStyle(
+                        fontSize: w * 0.032,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.secondary,
+                      ),
                     ),
                   ),
                 ],
               ),
               SizedBox(height: h * 0.012),
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 2,
-                separatorBuilder: (_, _) => SizedBox(height: h * 0.012),
-                itemBuilder: (context, index) {
-                  final alertTitle = index == 0
-                      ? 'Water Leak Reported'
-                      : 'Lease Expiring Soon';
-                  final alertDesc = index == 0
-                      ? 'Sunset Heights Apts • Unit 402 • High Priority'
-                      : 'Sarah Jenkins • Maple Residency • 14 days left';
-                  final alertIcon = index == 0
-                      ? Icons.water_drop_rounded
-                      : Icons.calendar_today_rounded;
-                  final alertColor = index == 0
-                      ? AppColors.error
-                      : AppColors.secondary;
+              if (alerts.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(w * 0.04),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 24),
+                      SizedBox(width: w * 0.03),
+                      Text(
+                        'No urgent alerts right now',
+                        style: TextStyle(fontSize: w * 0.034, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: alerts.length,
+                  separatorBuilder: (_, __) => SizedBox(height: h * 0.012),
+                  itemBuilder: (context, index) {
+                    final alert = alerts[index];
+                    final isLease = alert.type == 'lease';
+                    final alertIcon = isLease
+                        ? Icons.calendar_today_rounded
+                        : Icons.warning_amber_rounded;
+                    final alertColor = isLease ? AppColors.secondary : AppColors.error;
 
-                  return GestureDetector(
-                    onTap: () {
-                      if (index == 0) {
-                        Navigator.pushNamed(context, '/landlord_work_order_details');
-                      } else {
-                        Navigator.pushNamed(context, '/landlord_lease_management');
-                      }
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(w * 0.04),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: alertColor.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
+                    return GestureDetector(
+                      onTap: () {
+                        if (isLease) {
+                          Navigator.pushNamed(context, '/landlord_lease_management');
+                        } else {
+                          Navigator.pushNamed(context, '/landlord_work_order_details');
+                        }
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(w * 0.04),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: alertColor.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(alertIcon, color: alertColor, size: 20),
                             ),
-                            child: Icon(alertIcon, color: alertColor, size: 20),
-                          ),
-                          SizedBox(width: w * 0.03),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  alertTitle,
-                                  style: TextStyle(
-                                    fontSize: w * 0.036,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
+                            SizedBox(width: w * 0.03),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    alert.title,
+                                    style: TextStyle(
+                                      fontSize: w * 0.036,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  alertDesc,
-                                  style: TextStyle(
-                                    fontSize: w * 0.03,
-                                    color: AppColors.textSecondary,
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    alert.description,
+                                    style: TextStyle(
+                                      fontSize: w * 0.03,
+                                      color: AppColors.textSecondary,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          const Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            color: AppColors.textHint,
-                            size: 14,
-                          ),
-                        ],
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              color: AppColors.textHint,
+                              size: 14,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  },
+                ),
 
               SizedBox(height: h * 0.03),
 
-              // ── Maintenance Summary ─────────────────────────────────────
+              // ── Maintenance Summary (real counts) ───────────────────────
               Text(
                 'Maintenance Summary',
                 style: TextStyle(
@@ -498,23 +508,17 @@ class PortfolioDashboardScreen extends ConsumerWidget {
               SizedBox(height: h * 0.012),
               Row(
                 children: [
-                  _buildSummaryCard('6', 'Emergency', AppColors.error, w, h),
+                  _buildSummaryCard('${state.maintenanceEmergency}', 'Emergency', AppColors.error, w, h),
                   SizedBox(width: w * 0.03),
-                  _buildSummaryCard(
-                    '3',
-                    'In Progress',
-                    AppColors.secondary,
-                    w,
-                    h,
-                  ),
+                  _buildSummaryCard('${state.maintenanceInProgress}', 'In Progress', AppColors.secondary, w, h),
                   SizedBox(width: w * 0.03),
-                  _buildSummaryCard('12', 'Completed', Colors.green, w, h),
+                  _buildSummaryCard('${state.maintenanceCompleted}', 'Completed', Colors.green, w, h),
                 ],
               ),
 
               SizedBox(height: h * 0.03),
 
-              // ── Upcoming Activities ─────────────────────────────────────
+              // ── Upcoming Activity (from lease alerts or empty state) ─────
               Text(
                 'Upcoming Activities',
                 style: TextStyle(
@@ -524,71 +528,77 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                 ),
               ),
               SizedBox(height: h * 0.015),
-              Container(
-                padding: EdgeInsets.all(w * 0.04),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(16),
+              if (leaseAlert != null)
+                Container(
+                  padding: EdgeInsets.all(w * 0.04),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.scaffoldBg,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(Icons.event_rounded, color: AppColors.secondary, size: w * 0.055),
+                            Text(
+                              'LEASE',
+                              style: TextStyle(
+                                fontSize: w * 0.022,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: w * 0.04),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              leaseAlert.title,
+                              style: TextStyle(
+                                fontSize: w * 0.036,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              leaseAlert.description,
+                              style: TextStyle(fontSize: w * 0.03, color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  padding: EdgeInsets.all(w * 0.04),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined, color: AppColors.textHint, size: 22),
+                      SizedBox(width: w * 0.04),
+                      Text(
+                        'No upcoming activities',
+                        style: TextStyle(fontSize: w * 0.034, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.scaffoldBg,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            '26',
-                            style: TextStyle(
-                              fontSize: w * 0.045,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            'MAY',
-                            style: TextStyle(
-                              fontSize: w * 0.024,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: w * 0.04),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Vendor Payment Due',
-                            style: TextStyle(
-                              fontSize: w * 0.036,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Mike Plumbing • SAR 350 • Kitchen repair',
-                            style: TextStyle(
-                              fontSize: w * 0.03,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               SizedBox(height: h * 0.02),
             ],
           ),

@@ -47,6 +47,8 @@ import 'package:tenant_and_landlord_application/screens/landlord/lease_managemen
 import 'package:tenant_and_landlord_application/screens/landlord/financial_overview_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/reports_analytics_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/ai_smart_assistant_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/add_property_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/lease_detail_screen.dart';
 
 // ── Vendor Portal Screens ───────────────────────────
 import 'package:tenant_and_landlord_application/screens/vendor/vendor_onboarding_screen.dart';
@@ -110,6 +112,8 @@ class TLApp extends StatelessWidget {
         '/landlord_financial_overview': (_) => const FinancialOverviewScreen(),
         '/landlord_reports_analytics': (_) => const ReportsAnalyticsScreen(),
         '/landlord_ai_assistant': (_) => const AISmartAssistantScreen(),
+        '/landlord_add_property': (_) => const AddPropertyScreen(),
+        '/landlord_lease_detail': (_) => const LandlordLeaseDetailScreen(),
 
         // ── Vendor Portal Routes ──────────────────
         '/vendor_onboarding': (_) => const VendorOnboardingScreen(),

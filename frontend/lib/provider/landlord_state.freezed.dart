@@ -14,7 +14,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Property {
 
- String get id; String get name; String get address; double get occupancyRate; String get imageUrl; int get totalUnits; int get occupiedUnits; int get vacantUnits; double get monthlyRent;
+ String get id; String get name; String get address; double get occupancyRate; String get imageUrl; int get totalUnits; int get occupiedUnits; int get vacantUnits; double get monthlyRent;// Extra backend fields
+ String get type; List<String> get amenities; String get description; String get status;// Approval workflow fields
+ String get verificationStatus;// 'pending' | 'approved' | 'rejected'
+ String? get rejectionReason;
 /// Create a copy of Property
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +28,16 @@ $PropertyCopyWith<Property> get copyWith => _$PropertyCopyWithImpl<Property>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Property&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.totalUnits, totalUnits) || other.totalUnits == totalUnits)&&(identical(other.occupiedUnits, occupiedUnits) || other.occupiedUnits == occupiedUnits)&&(identical(other.vacantUnits, vacantUnits) || other.vacantUnits == vacantUnits)&&(identical(other.monthlyRent, monthlyRent) || other.monthlyRent == monthlyRent));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Property&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.totalUnits, totalUnits) || other.totalUnits == totalUnits)&&(identical(other.occupiedUnits, occupiedUnits) || other.occupiedUnits == occupiedUnits)&&(identical(other.vacantUnits, vacantUnits) || other.vacantUnits == vacantUnits)&&(identical(other.monthlyRent, monthlyRent) || other.monthlyRent == monthlyRent)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other.amenities, amenities)&&(identical(other.description, description) || other.description == description)&&(identical(other.status, status) || other.status == status)&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,address,occupancyRate,imageUrl,totalUnits,occupiedUnits,vacantUnits,monthlyRent);
+int get hashCode => Object.hash(runtimeType,id,name,address,occupancyRate,imageUrl,totalUnits,occupiedUnits,vacantUnits,monthlyRent,type,const DeepCollectionEquality().hash(amenities),description,status,verificationStatus,rejectionReason);
 
 @override
 String toString() {
-  return 'Property(id: $id, name: $name, address: $address, occupancyRate: $occupancyRate, imageUrl: $imageUrl, totalUnits: $totalUnits, occupiedUnits: $occupiedUnits, vacantUnits: $vacantUnits, monthlyRent: $monthlyRent)';
+  return 'Property(id: $id, name: $name, address: $address, occupancyRate: $occupancyRate, imageUrl: $imageUrl, totalUnits: $totalUnits, occupiedUnits: $occupiedUnits, vacantUnits: $vacantUnits, monthlyRent: $monthlyRent, type: $type, amenities: $amenities, description: $description, status: $status, verificationStatus: $verificationStatus, rejectionReason: $rejectionReason)';
 }
 
 
@@ -45,7 +48,7 @@ abstract mixin class $PropertyCopyWith<$Res>  {
   factory $PropertyCopyWith(Property value, $Res Function(Property) _then) = _$PropertyCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String address, double occupancyRate, String imageUrl, int totalUnits, int occupiedUnits, int vacantUnits, double monthlyRent
+ String id, String name, String address, double occupancyRate, String imageUrl, int totalUnits, int occupiedUnits, int vacantUnits, double monthlyRent, String type, List<String> amenities, String description, String status, String verificationStatus, String? rejectionReason
 });
 
 
@@ -62,7 +65,7 @@ class _$PropertyCopyWithImpl<$Res>
 
 /// Create a copy of Property
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? address = null,Object? occupancyRate = null,Object? imageUrl = null,Object? totalUnits = null,Object? occupiedUnits = null,Object? vacantUnits = null,Object? monthlyRent = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? address = null,Object? occupancyRate = null,Object? imageUrl = null,Object? totalUnits = null,Object? occupiedUnits = null,Object? vacantUnits = null,Object? monthlyRent = null,Object? type = null,Object? amenities = null,Object? description = null,Object? status = null,Object? verificationStatus = null,Object? rejectionReason = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -73,7 +76,13 @@ as String,totalUnits: null == totalUnits ? _self.totalUnits : totalUnits // igno
 as int,occupiedUnits: null == occupiedUnits ? _self.occupiedUnits : occupiedUnits // ignore: cast_nullable_to_non_nullable
 as int,vacantUnits: null == vacantUnits ? _self.vacantUnits : vacantUnits // ignore: cast_nullable_to_non_nullable
 as int,monthlyRent: null == monthlyRent ? _self.monthlyRent : monthlyRent // ignore: cast_nullable_to_non_nullable
-as double,
+as double,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as String,amenities: null == amenities ? _self.amenities : amenities // ignore: cast_nullable_to_non_nullable
+as List<String>,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,verificationStatus: null == verificationStatus ? _self.verificationStatus : verificationStatus // ignore: cast_nullable_to_non_nullable
+as String,rejectionReason: freezed == rejectionReason ? _self.rejectionReason : rejectionReason // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -158,10 +167,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Property() when $default != null:
-return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent);case _:
+return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason);case _:
   return orElse();
 
 }
@@ -179,10 +188,10 @@ return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imag
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason)  $default,) {final _that = this;
 switch (_that) {
 case _Property():
-return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent);case _:
+return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +208,10 @@ return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imag
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason)?  $default,) {final _that = this;
 switch (_that) {
 case _Property() when $default != null:
-return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent);case _:
+return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason);case _:
   return null;
 
 }
@@ -214,7 +223,7 @@ return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imag
 
 
 class _Property implements Property {
-  const _Property({required this.id, required this.name, required this.address, required this.occupancyRate, required this.imageUrl, required this.totalUnits, required this.occupiedUnits, required this.vacantUnits, required this.monthlyRent});
+  const _Property({required this.id, required this.name, required this.address, required this.occupancyRate, required this.imageUrl, required this.totalUnits, required this.occupiedUnits, required this.vacantUnits, required this.monthlyRent, this.type = 'apartment', final  List<String> amenities = const [], this.description = '', this.status = 'active', this.verificationStatus = 'pending', this.rejectionReason = null}): _amenities = amenities;
   
 
 @override final  String id;
@@ -226,6 +235,21 @@ class _Property implements Property {
 @override final  int occupiedUnits;
 @override final  int vacantUnits;
 @override final  double monthlyRent;
+// Extra backend fields
+@override@JsonKey() final  String type;
+ final  List<String> _amenities;
+@override@JsonKey() List<String> get amenities {
+  if (_amenities is EqualUnmodifiableListView) return _amenities;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_amenities);
+}
+
+@override@JsonKey() final  String description;
+@override@JsonKey() final  String status;
+// Approval workflow fields
+@override@JsonKey() final  String verificationStatus;
+// 'pending' | 'approved' | 'rejected'
+@override@JsonKey() final  String? rejectionReason;
 
 /// Create a copy of Property
 /// with the given fields replaced by the non-null parameter values.
@@ -237,16 +261,16 @@ _$PropertyCopyWith<_Property> get copyWith => __$PropertyCopyWithImpl<_Property>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Property&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.totalUnits, totalUnits) || other.totalUnits == totalUnits)&&(identical(other.occupiedUnits, occupiedUnits) || other.occupiedUnits == occupiedUnits)&&(identical(other.vacantUnits, vacantUnits) || other.vacantUnits == vacantUnits)&&(identical(other.monthlyRent, monthlyRent) || other.monthlyRent == monthlyRent));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Property&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.totalUnits, totalUnits) || other.totalUnits == totalUnits)&&(identical(other.occupiedUnits, occupiedUnits) || other.occupiedUnits == occupiedUnits)&&(identical(other.vacantUnits, vacantUnits) || other.vacantUnits == vacantUnits)&&(identical(other.monthlyRent, monthlyRent) || other.monthlyRent == monthlyRent)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other._amenities, _amenities)&&(identical(other.description, description) || other.description == description)&&(identical(other.status, status) || other.status == status)&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,address,occupancyRate,imageUrl,totalUnits,occupiedUnits,vacantUnits,monthlyRent);
+int get hashCode => Object.hash(runtimeType,id,name,address,occupancyRate,imageUrl,totalUnits,occupiedUnits,vacantUnits,monthlyRent,type,const DeepCollectionEquality().hash(_amenities),description,status,verificationStatus,rejectionReason);
 
 @override
 String toString() {
-  return 'Property(id: $id, name: $name, address: $address, occupancyRate: $occupancyRate, imageUrl: $imageUrl, totalUnits: $totalUnits, occupiedUnits: $occupiedUnits, vacantUnits: $vacantUnits, monthlyRent: $monthlyRent)';
+  return 'Property(id: $id, name: $name, address: $address, occupancyRate: $occupancyRate, imageUrl: $imageUrl, totalUnits: $totalUnits, occupiedUnits: $occupiedUnits, vacantUnits: $vacantUnits, monthlyRent: $monthlyRent, type: $type, amenities: $amenities, description: $description, status: $status, verificationStatus: $verificationStatus, rejectionReason: $rejectionReason)';
 }
 
 
@@ -257,7 +281,7 @@ abstract mixin class _$PropertyCopyWith<$Res> implements $PropertyCopyWith<$Res>
   factory _$PropertyCopyWith(_Property value, $Res Function(_Property) _then) = __$PropertyCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String address, double occupancyRate, String imageUrl, int totalUnits, int occupiedUnits, int vacantUnits, double monthlyRent
+ String id, String name, String address, double occupancyRate, String imageUrl, int totalUnits, int occupiedUnits, int vacantUnits, double monthlyRent, String type, List<String> amenities, String description, String status, String verificationStatus, String? rejectionReason
 });
 
 
@@ -274,7 +298,7 @@ class __$PropertyCopyWithImpl<$Res>
 
 /// Create a copy of Property
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? address = null,Object? occupancyRate = null,Object? imageUrl = null,Object? totalUnits = null,Object? occupiedUnits = null,Object? vacantUnits = null,Object? monthlyRent = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? address = null,Object? occupancyRate = null,Object? imageUrl = null,Object? totalUnits = null,Object? occupiedUnits = null,Object? vacantUnits = null,Object? monthlyRent = null,Object? type = null,Object? amenities = null,Object? description = null,Object? status = null,Object? verificationStatus = null,Object? rejectionReason = freezed,}) {
   return _then(_Property(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -285,7 +309,13 @@ as String,totalUnits: null == totalUnits ? _self.totalUnits : totalUnits // igno
 as int,occupiedUnits: null == occupiedUnits ? _self.occupiedUnits : occupiedUnits // ignore: cast_nullable_to_non_nullable
 as int,vacantUnits: null == vacantUnits ? _self.vacantUnits : vacantUnits // ignore: cast_nullable_to_non_nullable
 as int,monthlyRent: null == monthlyRent ? _self.monthlyRent : monthlyRent // ignore: cast_nullable_to_non_nullable
-as double,
+as double,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as String,amenities: null == amenities ? _self._amenities : amenities // ignore: cast_nullable_to_non_nullable
+as List<String>,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,verificationStatus: null == verificationStatus ? _self.verificationStatus : verificationStatus // ignore: cast_nullable_to_non_nullable
+as String,rejectionReason: freezed == rejectionReason ? _self.rejectionReason : rejectionReason // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -295,8 +325,9 @@ as double,
 /// @nodoc
 mixin _$Unit {
 
- String get id; String get name; String get status;// 'Occupied', 'Vacant', 'Maintenance'
- String get tenantName; double get rent; List<String> get amenities;
+ String get id; String get name; String get status;// 'occupied', 'vacant', 'maintenance', 'reserved'
+ String get tenantName; double get rent; List<String> get amenities;// Extra backend fields
+ int get bedrooms; int get bathrooms; int get squareFeet; double get depositAmount; String get availableDate; String get propertyId;
 /// Create a copy of Unit
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -307,16 +338,16 @@ $UnitCopyWith<Unit> get copyWith => _$UnitCopyWithImpl<Unit>(this as Unit, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Unit&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.rent, rent) || other.rent == rent)&&const DeepCollectionEquality().equals(other.amenities, amenities));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Unit&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.rent, rent) || other.rent == rent)&&const DeepCollectionEquality().equals(other.amenities, amenities)&&(identical(other.bedrooms, bedrooms) || other.bedrooms == bedrooms)&&(identical(other.bathrooms, bathrooms) || other.bathrooms == bathrooms)&&(identical(other.squareFeet, squareFeet) || other.squareFeet == squareFeet)&&(identical(other.depositAmount, depositAmount) || other.depositAmount == depositAmount)&&(identical(other.availableDate, availableDate) || other.availableDate == availableDate)&&(identical(other.propertyId, propertyId) || other.propertyId == propertyId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,status,tenantName,rent,const DeepCollectionEquality().hash(amenities));
+int get hashCode => Object.hash(runtimeType,id,name,status,tenantName,rent,const DeepCollectionEquality().hash(amenities),bedrooms,bathrooms,squareFeet,depositAmount,availableDate,propertyId);
 
 @override
 String toString() {
-  return 'Unit(id: $id, name: $name, status: $status, tenantName: $tenantName, rent: $rent, amenities: $amenities)';
+  return 'Unit(id: $id, name: $name, status: $status, tenantName: $tenantName, rent: $rent, amenities: $amenities, bedrooms: $bedrooms, bathrooms: $bathrooms, squareFeet: $squareFeet, depositAmount: $depositAmount, availableDate: $availableDate, propertyId: $propertyId)';
 }
 
 
@@ -327,7 +358,7 @@ abstract mixin class $UnitCopyWith<$Res>  {
   factory $UnitCopyWith(Unit value, $Res Function(Unit) _then) = _$UnitCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String status, String tenantName, double rent, List<String> amenities
+ String id, String name, String status, String tenantName, double rent, List<String> amenities, int bedrooms, int bathrooms, int squareFeet, double depositAmount, String availableDate, String propertyId
 });
 
 
@@ -344,7 +375,7 @@ class _$UnitCopyWithImpl<$Res>
 
 /// Create a copy of Unit
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? status = null,Object? tenantName = null,Object? rent = null,Object? amenities = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? status = null,Object? tenantName = null,Object? rent = null,Object? amenities = null,Object? bedrooms = null,Object? bathrooms = null,Object? squareFeet = null,Object? depositAmount = null,Object? availableDate = null,Object? propertyId = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -352,7 +383,13 @@ as String,status: null == status ? _self.status : status // ignore: cast_nullabl
 as String,tenantName: null == tenantName ? _self.tenantName : tenantName // ignore: cast_nullable_to_non_nullable
 as String,rent: null == rent ? _self.rent : rent // ignore: cast_nullable_to_non_nullable
 as double,amenities: null == amenities ? _self.amenities : amenities // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,bedrooms: null == bedrooms ? _self.bedrooms : bedrooms // ignore: cast_nullable_to_non_nullable
+as int,bathrooms: null == bathrooms ? _self.bathrooms : bathrooms // ignore: cast_nullable_to_non_nullable
+as int,squareFeet: null == squareFeet ? _self.squareFeet : squareFeet // ignore: cast_nullable_to_non_nullable
+as int,depositAmount: null == depositAmount ? _self.depositAmount : depositAmount // ignore: cast_nullable_to_non_nullable
+as double,availableDate: null == availableDate ? _self.availableDate : availableDate // ignore: cast_nullable_to_non_nullable
+as String,propertyId: null == propertyId ? _self.propertyId : propertyId // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
@@ -437,10 +474,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String status,  String tenantName,  double rent,  List<String> amenities)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String status,  String tenantName,  double rent,  List<String> amenities,  int bedrooms,  int bathrooms,  int squareFeet,  double depositAmount,  String availableDate,  String propertyId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Unit() when $default != null:
-return $default(_that.id,_that.name,_that.status,_that.tenantName,_that.rent,_that.amenities);case _:
+return $default(_that.id,_that.name,_that.status,_that.tenantName,_that.rent,_that.amenities,_that.bedrooms,_that.bathrooms,_that.squareFeet,_that.depositAmount,_that.availableDate,_that.propertyId);case _:
   return orElse();
 
 }
@@ -458,10 +495,10 @@ return $default(_that.id,_that.name,_that.status,_that.tenantName,_that.rent,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String status,  String tenantName,  double rent,  List<String> amenities)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String status,  String tenantName,  double rent,  List<String> amenities,  int bedrooms,  int bathrooms,  int squareFeet,  double depositAmount,  String availableDate,  String propertyId)  $default,) {final _that = this;
 switch (_that) {
 case _Unit():
-return $default(_that.id,_that.name,_that.status,_that.tenantName,_that.rent,_that.amenities);case _:
+return $default(_that.id,_that.name,_that.status,_that.tenantName,_that.rent,_that.amenities,_that.bedrooms,_that.bathrooms,_that.squareFeet,_that.depositAmount,_that.availableDate,_that.propertyId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -478,10 +515,10 @@ return $default(_that.id,_that.name,_that.status,_that.tenantName,_that.rent,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String status,  String tenantName,  double rent,  List<String> amenities)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String status,  String tenantName,  double rent,  List<String> amenities,  int bedrooms,  int bathrooms,  int squareFeet,  double depositAmount,  String availableDate,  String propertyId)?  $default,) {final _that = this;
 switch (_that) {
 case _Unit() when $default != null:
-return $default(_that.id,_that.name,_that.status,_that.tenantName,_that.rent,_that.amenities);case _:
+return $default(_that.id,_that.name,_that.status,_that.tenantName,_that.rent,_that.amenities,_that.bedrooms,_that.bathrooms,_that.squareFeet,_that.depositAmount,_that.availableDate,_that.propertyId);case _:
   return null;
 
 }
@@ -493,13 +530,13 @@ return $default(_that.id,_that.name,_that.status,_that.tenantName,_that.rent,_th
 
 
 class _Unit implements Unit {
-  const _Unit({required this.id, required this.name, required this.status, required this.tenantName, required this.rent, required final  List<String> amenities}): _amenities = amenities;
+  const _Unit({required this.id, required this.name, required this.status, required this.tenantName, required this.rent, required final  List<String> amenities, this.bedrooms = 0, this.bathrooms = 0, this.squareFeet = 0, this.depositAmount = 0.0, this.availableDate = '', this.propertyId = ''}): _amenities = amenities;
   
 
 @override final  String id;
 @override final  String name;
 @override final  String status;
-// 'Occupied', 'Vacant', 'Maintenance'
+// 'occupied', 'vacant', 'maintenance', 'reserved'
 @override final  String tenantName;
 @override final  double rent;
  final  List<String> _amenities;
@@ -509,6 +546,13 @@ class _Unit implements Unit {
   return EqualUnmodifiableListView(_amenities);
 }
 
+// Extra backend fields
+@override@JsonKey() final  int bedrooms;
+@override@JsonKey() final  int bathrooms;
+@override@JsonKey() final  int squareFeet;
+@override@JsonKey() final  double depositAmount;
+@override@JsonKey() final  String availableDate;
+@override@JsonKey() final  String propertyId;
 
 /// Create a copy of Unit
 /// with the given fields replaced by the non-null parameter values.
@@ -520,16 +564,16 @@ _$UnitCopyWith<_Unit> get copyWith => __$UnitCopyWithImpl<_Unit>(this, _$identit
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Unit&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.rent, rent) || other.rent == rent)&&const DeepCollectionEquality().equals(other._amenities, _amenities));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Unit&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.status, status) || other.status == status)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.rent, rent) || other.rent == rent)&&const DeepCollectionEquality().equals(other._amenities, _amenities)&&(identical(other.bedrooms, bedrooms) || other.bedrooms == bedrooms)&&(identical(other.bathrooms, bathrooms) || other.bathrooms == bathrooms)&&(identical(other.squareFeet, squareFeet) || other.squareFeet == squareFeet)&&(identical(other.depositAmount, depositAmount) || other.depositAmount == depositAmount)&&(identical(other.availableDate, availableDate) || other.availableDate == availableDate)&&(identical(other.propertyId, propertyId) || other.propertyId == propertyId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,status,tenantName,rent,const DeepCollectionEquality().hash(_amenities));
+int get hashCode => Object.hash(runtimeType,id,name,status,tenantName,rent,const DeepCollectionEquality().hash(_amenities),bedrooms,bathrooms,squareFeet,depositAmount,availableDate,propertyId);
 
 @override
 String toString() {
-  return 'Unit(id: $id, name: $name, status: $status, tenantName: $tenantName, rent: $rent, amenities: $amenities)';
+  return 'Unit(id: $id, name: $name, status: $status, tenantName: $tenantName, rent: $rent, amenities: $amenities, bedrooms: $bedrooms, bathrooms: $bathrooms, squareFeet: $squareFeet, depositAmount: $depositAmount, availableDate: $availableDate, propertyId: $propertyId)';
 }
 
 
@@ -540,7 +584,7 @@ abstract mixin class _$UnitCopyWith<$Res> implements $UnitCopyWith<$Res> {
   factory _$UnitCopyWith(_Unit value, $Res Function(_Unit) _then) = __$UnitCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String status, String tenantName, double rent, List<String> amenities
+ String id, String name, String status, String tenantName, double rent, List<String> amenities, int bedrooms, int bathrooms, int squareFeet, double depositAmount, String availableDate, String propertyId
 });
 
 
@@ -557,7 +601,7 @@ class __$UnitCopyWithImpl<$Res>
 
 /// Create a copy of Unit
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? status = null,Object? tenantName = null,Object? rent = null,Object? amenities = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? status = null,Object? tenantName = null,Object? rent = null,Object? amenities = null,Object? bedrooms = null,Object? bathrooms = null,Object? squareFeet = null,Object? depositAmount = null,Object? availableDate = null,Object? propertyId = null,}) {
   return _then(_Unit(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -565,7 +609,13 @@ as String,status: null == status ? _self.status : status // ignore: cast_nullabl
 as String,tenantName: null == tenantName ? _self.tenantName : tenantName // ignore: cast_nullable_to_non_nullable
 as String,rent: null == rent ? _self.rent : rent // ignore: cast_nullable_to_non_nullable
 as double,amenities: null == amenities ? _self._amenities : amenities // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,bedrooms: null == bedrooms ? _self.bedrooms : bedrooms // ignore: cast_nullable_to_non_nullable
+as int,bathrooms: null == bathrooms ? _self.bathrooms : bathrooms // ignore: cast_nullable_to_non_nullable
+as int,squareFeet: null == squareFeet ? _self.squareFeet : squareFeet // ignore: cast_nullable_to_non_nullable
+as int,depositAmount: null == depositAmount ? _self.depositAmount : depositAmount // ignore: cast_nullable_to_non_nullable
+as double,availableDate: null == availableDate ? _self.availableDate : availableDate // ignore: cast_nullable_to_non_nullable
+as String,propertyId: null == propertyId ? _self.propertyId : propertyId // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
@@ -576,7 +626,8 @@ as List<String>,
 mixin _$Tenant {
 
  String get id; String get name; String get unitName; String get contact; String get email; String get emergencyContactName; String get emergencyContactPhone; List<String> get memos; double get balance; String get status;// 'Active', 'Late Payment'
- String get dateJoined;
+ String get dateJoined;// Extra lease-linked fields
+ String get propertyName; String get leaseEndDate; double get rentAmount;
 /// Create a copy of Tenant
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -587,16 +638,16 @@ $TenantCopyWith<Tenant> get copyWith => _$TenantCopyWithImpl<Tenant>(this as Ten
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Tenant&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.contact, contact) || other.contact == contact)&&(identical(other.email, email) || other.email == email)&&(identical(other.emergencyContactName, emergencyContactName) || other.emergencyContactName == emergencyContactName)&&(identical(other.emergencyContactPhone, emergencyContactPhone) || other.emergencyContactPhone == emergencyContactPhone)&&const DeepCollectionEquality().equals(other.memos, memos)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.status, status) || other.status == status)&&(identical(other.dateJoined, dateJoined) || other.dateJoined == dateJoined));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Tenant&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.contact, contact) || other.contact == contact)&&(identical(other.email, email) || other.email == email)&&(identical(other.emergencyContactName, emergencyContactName) || other.emergencyContactName == emergencyContactName)&&(identical(other.emergencyContactPhone, emergencyContactPhone) || other.emergencyContactPhone == emergencyContactPhone)&&const DeepCollectionEquality().equals(other.memos, memos)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.status, status) || other.status == status)&&(identical(other.dateJoined, dateJoined) || other.dateJoined == dateJoined)&&(identical(other.propertyName, propertyName) || other.propertyName == propertyName)&&(identical(other.leaseEndDate, leaseEndDate) || other.leaseEndDate == leaseEndDate)&&(identical(other.rentAmount, rentAmount) || other.rentAmount == rentAmount));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,unitName,contact,email,emergencyContactName,emergencyContactPhone,const DeepCollectionEquality().hash(memos),balance,status,dateJoined);
+int get hashCode => Object.hash(runtimeType,id,name,unitName,contact,email,emergencyContactName,emergencyContactPhone,const DeepCollectionEquality().hash(memos),balance,status,dateJoined,propertyName,leaseEndDate,rentAmount);
 
 @override
 String toString() {
-  return 'Tenant(id: $id, name: $name, unitName: $unitName, contact: $contact, email: $email, emergencyContactName: $emergencyContactName, emergencyContactPhone: $emergencyContactPhone, memos: $memos, balance: $balance, status: $status, dateJoined: $dateJoined)';
+  return 'Tenant(id: $id, name: $name, unitName: $unitName, contact: $contact, email: $email, emergencyContactName: $emergencyContactName, emergencyContactPhone: $emergencyContactPhone, memos: $memos, balance: $balance, status: $status, dateJoined: $dateJoined, propertyName: $propertyName, leaseEndDate: $leaseEndDate, rentAmount: $rentAmount)';
 }
 
 
@@ -607,7 +658,7 @@ abstract mixin class $TenantCopyWith<$Res>  {
   factory $TenantCopyWith(Tenant value, $Res Function(Tenant) _then) = _$TenantCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String unitName, String contact, String email, String emergencyContactName, String emergencyContactPhone, List<String> memos, double balance, String status, String dateJoined
+ String id, String name, String unitName, String contact, String email, String emergencyContactName, String emergencyContactPhone, List<String> memos, double balance, String status, String dateJoined, String propertyName, String leaseEndDate, double rentAmount
 });
 
 
@@ -624,7 +675,7 @@ class _$TenantCopyWithImpl<$Res>
 
 /// Create a copy of Tenant
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? unitName = null,Object? contact = null,Object? email = null,Object? emergencyContactName = null,Object? emergencyContactPhone = null,Object? memos = null,Object? balance = null,Object? status = null,Object? dateJoined = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? unitName = null,Object? contact = null,Object? email = null,Object? emergencyContactName = null,Object? emergencyContactPhone = null,Object? memos = null,Object? balance = null,Object? status = null,Object? dateJoined = null,Object? propertyName = null,Object? leaseEndDate = null,Object? rentAmount = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -637,7 +688,10 @@ as String,memos: null == memos ? _self.memos : memos // ignore: cast_nullable_to
 as List<String>,balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
 as double,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,dateJoined: null == dateJoined ? _self.dateJoined : dateJoined // ignore: cast_nullable_to_non_nullable
-as String,
+as String,propertyName: null == propertyName ? _self.propertyName : propertyName // ignore: cast_nullable_to_non_nullable
+as String,leaseEndDate: null == leaseEndDate ? _self.leaseEndDate : leaseEndDate // ignore: cast_nullable_to_non_nullable
+as String,rentAmount: null == rentAmount ? _self.rentAmount : rentAmount // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 
@@ -722,10 +776,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String unitName,  String contact,  String email,  String emergencyContactName,  String emergencyContactPhone,  List<String> memos,  double balance,  String status,  String dateJoined)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String unitName,  String contact,  String email,  String emergencyContactName,  String emergencyContactPhone,  List<String> memos,  double balance,  String status,  String dateJoined,  String propertyName,  String leaseEndDate,  double rentAmount)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Tenant() when $default != null:
-return $default(_that.id,_that.name,_that.unitName,_that.contact,_that.email,_that.emergencyContactName,_that.emergencyContactPhone,_that.memos,_that.balance,_that.status,_that.dateJoined);case _:
+return $default(_that.id,_that.name,_that.unitName,_that.contact,_that.email,_that.emergencyContactName,_that.emergencyContactPhone,_that.memos,_that.balance,_that.status,_that.dateJoined,_that.propertyName,_that.leaseEndDate,_that.rentAmount);case _:
   return orElse();
 
 }
@@ -743,10 +797,10 @@ return $default(_that.id,_that.name,_that.unitName,_that.contact,_that.email,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String unitName,  String contact,  String email,  String emergencyContactName,  String emergencyContactPhone,  List<String> memos,  double balance,  String status,  String dateJoined)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String unitName,  String contact,  String email,  String emergencyContactName,  String emergencyContactPhone,  List<String> memos,  double balance,  String status,  String dateJoined,  String propertyName,  String leaseEndDate,  double rentAmount)  $default,) {final _that = this;
 switch (_that) {
 case _Tenant():
-return $default(_that.id,_that.name,_that.unitName,_that.contact,_that.email,_that.emergencyContactName,_that.emergencyContactPhone,_that.memos,_that.balance,_that.status,_that.dateJoined);case _:
+return $default(_that.id,_that.name,_that.unitName,_that.contact,_that.email,_that.emergencyContactName,_that.emergencyContactPhone,_that.memos,_that.balance,_that.status,_that.dateJoined,_that.propertyName,_that.leaseEndDate,_that.rentAmount);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -763,10 +817,10 @@ return $default(_that.id,_that.name,_that.unitName,_that.contact,_that.email,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String unitName,  String contact,  String email,  String emergencyContactName,  String emergencyContactPhone,  List<String> memos,  double balance,  String status,  String dateJoined)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String unitName,  String contact,  String email,  String emergencyContactName,  String emergencyContactPhone,  List<String> memos,  double balance,  String status,  String dateJoined,  String propertyName,  String leaseEndDate,  double rentAmount)?  $default,) {final _that = this;
 switch (_that) {
 case _Tenant() when $default != null:
-return $default(_that.id,_that.name,_that.unitName,_that.contact,_that.email,_that.emergencyContactName,_that.emergencyContactPhone,_that.memos,_that.balance,_that.status,_that.dateJoined);case _:
+return $default(_that.id,_that.name,_that.unitName,_that.contact,_that.email,_that.emergencyContactName,_that.emergencyContactPhone,_that.memos,_that.balance,_that.status,_that.dateJoined,_that.propertyName,_that.leaseEndDate,_that.rentAmount);case _:
   return null;
 
 }
@@ -778,7 +832,7 @@ return $default(_that.id,_that.name,_that.unitName,_that.contact,_that.email,_th
 
 
 class _Tenant implements Tenant {
-  const _Tenant({required this.id, required this.name, required this.unitName, required this.contact, required this.email, required this.emergencyContactName, required this.emergencyContactPhone, required final  List<String> memos, required this.balance, required this.status, required this.dateJoined}): _memos = memos;
+  const _Tenant({required this.id, required this.name, required this.unitName, required this.contact, required this.email, required this.emergencyContactName, required this.emergencyContactPhone, required final  List<String> memos, required this.balance, required this.status, required this.dateJoined, this.propertyName = '', this.leaseEndDate = '', this.rentAmount = 0.0}): _memos = memos;
   
 
 @override final  String id;
@@ -799,6 +853,10 @@ class _Tenant implements Tenant {
 @override final  String status;
 // 'Active', 'Late Payment'
 @override final  String dateJoined;
+// Extra lease-linked fields
+@override@JsonKey() final  String propertyName;
+@override@JsonKey() final  String leaseEndDate;
+@override@JsonKey() final  double rentAmount;
 
 /// Create a copy of Tenant
 /// with the given fields replaced by the non-null parameter values.
@@ -810,16 +868,16 @@ _$TenantCopyWith<_Tenant> get copyWith => __$TenantCopyWithImpl<_Tenant>(this, _
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Tenant&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.contact, contact) || other.contact == contact)&&(identical(other.email, email) || other.email == email)&&(identical(other.emergencyContactName, emergencyContactName) || other.emergencyContactName == emergencyContactName)&&(identical(other.emergencyContactPhone, emergencyContactPhone) || other.emergencyContactPhone == emergencyContactPhone)&&const DeepCollectionEquality().equals(other._memos, _memos)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.status, status) || other.status == status)&&(identical(other.dateJoined, dateJoined) || other.dateJoined == dateJoined));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Tenant&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.contact, contact) || other.contact == contact)&&(identical(other.email, email) || other.email == email)&&(identical(other.emergencyContactName, emergencyContactName) || other.emergencyContactName == emergencyContactName)&&(identical(other.emergencyContactPhone, emergencyContactPhone) || other.emergencyContactPhone == emergencyContactPhone)&&const DeepCollectionEquality().equals(other._memos, _memos)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.status, status) || other.status == status)&&(identical(other.dateJoined, dateJoined) || other.dateJoined == dateJoined)&&(identical(other.propertyName, propertyName) || other.propertyName == propertyName)&&(identical(other.leaseEndDate, leaseEndDate) || other.leaseEndDate == leaseEndDate)&&(identical(other.rentAmount, rentAmount) || other.rentAmount == rentAmount));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,unitName,contact,email,emergencyContactName,emergencyContactPhone,const DeepCollectionEquality().hash(_memos),balance,status,dateJoined);
+int get hashCode => Object.hash(runtimeType,id,name,unitName,contact,email,emergencyContactName,emergencyContactPhone,const DeepCollectionEquality().hash(_memos),balance,status,dateJoined,propertyName,leaseEndDate,rentAmount);
 
 @override
 String toString() {
-  return 'Tenant(id: $id, name: $name, unitName: $unitName, contact: $contact, email: $email, emergencyContactName: $emergencyContactName, emergencyContactPhone: $emergencyContactPhone, memos: $memos, balance: $balance, status: $status, dateJoined: $dateJoined)';
+  return 'Tenant(id: $id, name: $name, unitName: $unitName, contact: $contact, email: $email, emergencyContactName: $emergencyContactName, emergencyContactPhone: $emergencyContactPhone, memos: $memos, balance: $balance, status: $status, dateJoined: $dateJoined, propertyName: $propertyName, leaseEndDate: $leaseEndDate, rentAmount: $rentAmount)';
 }
 
 
@@ -830,7 +888,7 @@ abstract mixin class _$TenantCopyWith<$Res> implements $TenantCopyWith<$Res> {
   factory _$TenantCopyWith(_Tenant value, $Res Function(_Tenant) _then) = __$TenantCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String unitName, String contact, String email, String emergencyContactName, String emergencyContactPhone, List<String> memos, double balance, String status, String dateJoined
+ String id, String name, String unitName, String contact, String email, String emergencyContactName, String emergencyContactPhone, List<String> memos, double balance, String status, String dateJoined, String propertyName, String leaseEndDate, double rentAmount
 });
 
 
@@ -847,7 +905,7 @@ class __$TenantCopyWithImpl<$Res>
 
 /// Create a copy of Tenant
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? unitName = null,Object? contact = null,Object? email = null,Object? emergencyContactName = null,Object? emergencyContactPhone = null,Object? memos = null,Object? balance = null,Object? status = null,Object? dateJoined = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? unitName = null,Object? contact = null,Object? email = null,Object? emergencyContactName = null,Object? emergencyContactPhone = null,Object? memos = null,Object? balance = null,Object? status = null,Object? dateJoined = null,Object? propertyName = null,Object? leaseEndDate = null,Object? rentAmount = null,}) {
   return _then(_Tenant(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -860,7 +918,10 @@ as String,memos: null == memos ? _self._memos : memos // ignore: cast_nullable_t
 as List<String>,balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
 as double,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,dateJoined: null == dateJoined ? _self.dateJoined : dateJoined // ignore: cast_nullable_to_non_nullable
-as String,
+as String,propertyName: null == propertyName ? _self.propertyName : propertyName // ignore: cast_nullable_to_non_nullable
+as String,leaseEndDate: null == leaseEndDate ? _self.leaseEndDate : leaseEndDate // ignore: cast_nullable_to_non_nullable
+as String,rentAmount: null == rentAmount ? _self.rentAmount : rentAmount // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 
@@ -1729,9 +1790,573 @@ as String,
 }
 
 /// @nodoc
+mixin _$Lease {
+
+ String get id; String get unitName; String get tenantName; String get propertyName; double get rentAmount; String get startDate; String get endDate; String get status;// 'active', 'expired', 'pending'
+ int get daysLeft;
+/// Create a copy of Lease
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LeaseCopyWith<Lease> get copyWith => _$LeaseCopyWithImpl<Lease>(this as Lease, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Lease&&(identical(other.id, id) || other.id == id)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.propertyName, propertyName) || other.propertyName == propertyName)&&(identical(other.rentAmount, rentAmount) || other.rentAmount == rentAmount)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.status, status) || other.status == status)&&(identical(other.daysLeft, daysLeft) || other.daysLeft == daysLeft));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,unitName,tenantName,propertyName,rentAmount,startDate,endDate,status,daysLeft);
+
+@override
+String toString() {
+  return 'Lease(id: $id, unitName: $unitName, tenantName: $tenantName, propertyName: $propertyName, rentAmount: $rentAmount, startDate: $startDate, endDate: $endDate, status: $status, daysLeft: $daysLeft)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LeaseCopyWith<$Res>  {
+  factory $LeaseCopyWith(Lease value, $Res Function(Lease) _then) = _$LeaseCopyWithImpl;
+@useResult
+$Res call({
+ String id, String unitName, String tenantName, String propertyName, double rentAmount, String startDate, String endDate, String status, int daysLeft
+});
+
+
+
+
+}
+/// @nodoc
+class _$LeaseCopyWithImpl<$Res>
+    implements $LeaseCopyWith<$Res> {
+  _$LeaseCopyWithImpl(this._self, this._then);
+
+  final Lease _self;
+  final $Res Function(Lease) _then;
+
+/// Create a copy of Lease
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? unitName = null,Object? tenantName = null,Object? propertyName = null,Object? rentAmount = null,Object? startDate = null,Object? endDate = null,Object? status = null,Object? daysLeft = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,unitName: null == unitName ? _self.unitName : unitName // ignore: cast_nullable_to_non_nullable
+as String,tenantName: null == tenantName ? _self.tenantName : tenantName // ignore: cast_nullable_to_non_nullable
+as String,propertyName: null == propertyName ? _self.propertyName : propertyName // ignore: cast_nullable_to_non_nullable
+as String,rentAmount: null == rentAmount ? _self.rentAmount : rentAmount // ignore: cast_nullable_to_non_nullable
+as double,startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
+as String,endDate: null == endDate ? _self.endDate : endDate // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,daysLeft: null == daysLeft ? _self.daysLeft : daysLeft // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [Lease].
+extension LeasePatterns on Lease {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _Lease value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _Lease() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _Lease value)  $default,){
+final _that = this;
+switch (_that) {
+case _Lease():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _Lease value)?  $default,){
+final _that = this;
+switch (_that) {
+case _Lease() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String unitName,  String tenantName,  String propertyName,  double rentAmount,  String startDate,  String endDate,  String status,  int daysLeft)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _Lease() when $default != null:
+return $default(_that.id,_that.unitName,_that.tenantName,_that.propertyName,_that.rentAmount,_that.startDate,_that.endDate,_that.status,_that.daysLeft);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String unitName,  String tenantName,  String propertyName,  double rentAmount,  String startDate,  String endDate,  String status,  int daysLeft)  $default,) {final _that = this;
+switch (_that) {
+case _Lease():
+return $default(_that.id,_that.unitName,_that.tenantName,_that.propertyName,_that.rentAmount,_that.startDate,_that.endDate,_that.status,_that.daysLeft);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String unitName,  String tenantName,  String propertyName,  double rentAmount,  String startDate,  String endDate,  String status,  int daysLeft)?  $default,) {final _that = this;
+switch (_that) {
+case _Lease() when $default != null:
+return $default(_that.id,_that.unitName,_that.tenantName,_that.propertyName,_that.rentAmount,_that.startDate,_that.endDate,_that.status,_that.daysLeft);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _Lease implements Lease {
+  const _Lease({required this.id, required this.unitName, required this.tenantName, required this.propertyName, required this.rentAmount, required this.startDate, required this.endDate, required this.status, this.daysLeft = 0});
+  
+
+@override final  String id;
+@override final  String unitName;
+@override final  String tenantName;
+@override final  String propertyName;
+@override final  double rentAmount;
+@override final  String startDate;
+@override final  String endDate;
+@override final  String status;
+// 'active', 'expired', 'pending'
+@override@JsonKey() final  int daysLeft;
+
+/// Create a copy of Lease
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LeaseCopyWith<_Lease> get copyWith => __$LeaseCopyWithImpl<_Lease>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Lease&&(identical(other.id, id) || other.id == id)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.propertyName, propertyName) || other.propertyName == propertyName)&&(identical(other.rentAmount, rentAmount) || other.rentAmount == rentAmount)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.status, status) || other.status == status)&&(identical(other.daysLeft, daysLeft) || other.daysLeft == daysLeft));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,unitName,tenantName,propertyName,rentAmount,startDate,endDate,status,daysLeft);
+
+@override
+String toString() {
+  return 'Lease(id: $id, unitName: $unitName, tenantName: $tenantName, propertyName: $propertyName, rentAmount: $rentAmount, startDate: $startDate, endDate: $endDate, status: $status, daysLeft: $daysLeft)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LeaseCopyWith<$Res> implements $LeaseCopyWith<$Res> {
+  factory _$LeaseCopyWith(_Lease value, $Res Function(_Lease) _then) = __$LeaseCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String unitName, String tenantName, String propertyName, double rentAmount, String startDate, String endDate, String status, int daysLeft
+});
+
+
+
+
+}
+/// @nodoc
+class __$LeaseCopyWithImpl<$Res>
+    implements _$LeaseCopyWith<$Res> {
+  __$LeaseCopyWithImpl(this._self, this._then);
+
+  final _Lease _self;
+  final $Res Function(_Lease) _then;
+
+/// Create a copy of Lease
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? unitName = null,Object? tenantName = null,Object? propertyName = null,Object? rentAmount = null,Object? startDate = null,Object? endDate = null,Object? status = null,Object? daysLeft = null,}) {
+  return _then(_Lease(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,unitName: null == unitName ? _self.unitName : unitName // ignore: cast_nullable_to_non_nullable
+as String,tenantName: null == tenantName ? _self.tenantName : tenantName // ignore: cast_nullable_to_non_nullable
+as String,propertyName: null == propertyName ? _self.propertyName : propertyName // ignore: cast_nullable_to_non_nullable
+as String,rentAmount: null == rentAmount ? _self.rentAmount : rentAmount // ignore: cast_nullable_to_non_nullable
+as double,startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
+as String,endDate: null == endDate ? _self.endDate : endDate // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,daysLeft: null == daysLeft ? _self.daysLeft : daysLeft // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$UrgentAlert {
+
+ String get id; String get title; String get description; String get type;// 'maintenance' | 'lease'
+ String? get priority;
+/// Create a copy of UrgentAlert
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$UrgentAlertCopyWith<UrgentAlert> get copyWith => _$UrgentAlertCopyWithImpl<UrgentAlert>(this as UrgentAlert, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UrgentAlert&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.type, type) || other.type == type)&&(identical(other.priority, priority) || other.priority == priority));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,title,description,type,priority);
+
+@override
+String toString() {
+  return 'UrgentAlert(id: $id, title: $title, description: $description, type: $type, priority: $priority)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $UrgentAlertCopyWith<$Res>  {
+  factory $UrgentAlertCopyWith(UrgentAlert value, $Res Function(UrgentAlert) _then) = _$UrgentAlertCopyWithImpl;
+@useResult
+$Res call({
+ String id, String title, String description, String type, String? priority
+});
+
+
+
+
+}
+/// @nodoc
+class _$UrgentAlertCopyWithImpl<$Res>
+    implements $UrgentAlertCopyWith<$Res> {
+  _$UrgentAlertCopyWithImpl(this._self, this._then);
+
+  final UrgentAlert _self;
+  final $Res Function(UrgentAlert) _then;
+
+/// Create a copy of UrgentAlert
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? description = null,Object? type = null,Object? priority = freezed,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as String,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [UrgentAlert].
+extension UrgentAlertPatterns on UrgentAlert {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _UrgentAlert value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _UrgentAlert() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _UrgentAlert value)  $default,){
+final _that = this;
+switch (_that) {
+case _UrgentAlert():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _UrgentAlert value)?  $default,){
+final _that = this;
+switch (_that) {
+case _UrgentAlert() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String description,  String type,  String? priority)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _UrgentAlert() when $default != null:
+return $default(_that.id,_that.title,_that.description,_that.type,_that.priority);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String description,  String type,  String? priority)  $default,) {final _that = this;
+switch (_that) {
+case _UrgentAlert():
+return $default(_that.id,_that.title,_that.description,_that.type,_that.priority);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String description,  String type,  String? priority)?  $default,) {final _that = this;
+switch (_that) {
+case _UrgentAlert() when $default != null:
+return $default(_that.id,_that.title,_that.description,_that.type,_that.priority);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _UrgentAlert implements UrgentAlert {
+  const _UrgentAlert({required this.id, required this.title, required this.description, required this.type, this.priority});
+  
+
+@override final  String id;
+@override final  String title;
+@override final  String description;
+@override final  String type;
+// 'maintenance' | 'lease'
+@override final  String? priority;
+
+/// Create a copy of UrgentAlert
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$UrgentAlertCopyWith<_UrgentAlert> get copyWith => __$UrgentAlertCopyWithImpl<_UrgentAlert>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UrgentAlert&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.type, type) || other.type == type)&&(identical(other.priority, priority) || other.priority == priority));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,title,description,type,priority);
+
+@override
+String toString() {
+  return 'UrgentAlert(id: $id, title: $title, description: $description, type: $type, priority: $priority)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$UrgentAlertCopyWith<$Res> implements $UrgentAlertCopyWith<$Res> {
+  factory _$UrgentAlertCopyWith(_UrgentAlert value, $Res Function(_UrgentAlert) _then) = __$UrgentAlertCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String title, String description, String type, String? priority
+});
+
+
+
+
+}
+/// @nodoc
+class __$UrgentAlertCopyWithImpl<$Res>
+    implements _$UrgentAlertCopyWith<$Res> {
+  __$UrgentAlertCopyWithImpl(this._self, this._then);
+
+  final _UrgentAlert _self;
+  final $Res Function(_UrgentAlert) _then;
+
+/// Create a copy of UrgentAlert
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? description = null,Object? type = null,Object? priority = freezed,}) {
+  return _then(_UrgentAlert(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as String,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$LandlordState {
 
- List<Property> get properties; List<Unit> get units; List<Tenant> get tenants; List<WorkOrder> get workOrders; List<Bid> get bids; List<ChatMessage> get chatMessages; double get totalCollected; double get totalOutstanding; double get occupancyRate; bool get isLoading;
+// ── Profile ────────────────────────────────────────────────
+ String get userName; String get userAvatarUrl;// ── Core Lists ─────────────────────────────────────────────
+ List<Property> get properties; List<Unit> get units; List<Tenant> get tenants; List<WorkOrder> get workOrders; List<Bid> get bids; List<ChatMessage> get chatMessages; List<Lease> get leases;// ── Finance ────────────────────────────────────────────────
+ double get totalCollected; double get totalOutstanding; double get occupancyRate; double get rentCollectionPercent;// 0.0 to 1.0
+// ── Maintenance Summary ────────────────────────────────────
+ int get maintenanceEmergency; int get maintenanceInProgress; int get maintenanceCompleted;// ── Lease Summary ─────────────────────────────────────────
+ int get activeLeaseCount; int get expiringLeaseCount;// ── Urgent Alerts (home dashboard) ────────────────────────
+ List<UrgentAlert> get urgentAlerts;// ── Notifications ─────────────────────────────────────────
+ int get unreadNotifications;// ── Loading ────────────────────────────────────────────────
+ bool get isLoading; bool get isTenantsLoading; bool get isLeasesLoading; bool get isUnitsLoading; bool get isBidsLoading;// ── Error ──────────────────────────────────────────────────
+ String get errorMessage;
 /// Create a copy of LandlordState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1742,16 +2367,16 @@ $LandlordStateCopyWith<LandlordState> get copyWith => _$LandlordStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LandlordState&&const DeepCollectionEquality().equals(other.properties, properties)&&const DeepCollectionEquality().equals(other.units, units)&&const DeepCollectionEquality().equals(other.tenants, tenants)&&const DeepCollectionEquality().equals(other.workOrders, workOrders)&&const DeepCollectionEquality().equals(other.bids, bids)&&const DeepCollectionEquality().equals(other.chatMessages, chatMessages)&&(identical(other.totalCollected, totalCollected) || other.totalCollected == totalCollected)&&(identical(other.totalOutstanding, totalOutstanding) || other.totalOutstanding == totalOutstanding)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LandlordState&&(identical(other.userName, userName) || other.userName == userName)&&(identical(other.userAvatarUrl, userAvatarUrl) || other.userAvatarUrl == userAvatarUrl)&&const DeepCollectionEquality().equals(other.properties, properties)&&const DeepCollectionEquality().equals(other.units, units)&&const DeepCollectionEquality().equals(other.tenants, tenants)&&const DeepCollectionEquality().equals(other.workOrders, workOrders)&&const DeepCollectionEquality().equals(other.bids, bids)&&const DeepCollectionEquality().equals(other.chatMessages, chatMessages)&&const DeepCollectionEquality().equals(other.leases, leases)&&(identical(other.totalCollected, totalCollected) || other.totalCollected == totalCollected)&&(identical(other.totalOutstanding, totalOutstanding) || other.totalOutstanding == totalOutstanding)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.rentCollectionPercent, rentCollectionPercent) || other.rentCollectionPercent == rentCollectionPercent)&&(identical(other.maintenanceEmergency, maintenanceEmergency) || other.maintenanceEmergency == maintenanceEmergency)&&(identical(other.maintenanceInProgress, maintenanceInProgress) || other.maintenanceInProgress == maintenanceInProgress)&&(identical(other.maintenanceCompleted, maintenanceCompleted) || other.maintenanceCompleted == maintenanceCompleted)&&(identical(other.activeLeaseCount, activeLeaseCount) || other.activeLeaseCount == activeLeaseCount)&&(identical(other.expiringLeaseCount, expiringLeaseCount) || other.expiringLeaseCount == expiringLeaseCount)&&const DeepCollectionEquality().equals(other.urgentAlerts, urgentAlerts)&&(identical(other.unreadNotifications, unreadNotifications) || other.unreadNotifications == unreadNotifications)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isTenantsLoading, isTenantsLoading) || other.isTenantsLoading == isTenantsLoading)&&(identical(other.isLeasesLoading, isLeasesLoading) || other.isLeasesLoading == isLeasesLoading)&&(identical(other.isUnitsLoading, isUnitsLoading) || other.isUnitsLoading == isUnitsLoading)&&(identical(other.isBidsLoading, isBidsLoading) || other.isBidsLoading == isBidsLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(properties),const DeepCollectionEquality().hash(units),const DeepCollectionEquality().hash(tenants),const DeepCollectionEquality().hash(workOrders),const DeepCollectionEquality().hash(bids),const DeepCollectionEquality().hash(chatMessages),totalCollected,totalOutstanding,occupancyRate,isLoading);
+int get hashCode => Object.hashAll([runtimeType,userName,userAvatarUrl,const DeepCollectionEquality().hash(properties),const DeepCollectionEquality().hash(units),const DeepCollectionEquality().hash(tenants),const DeepCollectionEquality().hash(workOrders),const DeepCollectionEquality().hash(bids),const DeepCollectionEquality().hash(chatMessages),const DeepCollectionEquality().hash(leases),totalCollected,totalOutstanding,occupancyRate,rentCollectionPercent,maintenanceEmergency,maintenanceInProgress,maintenanceCompleted,activeLeaseCount,expiringLeaseCount,const DeepCollectionEquality().hash(urgentAlerts),unreadNotifications,isLoading,isTenantsLoading,isLeasesLoading,isUnitsLoading,isBidsLoading,errorMessage]);
 
 @override
 String toString() {
-  return 'LandlordState(properties: $properties, units: $units, tenants: $tenants, workOrders: $workOrders, bids: $bids, chatMessages: $chatMessages, totalCollected: $totalCollected, totalOutstanding: $totalOutstanding, occupancyRate: $occupancyRate, isLoading: $isLoading)';
+  return 'LandlordState(userName: $userName, userAvatarUrl: $userAvatarUrl, properties: $properties, units: $units, tenants: $tenants, workOrders: $workOrders, bids: $bids, chatMessages: $chatMessages, leases: $leases, totalCollected: $totalCollected, totalOutstanding: $totalOutstanding, occupancyRate: $occupancyRate, rentCollectionPercent: $rentCollectionPercent, maintenanceEmergency: $maintenanceEmergency, maintenanceInProgress: $maintenanceInProgress, maintenanceCompleted: $maintenanceCompleted, activeLeaseCount: $activeLeaseCount, expiringLeaseCount: $expiringLeaseCount, urgentAlerts: $urgentAlerts, unreadNotifications: $unreadNotifications, isLoading: $isLoading, isTenantsLoading: $isTenantsLoading, isLeasesLoading: $isLeasesLoading, isUnitsLoading: $isUnitsLoading, isBidsLoading: $isBidsLoading, errorMessage: $errorMessage)';
 }
 
 
@@ -1762,7 +2387,7 @@ abstract mixin class $LandlordStateCopyWith<$Res>  {
   factory $LandlordStateCopyWith(LandlordState value, $Res Function(LandlordState) _then) = _$LandlordStateCopyWithImpl;
 @useResult
 $Res call({
- List<Property> properties, List<Unit> units, List<Tenant> tenants, List<WorkOrder> workOrders, List<Bid> bids, List<ChatMessage> chatMessages, double totalCollected, double totalOutstanding, double occupancyRate, bool isLoading
+ String userName, String userAvatarUrl, List<Property> properties, List<Unit> units, List<Tenant> tenants, List<WorkOrder> workOrders, List<Bid> bids, List<ChatMessage> chatMessages, List<Lease> leases, double totalCollected, double totalOutstanding, double occupancyRate, double rentCollectionPercent, int maintenanceEmergency, int maintenanceInProgress, int maintenanceCompleted, int activeLeaseCount, int expiringLeaseCount, List<UrgentAlert> urgentAlerts, int unreadNotifications, bool isLoading, bool isTenantsLoading, bool isLeasesLoading, bool isUnitsLoading, bool isBidsLoading, String errorMessage
 });
 
 
@@ -1779,19 +2404,35 @@ class _$LandlordStateCopyWithImpl<$Res>
 
 /// Create a copy of LandlordState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? properties = null,Object? units = null,Object? tenants = null,Object? workOrders = null,Object? bids = null,Object? chatMessages = null,Object? totalCollected = null,Object? totalOutstanding = null,Object? occupancyRate = null,Object? isLoading = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? userName = null,Object? userAvatarUrl = null,Object? properties = null,Object? units = null,Object? tenants = null,Object? workOrders = null,Object? bids = null,Object? chatMessages = null,Object? leases = null,Object? totalCollected = null,Object? totalOutstanding = null,Object? occupancyRate = null,Object? rentCollectionPercent = null,Object? maintenanceEmergency = null,Object? maintenanceInProgress = null,Object? maintenanceCompleted = null,Object? activeLeaseCount = null,Object? expiringLeaseCount = null,Object? urgentAlerts = null,Object? unreadNotifications = null,Object? isLoading = null,Object? isTenantsLoading = null,Object? isLeasesLoading = null,Object? isUnitsLoading = null,Object? isBidsLoading = null,Object? errorMessage = null,}) {
   return _then(_self.copyWith(
-properties: null == properties ? _self.properties : properties // ignore: cast_nullable_to_non_nullable
+userName: null == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
+as String,userAvatarUrl: null == userAvatarUrl ? _self.userAvatarUrl : userAvatarUrl // ignore: cast_nullable_to_non_nullable
+as String,properties: null == properties ? _self.properties : properties // ignore: cast_nullable_to_non_nullable
 as List<Property>,units: null == units ? _self.units : units // ignore: cast_nullable_to_non_nullable
 as List<Unit>,tenants: null == tenants ? _self.tenants : tenants // ignore: cast_nullable_to_non_nullable
 as List<Tenant>,workOrders: null == workOrders ? _self.workOrders : workOrders // ignore: cast_nullable_to_non_nullable
 as List<WorkOrder>,bids: null == bids ? _self.bids : bids // ignore: cast_nullable_to_non_nullable
 as List<Bid>,chatMessages: null == chatMessages ? _self.chatMessages : chatMessages // ignore: cast_nullable_to_non_nullable
-as List<ChatMessage>,totalCollected: null == totalCollected ? _self.totalCollected : totalCollected // ignore: cast_nullable_to_non_nullable
+as List<ChatMessage>,leases: null == leases ? _self.leases : leases // ignore: cast_nullable_to_non_nullable
+as List<Lease>,totalCollected: null == totalCollected ? _self.totalCollected : totalCollected // ignore: cast_nullable_to_non_nullable
 as double,totalOutstanding: null == totalOutstanding ? _self.totalOutstanding : totalOutstanding // ignore: cast_nullable_to_non_nullable
 as double,occupancyRate: null == occupancyRate ? _self.occupancyRate : occupancyRate // ignore: cast_nullable_to_non_nullable
-as double,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
-as bool,
+as double,rentCollectionPercent: null == rentCollectionPercent ? _self.rentCollectionPercent : rentCollectionPercent // ignore: cast_nullable_to_non_nullable
+as double,maintenanceEmergency: null == maintenanceEmergency ? _self.maintenanceEmergency : maintenanceEmergency // ignore: cast_nullable_to_non_nullable
+as int,maintenanceInProgress: null == maintenanceInProgress ? _self.maintenanceInProgress : maintenanceInProgress // ignore: cast_nullable_to_non_nullable
+as int,maintenanceCompleted: null == maintenanceCompleted ? _self.maintenanceCompleted : maintenanceCompleted // ignore: cast_nullable_to_non_nullable
+as int,activeLeaseCount: null == activeLeaseCount ? _self.activeLeaseCount : activeLeaseCount // ignore: cast_nullable_to_non_nullable
+as int,expiringLeaseCount: null == expiringLeaseCount ? _self.expiringLeaseCount : expiringLeaseCount // ignore: cast_nullable_to_non_nullable
+as int,urgentAlerts: null == urgentAlerts ? _self.urgentAlerts : urgentAlerts // ignore: cast_nullable_to_non_nullable
+as List<UrgentAlert>,unreadNotifications: null == unreadNotifications ? _self.unreadNotifications : unreadNotifications // ignore: cast_nullable_to_non_nullable
+as int,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,isTenantsLoading: null == isTenantsLoading ? _self.isTenantsLoading : isTenantsLoading // ignore: cast_nullable_to_non_nullable
+as bool,isLeasesLoading: null == isLeasesLoading ? _self.isLeasesLoading : isLeasesLoading // ignore: cast_nullable_to_non_nullable
+as bool,isUnitsLoading: null == isUnitsLoading ? _self.isUnitsLoading : isUnitsLoading // ignore: cast_nullable_to_non_nullable
+as bool,isBidsLoading: null == isBidsLoading ? _self.isBidsLoading : isBidsLoading // ignore: cast_nullable_to_non_nullable
+as bool,errorMessage: null == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
@@ -1876,10 +2517,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Property> properties,  List<Unit> units,  List<Tenant> tenants,  List<WorkOrder> workOrders,  List<Bid> bids,  List<ChatMessage> chatMessages,  double totalCollected,  double totalOutstanding,  double occupancyRate,  bool isLoading)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userName,  String userAvatarUrl,  List<Property> properties,  List<Unit> units,  List<Tenant> tenants,  List<WorkOrder> workOrders,  List<Bid> bids,  List<ChatMessage> chatMessages,  List<Lease> leases,  double totalCollected,  double totalOutstanding,  double occupancyRate,  double rentCollectionPercent,  int maintenanceEmergency,  int maintenanceInProgress,  int maintenanceCompleted,  int activeLeaseCount,  int expiringLeaseCount,  List<UrgentAlert> urgentAlerts,  int unreadNotifications,  bool isLoading,  bool isTenantsLoading,  bool isLeasesLoading,  bool isUnitsLoading,  bool isBidsLoading,  String errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LandlordState() when $default != null:
-return $default(_that.properties,_that.units,_that.tenants,_that.workOrders,_that.bids,_that.chatMessages,_that.totalCollected,_that.totalOutstanding,_that.occupancyRate,_that.isLoading);case _:
+return $default(_that.userName,_that.userAvatarUrl,_that.properties,_that.units,_that.tenants,_that.workOrders,_that.bids,_that.chatMessages,_that.leases,_that.totalCollected,_that.totalOutstanding,_that.occupancyRate,_that.rentCollectionPercent,_that.maintenanceEmergency,_that.maintenanceInProgress,_that.maintenanceCompleted,_that.activeLeaseCount,_that.expiringLeaseCount,_that.urgentAlerts,_that.unreadNotifications,_that.isLoading,_that.isTenantsLoading,_that.isLeasesLoading,_that.isUnitsLoading,_that.isBidsLoading,_that.errorMessage);case _:
   return orElse();
 
 }
@@ -1897,10 +2538,10 @@ return $default(_that.properties,_that.units,_that.tenants,_that.workOrders,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Property> properties,  List<Unit> units,  List<Tenant> tenants,  List<WorkOrder> workOrders,  List<Bid> bids,  List<ChatMessage> chatMessages,  double totalCollected,  double totalOutstanding,  double occupancyRate,  bool isLoading)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userName,  String userAvatarUrl,  List<Property> properties,  List<Unit> units,  List<Tenant> tenants,  List<WorkOrder> workOrders,  List<Bid> bids,  List<ChatMessage> chatMessages,  List<Lease> leases,  double totalCollected,  double totalOutstanding,  double occupancyRate,  double rentCollectionPercent,  int maintenanceEmergency,  int maintenanceInProgress,  int maintenanceCompleted,  int activeLeaseCount,  int expiringLeaseCount,  List<UrgentAlert> urgentAlerts,  int unreadNotifications,  bool isLoading,  bool isTenantsLoading,  bool isLeasesLoading,  bool isUnitsLoading,  bool isBidsLoading,  String errorMessage)  $default,) {final _that = this;
 switch (_that) {
 case _LandlordState():
-return $default(_that.properties,_that.units,_that.tenants,_that.workOrders,_that.bids,_that.chatMessages,_that.totalCollected,_that.totalOutstanding,_that.occupancyRate,_that.isLoading);case _:
+return $default(_that.userName,_that.userAvatarUrl,_that.properties,_that.units,_that.tenants,_that.workOrders,_that.bids,_that.chatMessages,_that.leases,_that.totalCollected,_that.totalOutstanding,_that.occupancyRate,_that.rentCollectionPercent,_that.maintenanceEmergency,_that.maintenanceInProgress,_that.maintenanceCompleted,_that.activeLeaseCount,_that.expiringLeaseCount,_that.urgentAlerts,_that.unreadNotifications,_that.isLoading,_that.isTenantsLoading,_that.isLeasesLoading,_that.isUnitsLoading,_that.isBidsLoading,_that.errorMessage);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1917,10 +2558,10 @@ return $default(_that.properties,_that.units,_that.tenants,_that.workOrders,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Property> properties,  List<Unit> units,  List<Tenant> tenants,  List<WorkOrder> workOrders,  List<Bid> bids,  List<ChatMessage> chatMessages,  double totalCollected,  double totalOutstanding,  double occupancyRate,  bool isLoading)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userName,  String userAvatarUrl,  List<Property> properties,  List<Unit> units,  List<Tenant> tenants,  List<WorkOrder> workOrders,  List<Bid> bids,  List<ChatMessage> chatMessages,  List<Lease> leases,  double totalCollected,  double totalOutstanding,  double occupancyRate,  double rentCollectionPercent,  int maintenanceEmergency,  int maintenanceInProgress,  int maintenanceCompleted,  int activeLeaseCount,  int expiringLeaseCount,  List<UrgentAlert> urgentAlerts,  int unreadNotifications,  bool isLoading,  bool isTenantsLoading,  bool isLeasesLoading,  bool isUnitsLoading,  bool isBidsLoading,  String errorMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _LandlordState() when $default != null:
-return $default(_that.properties,_that.units,_that.tenants,_that.workOrders,_that.bids,_that.chatMessages,_that.totalCollected,_that.totalOutstanding,_that.occupancyRate,_that.isLoading);case _:
+return $default(_that.userName,_that.userAvatarUrl,_that.properties,_that.units,_that.tenants,_that.workOrders,_that.bids,_that.chatMessages,_that.leases,_that.totalCollected,_that.totalOutstanding,_that.occupancyRate,_that.rentCollectionPercent,_that.maintenanceEmergency,_that.maintenanceInProgress,_that.maintenanceCompleted,_that.activeLeaseCount,_that.expiringLeaseCount,_that.urgentAlerts,_that.unreadNotifications,_that.isLoading,_that.isTenantsLoading,_that.isLeasesLoading,_that.isUnitsLoading,_that.isBidsLoading,_that.errorMessage);case _:
   return null;
 
 }
@@ -1932,10 +2573,15 @@ return $default(_that.properties,_that.units,_that.tenants,_that.workOrders,_tha
 
 
 class _LandlordState implements LandlordState {
-  const _LandlordState({final  List<Property> properties = const [], final  List<Unit> units = const [], final  List<Tenant> tenants = const [], final  List<WorkOrder> workOrders = const [], final  List<Bid> bids = const [], final  List<ChatMessage> chatMessages = const [], this.totalCollected = 24500.0, this.totalOutstanding = 3200.0, this.occupancyRate = 0.94, this.isLoading = false}): _properties = properties,_units = units,_tenants = tenants,_workOrders = workOrders,_bids = bids,_chatMessages = chatMessages;
+  const _LandlordState({this.userName = '', this.userAvatarUrl = '', final  List<Property> properties = const [], final  List<Unit> units = const [], final  List<Tenant> tenants = const [], final  List<WorkOrder> workOrders = const [], final  List<Bid> bids = const [], final  List<ChatMessage> chatMessages = const [], final  List<Lease> leases = const [], this.totalCollected = 0.0, this.totalOutstanding = 0.0, this.occupancyRate = 0.0, this.rentCollectionPercent = 0.0, this.maintenanceEmergency = 0, this.maintenanceInProgress = 0, this.maintenanceCompleted = 0, this.activeLeaseCount = 0, this.expiringLeaseCount = 0, final  List<UrgentAlert> urgentAlerts = const [], this.unreadNotifications = 0, this.isLoading = false, this.isTenantsLoading = false, this.isLeasesLoading = false, this.isUnitsLoading = false, this.isBidsLoading = false, this.errorMessage = ''}): _properties = properties,_units = units,_tenants = tenants,_workOrders = workOrders,_bids = bids,_chatMessages = chatMessages,_leases = leases,_urgentAlerts = urgentAlerts;
   
 
+// ── Profile ────────────────────────────────────────────────
+@override@JsonKey() final  String userName;
+@override@JsonKey() final  String userAvatarUrl;
+// ── Core Lists ─────────────────────────────────────────────
  final  List<Property> _properties;
+// ── Core Lists ─────────────────────────────────────────────
 @override@JsonKey() List<Property> get properties {
   if (_properties is EqualUnmodifiableListView) return _properties;
   // ignore: implicit_dynamic_type
@@ -1977,10 +2623,45 @@ class _LandlordState implements LandlordState {
   return EqualUnmodifiableListView(_chatMessages);
 }
 
+ final  List<Lease> _leases;
+@override@JsonKey() List<Lease> get leases {
+  if (_leases is EqualUnmodifiableListView) return _leases;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_leases);
+}
+
+// ── Finance ────────────────────────────────────────────────
 @override@JsonKey() final  double totalCollected;
 @override@JsonKey() final  double totalOutstanding;
 @override@JsonKey() final  double occupancyRate;
+@override@JsonKey() final  double rentCollectionPercent;
+// 0.0 to 1.0
+// ── Maintenance Summary ────────────────────────────────────
+@override@JsonKey() final  int maintenanceEmergency;
+@override@JsonKey() final  int maintenanceInProgress;
+@override@JsonKey() final  int maintenanceCompleted;
+// ── Lease Summary ─────────────────────────────────────────
+@override@JsonKey() final  int activeLeaseCount;
+@override@JsonKey() final  int expiringLeaseCount;
+// ── Urgent Alerts (home dashboard) ────────────────────────
+ final  List<UrgentAlert> _urgentAlerts;
+// ── Urgent Alerts (home dashboard) ────────────────────────
+@override@JsonKey() List<UrgentAlert> get urgentAlerts {
+  if (_urgentAlerts is EqualUnmodifiableListView) return _urgentAlerts;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_urgentAlerts);
+}
+
+// ── Notifications ─────────────────────────────────────────
+@override@JsonKey() final  int unreadNotifications;
+// ── Loading ────────────────────────────────────────────────
 @override@JsonKey() final  bool isLoading;
+@override@JsonKey() final  bool isTenantsLoading;
+@override@JsonKey() final  bool isLeasesLoading;
+@override@JsonKey() final  bool isUnitsLoading;
+@override@JsonKey() final  bool isBidsLoading;
+// ── Error ──────────────────────────────────────────────────
+@override@JsonKey() final  String errorMessage;
 
 /// Create a copy of LandlordState
 /// with the given fields replaced by the non-null parameter values.
@@ -1992,16 +2673,16 @@ _$LandlordStateCopyWith<_LandlordState> get copyWith => __$LandlordStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LandlordState&&const DeepCollectionEquality().equals(other._properties, _properties)&&const DeepCollectionEquality().equals(other._units, _units)&&const DeepCollectionEquality().equals(other._tenants, _tenants)&&const DeepCollectionEquality().equals(other._workOrders, _workOrders)&&const DeepCollectionEquality().equals(other._bids, _bids)&&const DeepCollectionEquality().equals(other._chatMessages, _chatMessages)&&(identical(other.totalCollected, totalCollected) || other.totalCollected == totalCollected)&&(identical(other.totalOutstanding, totalOutstanding) || other.totalOutstanding == totalOutstanding)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LandlordState&&(identical(other.userName, userName) || other.userName == userName)&&(identical(other.userAvatarUrl, userAvatarUrl) || other.userAvatarUrl == userAvatarUrl)&&const DeepCollectionEquality().equals(other._properties, _properties)&&const DeepCollectionEquality().equals(other._units, _units)&&const DeepCollectionEquality().equals(other._tenants, _tenants)&&const DeepCollectionEquality().equals(other._workOrders, _workOrders)&&const DeepCollectionEquality().equals(other._bids, _bids)&&const DeepCollectionEquality().equals(other._chatMessages, _chatMessages)&&const DeepCollectionEquality().equals(other._leases, _leases)&&(identical(other.totalCollected, totalCollected) || other.totalCollected == totalCollected)&&(identical(other.totalOutstanding, totalOutstanding) || other.totalOutstanding == totalOutstanding)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.rentCollectionPercent, rentCollectionPercent) || other.rentCollectionPercent == rentCollectionPercent)&&(identical(other.maintenanceEmergency, maintenanceEmergency) || other.maintenanceEmergency == maintenanceEmergency)&&(identical(other.maintenanceInProgress, maintenanceInProgress) || other.maintenanceInProgress == maintenanceInProgress)&&(identical(other.maintenanceCompleted, maintenanceCompleted) || other.maintenanceCompleted == maintenanceCompleted)&&(identical(other.activeLeaseCount, activeLeaseCount) || other.activeLeaseCount == activeLeaseCount)&&(identical(other.expiringLeaseCount, expiringLeaseCount) || other.expiringLeaseCount == expiringLeaseCount)&&const DeepCollectionEquality().equals(other._urgentAlerts, _urgentAlerts)&&(identical(other.unreadNotifications, unreadNotifications) || other.unreadNotifications == unreadNotifications)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isTenantsLoading, isTenantsLoading) || other.isTenantsLoading == isTenantsLoading)&&(identical(other.isLeasesLoading, isLeasesLoading) || other.isLeasesLoading == isLeasesLoading)&&(identical(other.isUnitsLoading, isUnitsLoading) || other.isUnitsLoading == isUnitsLoading)&&(identical(other.isBidsLoading, isBidsLoading) || other.isBidsLoading == isBidsLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_properties),const DeepCollectionEquality().hash(_units),const DeepCollectionEquality().hash(_tenants),const DeepCollectionEquality().hash(_workOrders),const DeepCollectionEquality().hash(_bids),const DeepCollectionEquality().hash(_chatMessages),totalCollected,totalOutstanding,occupancyRate,isLoading);
+int get hashCode => Object.hashAll([runtimeType,userName,userAvatarUrl,const DeepCollectionEquality().hash(_properties),const DeepCollectionEquality().hash(_units),const DeepCollectionEquality().hash(_tenants),const DeepCollectionEquality().hash(_workOrders),const DeepCollectionEquality().hash(_bids),const DeepCollectionEquality().hash(_chatMessages),const DeepCollectionEquality().hash(_leases),totalCollected,totalOutstanding,occupancyRate,rentCollectionPercent,maintenanceEmergency,maintenanceInProgress,maintenanceCompleted,activeLeaseCount,expiringLeaseCount,const DeepCollectionEquality().hash(_urgentAlerts),unreadNotifications,isLoading,isTenantsLoading,isLeasesLoading,isUnitsLoading,isBidsLoading,errorMessage]);
 
 @override
 String toString() {
-  return 'LandlordState(properties: $properties, units: $units, tenants: $tenants, workOrders: $workOrders, bids: $bids, chatMessages: $chatMessages, totalCollected: $totalCollected, totalOutstanding: $totalOutstanding, occupancyRate: $occupancyRate, isLoading: $isLoading)';
+  return 'LandlordState(userName: $userName, userAvatarUrl: $userAvatarUrl, properties: $properties, units: $units, tenants: $tenants, workOrders: $workOrders, bids: $bids, chatMessages: $chatMessages, leases: $leases, totalCollected: $totalCollected, totalOutstanding: $totalOutstanding, occupancyRate: $occupancyRate, rentCollectionPercent: $rentCollectionPercent, maintenanceEmergency: $maintenanceEmergency, maintenanceInProgress: $maintenanceInProgress, maintenanceCompleted: $maintenanceCompleted, activeLeaseCount: $activeLeaseCount, expiringLeaseCount: $expiringLeaseCount, urgentAlerts: $urgentAlerts, unreadNotifications: $unreadNotifications, isLoading: $isLoading, isTenantsLoading: $isTenantsLoading, isLeasesLoading: $isLeasesLoading, isUnitsLoading: $isUnitsLoading, isBidsLoading: $isBidsLoading, errorMessage: $errorMessage)';
 }
 
 
@@ -2012,7 +2693,7 @@ abstract mixin class _$LandlordStateCopyWith<$Res> implements $LandlordStateCopy
   factory _$LandlordStateCopyWith(_LandlordState value, $Res Function(_LandlordState) _then) = __$LandlordStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Property> properties, List<Unit> units, List<Tenant> tenants, List<WorkOrder> workOrders, List<Bid> bids, List<ChatMessage> chatMessages, double totalCollected, double totalOutstanding, double occupancyRate, bool isLoading
+ String userName, String userAvatarUrl, List<Property> properties, List<Unit> units, List<Tenant> tenants, List<WorkOrder> workOrders, List<Bid> bids, List<ChatMessage> chatMessages, List<Lease> leases, double totalCollected, double totalOutstanding, double occupancyRate, double rentCollectionPercent, int maintenanceEmergency, int maintenanceInProgress, int maintenanceCompleted, int activeLeaseCount, int expiringLeaseCount, List<UrgentAlert> urgentAlerts, int unreadNotifications, bool isLoading, bool isTenantsLoading, bool isLeasesLoading, bool isUnitsLoading, bool isBidsLoading, String errorMessage
 });
 
 
@@ -2029,19 +2710,35 @@ class __$LandlordStateCopyWithImpl<$Res>
 
 /// Create a copy of LandlordState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? properties = null,Object? units = null,Object? tenants = null,Object? workOrders = null,Object? bids = null,Object? chatMessages = null,Object? totalCollected = null,Object? totalOutstanding = null,Object? occupancyRate = null,Object? isLoading = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? userName = null,Object? userAvatarUrl = null,Object? properties = null,Object? units = null,Object? tenants = null,Object? workOrders = null,Object? bids = null,Object? chatMessages = null,Object? leases = null,Object? totalCollected = null,Object? totalOutstanding = null,Object? occupancyRate = null,Object? rentCollectionPercent = null,Object? maintenanceEmergency = null,Object? maintenanceInProgress = null,Object? maintenanceCompleted = null,Object? activeLeaseCount = null,Object? expiringLeaseCount = null,Object? urgentAlerts = null,Object? unreadNotifications = null,Object? isLoading = null,Object? isTenantsLoading = null,Object? isLeasesLoading = null,Object? isUnitsLoading = null,Object? isBidsLoading = null,Object? errorMessage = null,}) {
   return _then(_LandlordState(
-properties: null == properties ? _self._properties : properties // ignore: cast_nullable_to_non_nullable
+userName: null == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
+as String,userAvatarUrl: null == userAvatarUrl ? _self.userAvatarUrl : userAvatarUrl // ignore: cast_nullable_to_non_nullable
+as String,properties: null == properties ? _self._properties : properties // ignore: cast_nullable_to_non_nullable
 as List<Property>,units: null == units ? _self._units : units // ignore: cast_nullable_to_non_nullable
 as List<Unit>,tenants: null == tenants ? _self._tenants : tenants // ignore: cast_nullable_to_non_nullable
 as List<Tenant>,workOrders: null == workOrders ? _self._workOrders : workOrders // ignore: cast_nullable_to_non_nullable
 as List<WorkOrder>,bids: null == bids ? _self._bids : bids // ignore: cast_nullable_to_non_nullable
 as List<Bid>,chatMessages: null == chatMessages ? _self._chatMessages : chatMessages // ignore: cast_nullable_to_non_nullable
-as List<ChatMessage>,totalCollected: null == totalCollected ? _self.totalCollected : totalCollected // ignore: cast_nullable_to_non_nullable
+as List<ChatMessage>,leases: null == leases ? _self._leases : leases // ignore: cast_nullable_to_non_nullable
+as List<Lease>,totalCollected: null == totalCollected ? _self.totalCollected : totalCollected // ignore: cast_nullable_to_non_nullable
 as double,totalOutstanding: null == totalOutstanding ? _self.totalOutstanding : totalOutstanding // ignore: cast_nullable_to_non_nullable
 as double,occupancyRate: null == occupancyRate ? _self.occupancyRate : occupancyRate // ignore: cast_nullable_to_non_nullable
-as double,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
-as bool,
+as double,rentCollectionPercent: null == rentCollectionPercent ? _self.rentCollectionPercent : rentCollectionPercent // ignore: cast_nullable_to_non_nullable
+as double,maintenanceEmergency: null == maintenanceEmergency ? _self.maintenanceEmergency : maintenanceEmergency // ignore: cast_nullable_to_non_nullable
+as int,maintenanceInProgress: null == maintenanceInProgress ? _self.maintenanceInProgress : maintenanceInProgress // ignore: cast_nullable_to_non_nullable
+as int,maintenanceCompleted: null == maintenanceCompleted ? _self.maintenanceCompleted : maintenanceCompleted // ignore: cast_nullable_to_non_nullable
+as int,activeLeaseCount: null == activeLeaseCount ? _self.activeLeaseCount : activeLeaseCount // ignore: cast_nullable_to_non_nullable
+as int,expiringLeaseCount: null == expiringLeaseCount ? _self.expiringLeaseCount : expiringLeaseCount // ignore: cast_nullable_to_non_nullable
+as int,urgentAlerts: null == urgentAlerts ? _self._urgentAlerts : urgentAlerts // ignore: cast_nullable_to_non_nullable
+as List<UrgentAlert>,unreadNotifications: null == unreadNotifications ? _self.unreadNotifications : unreadNotifications // ignore: cast_nullable_to_non_nullable
+as int,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,isTenantsLoading: null == isTenantsLoading ? _self.isTenantsLoading : isTenantsLoading // ignore: cast_nullable_to_non_nullable
+as bool,isLeasesLoading: null == isLeasesLoading ? _self.isLeasesLoading : isLeasesLoading // ignore: cast_nullable_to_non_nullable
+as bool,isUnitsLoading: null == isUnitsLoading ? _self.isUnitsLoading : isUnitsLoading // ignore: cast_nullable_to_non_nullable
+as bool,isBidsLoading: null == isBidsLoading ? _self.isBidsLoading : isBidsLoading // ignore: cast_nullable_to_non_nullable
+as bool,errorMessage: null == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 

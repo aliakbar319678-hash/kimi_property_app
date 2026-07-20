@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/payment_maintenance_provider.dart';
+import 'package:tenant_and_landlord_application/provider/tenant_lease_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_bottom_navigation_bar.dart';
 
@@ -11,9 +12,21 @@ class LeaseSummaryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(leaseSummaryProvider);
     final notif = ref.read(leaseSummaryProvider.notifier);
+    final leaseAsync = ref.watch(tenantLeaseProvider);
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
     final pad = w * 0.05;
+
+    final lease = leaseAsync.asData?.value ?? TenantLeaseData.empty();
+    final propertyDisplay = lease.propertyName.isNotEmpty
+        ? '${lease.propertyName}, ${lease.unitName}'
+        : 'Your Property';
+    final endDateDisplay = lease.endDate.isNotEmpty
+        ? _formatDate(lease.endDate)
+        : 'N/A';
+    final depositDisplay = lease.securityDeposit > 0
+        ? '\$${lease.securityDeposit.toStringAsFixed(0)}'
+        : '\$—';
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -38,7 +51,7 @@ class LeaseSummaryScreen extends ConsumerWidget {
                     ),
                     SizedBox(height: h * 0.005),
                     Text(
-                      'Active Agreement • Unit 4B, Riverside Apartments',
+                      'Active Agreement • $propertyDisplay',
                       style: TextStyle(
                         fontSize: w * 0.033,
                         color: AppColors.textSecondary,
@@ -203,7 +216,7 @@ class LeaseSummaryScreen extends ConsumerWidget {
                           ),
                           SizedBox(height: h * 0.008),
                           Text(
-                            '\$1,200',
+                            depositDisplay,
                             style: TextStyle(
                               fontSize: w * 0.08,
                               fontWeight: FontWeight.w700,
@@ -254,7 +267,7 @@ class LeaseSummaryScreen extends ConsumerWidget {
                             ),
                           ),
                           Text(
-                            'Expires Aug 31, 2025',
+                            'Expires $endDateDisplay',
                             style: TextStyle(
                               fontSize: w * 0.032,
                               color: AppColors.textSecondary,
@@ -336,7 +349,7 @@ class LeaseSummaryScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Riverside Apartments, Unit 4B',
+                              propertyDisplay,
                               style: TextStyle(
                                 fontSize: w * 0.042,
                                 fontWeight: FontWeight.w700,
@@ -344,7 +357,9 @@ class LeaseSummaryScreen extends ConsumerWidget {
                               ),
                             ),
                             Text(
-                              'Managed by Propertius Property Group',
+                              lease.propertyName.isNotEmpty
+                                  ? 'Managed by T&L Property Group'
+                                  : 'Managed by Propertius Property Group',
                               style: TextStyle(
                                 fontSize: w * 0.031,
                                 color: AppColors.white.withValues(alpha: 0.8),
@@ -442,6 +457,20 @@ class _UtilityChip extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// ── Helpers ────────────────────────────────────
+String _formatDate(String iso) {
+  try {
+    final d = DateTime.parse(iso);
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[d.month - 1]} ${d.day}, ${d.year}';
+  } catch (_) {
+    return iso;
   }
 }
 

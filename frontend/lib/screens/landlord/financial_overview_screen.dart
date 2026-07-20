@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
@@ -126,25 +126,17 @@ class FinancialOverviewScreen extends ConsumerWidget {
                 children: [
                   _buildProgressBar(
                     'Collected',
-                    '80%',
-                    '\$24,500',
+                    '${(state.rentCollectionPercent * 100).toStringAsFixed(0)}%',
+                    '\$${state.totalCollected.toStringAsFixed(0)}',
                     Colors.green,
                     w,
                   ),
                   const SizedBox(height: 16),
                   _buildProgressBar(
                     'Outstanding',
-                    '12%',
-                    '\$3,200',
+                    '${((1.0 - state.rentCollectionPercent) * 100).toStringAsFixed(0)}%',
+                    '\$${state.totalOutstanding.toStringAsFixed(0)}',
                     AppColors.error,
-                    w,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildProgressBar(
-                    'Late Payments',
-                    '8%',
-                    '\$1,800',
-                    Colors.orange,
                     w,
                   ),
                 ],
@@ -163,83 +155,99 @@ class FinancialOverviewScreen extends ConsumerWidget {
               ),
             ),
             SizedBox(height: h * 0.015),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 2,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
-              itemBuilder: (context, idx) {
-                final name = idx == 0 ? 'John Smith' : 'Sarah Jenkins';
-                final amount = idx == 0 ? '+\$1,200' : 'Late Rent';
-                final date = idx == 0 ? 'May 19, 2026' : 'May 15, 2026';
-                final isLate = idx == 1;
-
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: isLate
-                                  ? AppColors.error.withValues(alpha: 0.1)
-                                  : Colors.green.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              isLate
-                                  ? Icons.warning_amber_rounded
-                                  : Icons.check_rounded,
-                              color: isLate ? AppColors.error : Colors.green,
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                date,
-                                style: const TextStyle(
-                                  color: AppColors.textHint,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      Text(
-                        amount,
+            state.tenants.isEmpty
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'No recent financial activity',
                         style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                          color: isLate ? AppColors.error : Colors.green,
+                          color: AppColors.textHint,
+                          fontSize: 13,
                         ),
                       ),
-                    ],
+                    ),
+                  )
+                : ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: state.tenants.length > 5 ? 5 : state.tenants.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (context, idx) {
+                      final tenant = state.tenants[idx];
+                      final isLate = tenant.status == 'Late Payment';
+                      final name = tenant.name;
+                      final amount = isLate ? 'Late Rent' : '+\$${tenant.rentAmount.toStringAsFixed(0)}';
+                      final date = tenant.dateJoined;
+
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: isLate
+                                        ? AppColors.error.withValues(alpha: 0.1)
+                                        : Colors.green.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    isLate
+                                        ? Icons.warning_amber_rounded
+                                        : Icons.check_rounded,
+                                    color: isLate ? AppColors.error : Colors.green,
+                                    size: 18,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    if (date.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        date,
+                                        style: const TextStyle(
+                                          color: AppColors.textHint,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                            ),
+                            Text(
+                              amount,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                                color: isLate ? AppColors.error : Colors.green,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ],
         ),
       ),

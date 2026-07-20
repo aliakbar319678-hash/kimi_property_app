@@ -1,0 +1,176 @@
+{
+  "missing_tables_in_db": [
+    {
+      "table": "move_inspections",
+      "query": "into move_inspections ...",
+      "file": "src\\routes\\move.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "move_inspections",
+      "query": "from move_inspections ...",
+      "file": "src\\routes\\move.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "vendor_profiles_advanced",
+      "query": "into vendor_profiles_advanced ...",
+      "file": "src\\routes\\vendor_advanced.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "vendor_profiles_advanced",
+      "query": "from vendor_profiles_advanced ...",
+      "file": "src\\routes\\vendor_advanced.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "move_inspections",
+      "query": "update move_inspections ...",
+      "file": "src\\routes\\move.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "move_inspections",
+      "query": "update move_inspections ...",
+      "file": "src\\services\\upload.service.ts",
+      "line": 1
+    }
+  ],
+  "missing_columns_in_db": [
+    {
+      "table": "screening_applications",
+      "column": "employment_status",
+      "query": "INSERT INTO screening_applications (tenant_id, property_id, monthly_income, employment_status, credit_score_mock, background_status_mock, decision) ...",
+      "file": "src\\routes\\screening.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "late_payment_notices",
+      "column": "legal_case_reference",
+      "query": "INSERT INTO late_payment_notices (lease_id, tenant_id, amount_due, late_fee_applied, days_late, notice_status, legal_case_reference, court_hearing_date, legal_documents) ...",
+      "file": "src\\routes\\late.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "late_payment_notices",
+      "column": "court_hearing_date",
+      "query": "INSERT INTO late_payment_notices (lease_id, tenant_id, amount_due, late_fee_applied, days_late, notice_status, legal_case_reference, court_hearing_date, legal_documents) ...",
+      "file": "src\\routes\\late.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "property_marketing",
+      "column": "is_featured",
+      "query": "INSERT INTO property_marketing (property_id, public_description, virtual_tour_url, is_featured, amenities) ...",
+      "file": "src\\routes\\marketing.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "property_marketing",
+      "column": "public_description",
+      "query": "INSERT INTO property_marketing (property_id, public_description, virtual_tour_url, is_featured, amenities) ...",
+      "file": "src\\routes\\marketing.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "late_payment_notices",
+      "column": "notice_status",
+      "query": "INSERT INTO late_payment_notices (lease_id, tenant_id, amount_due, late_fee_applied, days_late, notice_status, legal_case_reference, court_hearing_date, legal_documents) ...",
+      "file": "src\\routes\\late.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "property_marketing",
+      "column": "amenities",
+      "query": "INSERT INTO property_marketing (property_id, public_description, virtual_tour_url, is_featured, amenities) ...",
+      "file": "src\\routes\\marketing.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "showings",
+      "column": "showing_date",
+      "query": "INSERT INTO showings (property_id, tenant_id, showing_date, status, notes) ...",
+      "file": "src\\routes\\marketing.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "screening_applications",
+      "column": "background_status_mock",
+      "query": "INSERT INTO screening_applications (tenant_id, property_id, monthly_income, employment_status, credit_score_mock, background_status_mock, decision) ...",
+      "file": "src\\routes\\screening.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "showings",
+      "column": "tenant_id",
+      "query": "INSERT INTO showings (property_id, tenant_id, showing_date, status, notes) ...",
+      "file": "src\\routes\\marketing.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "screening_applications",
+      "column": "monthly_income",
+      "query": "INSERT INTO screening_applications (tenant_id, property_id, monthly_income, employment_status, credit_score_mock, background_status_mock, decision) ...",
+      "file": "src\\routes\\screening.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "late_payment_notices",
+      "column": "days_late",
+      "query": "INSERT INTO late_payment_notices (lease_id, tenant_id, amount_due, late_fee_applied, days_late, notice_status, legal_case_reference, court_hearing_date, legal_documents) ...",
+      "file": "src\\routes\\late.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "vendor_reviews",
+      "column": "categories",
+      "query": "INSERT INTO vendor_reviews (vendor_id, reviewer_id, rating, comment, categories, work_order_id) ...",
+      "file": "src\\routes\\vendor_advanced.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "late_payment_notices",
+      "column": "amount_due",
+      "query": "INSERT INTO late_payment_notices (lease_id, tenant_id, amount_due, late_fee_applied, days_late, notice_status, legal_case_reference, court_hearing_date, legal_documents) ...",
+      "file": "src\\routes\\late.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "late_payment_notices",
+      "column": "late_fee_applied",
+      "query": "INSERT INTO late_payment_notices (lease_id, tenant_id, amount_due, late_fee_applied, days_late, notice_status, legal_case_reference, court_hearing_date, legal_documents) ...",
+      "file": "src\\routes\\late.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "screening_applications",
+      "column": "tenant_id",
+      "query": "INSERT INTO screening_applications (tenant_id, property_id, monthly_income, employment_status, credit_score_mock, background_status_mock, decision) ...",
+      "file": "src\\routes\\screening.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "late_payment_notices",
+      "column": "legal_documents",
+      "query": "INSERT INTO late_payment_notices (lease_id, tenant_id, amount_due, late_fee_applied, days_late, notice_status, legal_case_reference, court_hearing_date, legal_documents) ...",
+      "file": "src\\routes\\late.routes.ts",
+      "line": 1
+    },
+    {
+      "table": "screening_applications",
+      "column": "credit_score_mock",
+      "query": "INSERT INTO screening_applications (tenant_id, property_id, monthly_income, employment_status, credit_score_mock, background_status_mock, decision) ...",
+      "file": "src\\routes\\screening.routes.ts",
+      "line": 1
+    }
+  ],
+  "unused_tables_in_code": [
+    "scheduled_tasks",
+    "move_in_checklists",
+    "move_out_inspections",
+    "vendor_ratings",
+    "vendor_insurances",
+    "renewal_notices"
+  ]
+}

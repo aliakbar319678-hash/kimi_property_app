@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/payment_maintenance_provider.dart';
+import 'package:tenant_and_landlord_application/provider/tenant_lease_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_bottom_navigation_bar.dart';
 
@@ -10,6 +11,22 @@ class RequestTrackingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(requestTrackingProvider);
+    final workOrdersAsync = ref.watch(tenantWorkOrdersProvider);
+    final workOrders = workOrdersAsync.asData?.value ?? [];
+    final openCount = workOrders.where((wo) {
+      final s = (wo['status'] ?? '').toString().toLowerCase();
+      return s == 'open' || s == 'request' || s == 'assigned' || s == 'in-progress';
+    }).length;
+    final now = DateTime.now();
+    final thisMonthCount = workOrders.where((wo) {
+      final created = wo['created_at']?.toString() ?? '';
+      try {
+        final d = DateTime.parse(created);
+        return d.month == now.month && d.year == now.year;
+      } catch (_) {
+        return false;
+      }
+    }).length;
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
     final pad = w * 0.05;
@@ -252,7 +269,7 @@ class RequestTrackingScreen extends ConsumerWidget {
                                 ),
                               ),
                               Text(
-                                '1',
+                                '$openCount',
                                 style: TextStyle(
                                   fontSize: w * 0.036,
                                   fontWeight: FontWeight.w700,
@@ -273,7 +290,7 @@ class RequestTrackingScreen extends ConsumerWidget {
                                 ),
                               ),
                               Text(
-                                '3',
+                                '$thisMonthCount',
                                 style: TextStyle(
                                   fontSize: w * 0.036,
                                   fontWeight: FontWeight.w700,

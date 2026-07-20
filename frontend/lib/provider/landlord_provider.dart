@@ -1,5 +1,11 @@
+import 'dart:convert';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:intl/intl.dart';
 import 'landlord_state.dart';
+import '../core/api_client.dart';
+import '../core/api_constants.dart';
 
 class LandlordNotifier extends StateNotifier<LandlordState> {
   LandlordNotifier() : super(const LandlordState()) {
@@ -7,231 +13,692 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
   }
 
   void _loadInitialData() {
-    final defaultProperties = [
-      const Property(
-        id: 'prop1',
-        name: 'Sunset Apartments',
-        address: 'Sunset Heights, Unit 402',
-        occupancyRate: 0.92,
-        imageUrl:
-            'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80',
-        totalUnits: 24,
-        occupiedUnits: 22,
-        vacantUnits: 2,
-        monthlyRent: 14200.0,
-      ),
-      const Property(
-        id: 'prop2',
-        name: 'Maple Residency',
-        address: '12 Valley Rd, Suite A',
-        occupancyRate: 1.0,
-        imageUrl:
-            'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80',
-        totalUnits: 10,
-        occupiedUnits: 10,
-        vacantUnits: 0,
-        monthlyRent: 18500.0,
-      ),
-    ];
-
-    final defaultUnits = [
-      const Unit(
-        id: 'u101',
-        name: 'Unit 101',
-        status: 'Occupied',
-        tenantName: 'John Smith',
-        rent: 1200.0,
-        amenities: ['Luxury Pool', '24/7 Gym', 'Maintenance'],
-      ),
-      const Unit(
-        id: 'u102',
-        name: 'Unit 102',
-        status: 'Vacant',
-        tenantName: '',
-        rent: 1100.0,
-        amenities: ['Luxury Pool', 'Maintenance'],
-      ),
-      const Unit(
-        id: 'u103',
-        name: 'Unit 103',
-        status: 'Maintenance',
-        tenantName: '',
-        rent: 1050.0,
-        amenities: ['Luxury Pool', '24/7 Gym', 'Maintenance'],
-      ),
-    ];
-
-    final defaultTenants = [
-      const Tenant(
-        id: 't1',
-        name: 'John Smith',
-        unitName: 'Sunset Heights Apts, Unit 402',
-        contact: '(555) 123-4567',
-        email: 'john.smith@example.com',
-        emergencyContactName: 'Jane Smith (Mother)',
-        emergencyContactPhone: '(555) 987-6543',
-        memos: [
-          'Tenant reported kitchen sink leak.',
-          'Lease renewal pending for June.',
-        ],
-        balance: 0.0,
-        status: 'Active',
-        dateJoined: 'Dec 12, 2023',
-      ),
-      const Tenant(
-        id: 't2',
-        name: 'Sarah Jenkins',
-        unitName: 'Maple Residency, Unit 4',
-        contact: '(555) 765-4321',
-        email: 'sarah.j@example.com',
-        emergencyContactName: 'David Jenkins (Father)',
-        emergencyContactPhone: '(555) 111-2222',
-        memos: ['Late fee applied for May.', 'Requested AC repair last week.'],
-        balance: 450.0,
-        status: 'Late Payment',
-        dateJoined: 'Aug 15, 2024',
-      ),
-    ];
-
-    final defaultWorkOrders = [
-      const WorkOrder(
-        id: '105',
-        title: 'Kitchen Sink Leak',
-        description:
-            'Tenant reported a leak under the kitchen sink. Water is pooling inside the cabinet and needs inspection and repair.',
-        propertyName: 'Sunset Heights Apts',
-        unitName: 'Unit 402',
-        tenantName: 'John Smith',
-        priority: 'High',
-        status: 'In-Progress',
-        photos: [
-          'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&q=80',
-        ],
-        category: 'Plumbing',
-        date: 'May 19, 2026',
-        timeSlot: '2:00 PM - 4:00 PM',
-        accessInstructions:
-            'Tenant is available after 1 PM. Vendor should call before arrival.',
-        vendorName: 'Mike Plumbing',
-        vendorPhone: '(555) 234-5678',
-        bidAmount: 350.0,
-      ),
-      const WorkOrder(
-        id: '101',
-        title: 'AC Not Working',
-        description:
-            'AC unit is blowing warm air in the living room. Requires urgent compressor check.',
-        propertyName: 'Sunset Heights Apts',
-        unitName: 'Unit 102',
-        tenantName: 'John Smith',
-        priority: 'Emergency',
-        status: 'Request',
-        photos: [],
-        category: 'HVAC',
-        date: 'May 20, 2026',
-        timeSlot: '10:00 AM - 12:00 PM',
-        accessInstructions: 'Tenant is not home. Use Master Key to enter.',
-      ),
-      const WorkOrder(
-        id: '108',
-        title: 'Light Fixture Replacement',
-        description:
-            'Living room main ceiling light fixture needs replacement.',
-        propertyName: 'Maple Residency',
-        unitName: 'Unit 4',
-        tenantName: 'Sarah Jenkins',
-        priority: 'Low',
-        status: 'Completed',
-        photos: [],
-        category: 'Electrical',
-        date: 'May 15, 2026',
-        timeSlot: '9:00 AM - 11:00 AM',
-        accessInstructions: 'Tenant will open the door.',
-        vendorName: 'Elite Home Repairs',
-        vendorPhone: '(555) 876-5432',
-        bidAmount: 120.0,
-      ),
-    ];
-
-    final defaultBids = [
-      const Bid(
-        id: 'b1',
-        vendorName: 'Mike Plumbing',
-        rating: 4.8,
-        totalJobs: 124,
-        price: 350.0,
-        time: 'Today, 2:00 PM',
-        avatarUrl:
-            'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&q=80',
-      ),
-      const Bid(
-        id: 'b2',
-        vendorName: 'QuickFix Maintenance',
-        rating: 4.6,
-        totalJobs: 89,
-        price: 300.0,
-        time: 'Tomorrow, 11:30 AM',
-        avatarUrl:
-            'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=100&q=80',
-      ),
-      const Bid(
-        id: 'b3',
-        vendorName: 'Elite Home Repairs',
-        rating: 4.9,
-        totalJobs: 210,
-        price: 450.0,
-        time: 'Today, 5:00 PM',
-        avatarUrl:
-            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80',
-      ),
-    ];
-
-    final defaultChatMessages = [
-      const ChatMessage(
-        id: 'c1',
-        senderName: 'Mike Plumbing',
-        role: 'Vendor',
-        message:
-            'I can visit at 2:00 PM today. I have the standard sink gaskets in stock.',
-        time: '10:00 AM',
-      ),
-      const ChatMessage(
-        id: 'c2',
-        senderName: 'Landlord',
-        role: 'Landlord',
-        message:
-            'Sounds good. Tenant will be home at that time. Please ring unit 402.',
-        time: '10:15 AM',
-      ),
-      const ChatMessage(
-        id: 'c3',
-        senderName: 'John Smith',
-        role: 'Tenant',
-        message:
-            'Perfect, I will unlock the side gate as well for easy access.',
-        time: '10:30 AM',
-      ),
-    ];
-
-    state = LandlordState(
-      properties: defaultProperties,
-      units: defaultUnits,
-      tenants: defaultTenants,
-      workOrders: defaultWorkOrders,
-      bids: defaultBids,
-      chatMessages: defaultChatMessages,
-      totalCollected: 24500.0,
-      totalOutstanding: 3200.0,
-      occupancyRate: 0.94,
-    );
+    // Fire all real API calls concurrently – no more mock data
+    loadProperties();
+    loadUserProfile();
+    loadWorkOrders();
+    loadFinanceDashboard();
+    loadUrgentAlerts();
+    loadUnreadCount();
+    loadTenants();
+    loadLeases();
   }
 
-  // Add unit
-  void addUnit(Unit unit) {
-    state = state.copyWith(units: [...state.units, unit]);
+  // ── 1. Load user profile (name + avatar) ─────────────────────────────────────
+  Future<void> loadUserProfile() async {
+    try {
+      final resp = await ApiClient().dio.get(ApiConstants.userProfile);
+      final data = resp.data['data'] as Map<String, dynamic>? ?? {};
+      final firstName = data['legal_first_name']?.toString() ??
+          data['display_name']?.toString() ??
+          data['email']?.toString().split('@').first ??
+          'Landlord';
+      final avatarUrl = data['avatar_url']?.toString() ?? '';
+      state = state.copyWith(userName: firstName, userAvatarUrl: avatarUrl);
+    } catch (_) {
+      // Keep empty defaults on failure
+    }
   }
 
-  // Add Tenant Memo
+  // ── 2. Load properties ───────────────────────────────────────────────────────
+  Future<void> loadProperties() async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final resp = await ApiClient().dio.get(ApiConstants.properties);
+      final List<dynamic> rawList = (resp.data['data'] ?? []) as List<dynamic>;
+      final properties = rawList.map((item) {
+        final m = item as Map<String, dynamic>;
+
+        final address1 = m['address_line1']?.toString() ?? '';
+        final city = m['city']?.toString() ?? '';
+        final stateProv = m['state_province']?.toString() ?? '';
+        final address =
+            [address1, city, stateProv].where((s) => s.isNotEmpty).join(', ');
+
+        final totalUnits = (m['total_units'] ?? 0) as int;
+        final occupiedUnits = (m['occupied_units'] ?? 0) as int;
+        final vacantUnits = (m['vacant_units'] ?? 0) as int;
+        final occupancyRate = totalUnits > 0
+            ? (occupiedUnits.toDouble() / totalUnits.toDouble())
+            : 0.0;
+
+        String imageUrl =
+            'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80';
+        final rawImages = m['images'];
+        if (rawImages is List && rawImages.isNotEmpty) {
+          imageUrl = rawImages[0]?.toString() ?? imageUrl;
+        } else if (rawImages is String && rawImages.isNotEmpty) {
+          try {
+            final parsed = jsonDecode(rawImages);
+            if (parsed is List && parsed.isNotEmpty) {
+              imageUrl = parsed[0]?.toString() ?? imageUrl;
+            }
+          } catch (_) {
+            imageUrl = rawImages;
+          }
+        }
+
+        // Parse amenities
+        List<String> amenities = [];
+        final rawAmenities = m['amenities'];
+        if (rawAmenities is List) {
+          amenities = rawAmenities.map((a) => a.toString()).toList();
+        } else if (rawAmenities is String && rawAmenities.isNotEmpty) {
+          try {
+            final parsed = jsonDecode(rawAmenities);
+            if (parsed is List) {
+              amenities = parsed.map((a) => a.toString()).toList();
+            }
+          } catch (_) {}
+        }
+
+        return Property(
+          id: m['id']?.toString() ?? '',
+          name: m['name']?.toString() ?? 'Unnamed Property',
+          address: address,
+          occupancyRate: occupancyRate,
+          imageUrl: imageUrl,
+          totalUnits: totalUnits,
+          occupiedUnits: occupiedUnits,
+          vacantUnits: vacantUnits,
+          monthlyRent:
+              ((m['monthly_rent'] ?? m['price'] ?? 0.0) as num).toDouble(),
+          type: m['type']?.toString() ?? 'apartment',
+          amenities: amenities,
+          description: m['description']?.toString() ?? '',
+          status: m['status']?.toString() ?? 'active',
+          verificationStatus: m['verification_status']?.toString() ?? 'pending',
+          rejectionReason: m['rejection_reason']?.toString(),
+        );
+      }).toList();
+
+      int totalU = 0;
+      int occupiedU = 0;
+      for (final p in properties) {
+        totalU += p.totalUnits;
+        occupiedU += p.occupiedUnits;
+      }
+      final calculatedOccupancy = totalU > 0
+          ? (occupiedU.toDouble() / totalU.toDouble())
+          : 0.0;
+
+      state = state.copyWith(
+        properties: properties,
+        occupancyRate: calculatedOccupancy,
+        isLoading: false,
+      );
+    } catch (e) {
+      debugPrint('[LandlordProvider] loadProperties error: $e');
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  // ── 3. Load work orders → populate workOrders + maintenance summary ───────────
+  Future<void> loadWorkOrders() async {
+    try {
+      final resp =
+          await ApiClient().dio.get(ApiConstants.workOrders);
+      final List<dynamic> rawList =
+          (resp.data['data'] ?? []) as List<dynamic>;
+
+      int emergency = 0;
+      int inProgress = 0;
+      int completed = 0;
+
+      final orders = rawList.map((item) {
+        final m = item as Map<String, dynamic>;
+        final status = (m['status'] ?? '').toString().toLowerCase();
+        final priority = (m['priority'] ?? '').toString().toLowerCase();
+
+        if (priority == 'emergency' || status == 'emergency') emergency++;
+        if (status == 'in_progress' || status == 'in-progress' || status == 'assigned') inProgress++;
+        if (status == 'completed') completed++;
+
+        // Parse photos
+        List<String> photos = [];
+        final rawPhotos = m['photos'];
+        if (rawPhotos is List) {
+          photos = rawPhotos.map((p) => p.toString()).toList();
+        } else if (rawPhotos is String && rawPhotos.isNotEmpty) {
+          try {
+            final parsed = jsonDecode(rawPhotos);
+            if (parsed is List) photos = parsed.map((p) => p.toString()).toList();
+          } catch (_) {}
+        }
+
+        // Format date
+        String formattedDate = '';
+        try {
+          final rawDate = m['created_at']?.toString() ?? m['date']?.toString() ?? '';
+          if (rawDate.isNotEmpty) {
+            final dt = DateTime.tryParse(rawDate);
+            if (dt != null) formattedDate = DateFormat('MMM dd, yyyy').format(dt);
+          }
+        } catch (_) {}
+
+        return WorkOrder(
+          id: m['id']?.toString() ?? '',
+          title: m['title']?.toString() ?? 'Work Order',
+          description: m['description']?.toString() ?? '',
+          propertyName: m['property_name']?.toString() ?? m['propertyName']?.toString() ?? '',
+          unitName: m['unit_name']?.toString() ?? m['unitName']?.toString() ?? '',
+          tenantName: m['tenant_name']?.toString() ?? m['tenantName']?.toString() ?? '',
+          priority: _capitalize(m['priority']?.toString() ?? 'Medium'),
+          status: _formatStatus(m['status']?.toString() ?? 'Request'),
+          photos: photos,
+          category: _capitalize(m['category']?.toString() ?? 'General'),
+          date: formattedDate,
+          timeSlot: m['time_slot']?.toString() ?? m['timeSlot']?.toString() ?? '',
+          accessInstructions: m['access_instructions']?.toString() ?? m['accessInstructions']?.toString() ?? '',
+          vendorName: m['vendor_name']?.toString() ?? m['vendorName']?.toString(),
+          vendorPhone: m['vendor_phone']?.toString() ?? m['vendorPhone']?.toString(),
+          bidAmount: m['bid_amount'] != null ? (m['bid_amount'] as num).toDouble() : null,
+        );
+      }).toList();
+
+      state = state.copyWith(
+        workOrders: orders,
+        maintenanceEmergency: emergency,
+        maintenanceInProgress: inProgress,
+        maintenanceCompleted: completed,
+      );
+    } catch (e) {
+      debugPrint('[LandlordProvider] loadWorkOrders error: $e');
+    }
+  }
+
+  // ── 4. Load finance dashboard → totalCollected, outstanding, rent % ───────────
+  Future<void> loadFinanceDashboard() async {
+    try {
+      final resp = await ApiClient().dio.get(ApiConstants.financeDashboard);
+      final data = resp.data['data'] as Map<String, dynamic>? ?? {};
+
+      final totalCollected =
+          ((data['total_collected'] ?? data['totalCollected'] ?? 0) as num)
+              .toDouble();
+      final totalOutstanding =
+          ((data['total_outstanding'] ?? data['totalOutstanding'] ?? 0) as num)
+              .toDouble();
+      final rentPercent =
+          ((data['rent_collection_percent'] ?? data['rentCollectionPercent'] ?? 0) as num)
+              .toDouble();
+
+      // Backend may return 0–100 scale; normalise to 0.0–1.0
+      final normalised = rentPercent > 1.0 ? rentPercent / 100.0 : rentPercent;
+
+      state = state.copyWith(
+        totalCollected: totalCollected,
+        totalOutstanding: totalOutstanding,
+        rentCollectionPercent: normalised.clamp(0.0, 1.0),
+      );
+    } catch (e) {
+      debugPrint('[LandlordProvider] loadFinanceDashboard error: $e');
+    }
+  }
+
+  // ── 5. Load urgent alerts (expiring leases + emergency work orders) ────────────
+  Future<void> loadUrgentAlerts() async {
+    final alerts = <UrgentAlert>[];
+    try {
+      // Expiring leases
+      final leaseResp =
+          await ApiClient().dio.get(ApiConstants.leasesExpiringSoon);
+      final List<dynamic> leases =
+          (leaseResp.data['data'] ?? []) as List<dynamic>;
+      for (final l in leases.take(3)) {
+        final m = l as Map<String, dynamic>;
+        final tenantName = m['tenant_name']?.toString() ??
+            m['tenantName']?.toString() ??
+            'Tenant';
+        final propName = m['property_name']?.toString() ??
+            m['propertyName']?.toString() ??
+            '';
+        final endDate = m['end_date']?.toString() ?? m['endDate']?.toString() ?? '';
+        String daysLeft = '';
+        try {
+          final dt = DateTime.tryParse(endDate);
+          if (dt != null) {
+            final diff = dt.difference(DateTime.now()).inDays;
+            daysLeft = '$diff days left';
+          }
+        } catch (_) {}
+        alerts.add(UrgentAlert(
+          id: m['id']?.toString() ?? 'lease_${alerts.length}',
+          title: 'Lease Expiring Soon',
+          description:
+              '$tenantName${propName.isNotEmpty ? " • $propName" : ""}${daysLeft.isNotEmpty ? " • $daysLeft" : ""}',
+          type: 'lease',
+        ));
+      }
+    } catch (_) {}
+
+    try {
+      // High-priority / emergency open work orders
+      final woResp = await ApiClient().dio.get(ApiConstants.workOrders);
+      final List<dynamic> orders =
+          (woResp.data['data'] ?? []) as List<dynamic>;
+      for (final o in orders) {
+        final m = o as Map<String, dynamic>;
+        final priority = (m['priority'] ?? '').toString().toLowerCase();
+        final status = (m['status'] ?? '').toString().toLowerCase();
+        if ((priority == 'emergency' || priority == 'high') &&
+            status != 'completed' &&
+            status != 'cancelled') {
+          final propName = m['property_name']?.toString() ??
+              m['propertyName']?.toString() ??
+              '';
+          final unitName =
+              m['unit_name']?.toString() ?? m['unitName']?.toString() ?? '';
+          alerts.add(UrgentAlert(
+            id: m['id']?.toString() ?? 'wo_${alerts.length}',
+            title: m['title']?.toString() ?? 'Maintenance Issue',
+            description:
+                '${propName.isNotEmpty ? propName : ""}${unitName.isNotEmpty ? " • $unitName" : ""} • ${_capitalize(priority)} Priority',
+            type: 'maintenance',
+            priority: priority,
+          ));
+          if (alerts.length >= 5) break;
+        }
+      }
+    } catch (_) {}
+
+    state = state.copyWith(urgentAlerts: alerts);
+  }
+
+  // ── 6. Load unread notification count ─────────────────────────────────────────
+  Future<void> loadUnreadCount() async {
+    try {
+      final resp =
+          await ApiClient().dio.get(ApiConstants.notificationsUnreadCount);
+      final data = resp.data['data'];
+      final count = data is int
+          ? data
+          : (data is Map ? (data['count'] ?? data['total'] ?? 0) as int : 0);
+      state = state.copyWith(unreadNotifications: count);
+    } catch (_) {
+      // Keep 0 on failure
+    }
+  }
+
+  // ── 7. Load tenants from leases dashboard ─────────────────────────────────────
+  Future<void> loadTenants() async {
+    state = state.copyWith(isTenantsLoading: true);
+    try {
+      final resp = await ApiClient().dio.get(ApiConstants.usersTenants);
+      final List<dynamic> rawList = (resp.data['data'] ?? []) as List<dynamic>;
+
+      final tenants = rawList.map((item) {
+        final m = item as Map<String, dynamic>;
+        final tenantData = m['tenant'] as Map<String, dynamic>? ?? {};
+
+        // Determine payment status
+        final status = (m['status'] ?? '').toString().toLowerCase();
+        String paymentStatus = 'Active';
+        if (status == 'overdue' || status == 'late') {
+          paymentStatus = 'Late Payment';
+        }
+
+        // Format join date from start_date
+        String dateJoined = '';
+        try {
+          final raw = m['start_date']?.toString() ?? '';
+          final dt = DateTime.tryParse(raw);
+          if (dt != null) dateJoined = DateFormat('MMM dd, yyyy').format(dt);
+        } catch (_) {}
+
+        // Lease end date
+        String leaseEnd = '';
+        try {
+          final raw = m['end_date']?.toString() ?? '';
+          final dt = DateTime.tryParse(raw);
+          if (dt != null) leaseEnd = DateFormat('MMM dd, yyyy').format(dt);
+        } catch (_) {}
+
+        final rentAmt = ((m['rent_amount'] ?? m['rentAmount'] ?? 0) as num).toDouble();
+        final outstanding = ((m['outstanding'] ?? m['balance'] ?? 0) as num).toDouble();
+
+        final firstName = tenantData['legal_first_name']?.toString() ?? '';
+        final lastName = tenantData['legal_last_name']?.toString() ?? '';
+        final fullName = [firstName, lastName].where((s) => s.isNotEmpty).join(' ');
+
+        return Tenant(
+          id: m['id']?.toString() ?? '',
+          name: fullName.isNotEmpty
+              ? fullName
+              : (tenantData['email']?.toString().split('@').first ?? 'Tenant'),
+          unitName: m['unit_name']?.toString() ?? m['unitName']?.toString() ?? 'N/A',
+          contact: tenantData['phone']?.toString() ?? '',
+          email: tenantData['email']?.toString() ?? '',
+          emergencyContactName: '',
+          emergencyContactPhone: '',
+          memos: [],
+          balance: outstanding,
+          status: paymentStatus,
+          dateJoined: dateJoined,
+          propertyName: m['property_name']?.toString() ?? m['propertyName']?.toString() ?? '',
+          leaseEndDate: leaseEnd,
+          rentAmount: rentAmt,
+        );
+      }).toList();
+
+      state = state.copyWith(tenants: tenants, isTenantsLoading: false);
+    } catch (e) {
+      debugPrint('[LandlordProvider] loadTenants error: $e');
+      state = state.copyWith(isTenantsLoading: false);
+    }
+  }
+
+  // ── 8. Load leases list from /leases/dashboard ────────────────────────────────
+  Future<void> loadLeases() async {
+    state = state.copyWith(isLeasesLoading: true);
+    try {
+      final resp = await ApiClient().dio.get(ApiConstants.leasesDashboard);
+      final List<dynamic> rawList = (resp.data['data'] ?? []) as List<dynamic>;
+
+      int activeCount = 0;
+      int expiringCount = 0;
+
+      final leases = rawList.map((item) {
+        final m = item as Map<String, dynamic>;
+        final tenantData = m['tenant'] as Map<String, dynamic>? ?? {};
+
+        final status = (m['status'] ?? 'active').toString().toLowerCase();
+        if (status == 'active') activeCount++;
+
+        // Days left calculation
+        int daysLeft = 0;
+        String endDate = '';
+        try {
+          final raw = m['end_date']?.toString() ?? '';
+          final dt = DateTime.tryParse(raw);
+          if (dt != null) {
+            daysLeft = dt.difference(DateTime.now()).inDays;
+            endDate = DateFormat('MMM dd, yyyy').format(dt);
+            if (daysLeft <= 60 && daysLeft > 0) expiringCount++;
+          }
+        } catch (_) {}
+
+        String startDate = '';
+        try {
+          final raw = m['start_date']?.toString() ?? '';
+          final dt = DateTime.tryParse(raw);
+          if (dt != null) startDate = DateFormat('MMM dd, yyyy').format(dt);
+        } catch (_) {}
+
+        final firstName = tenantData['legal_first_name']?.toString() ?? '';
+        final lastName = tenantData['legal_last_name']?.toString() ?? '';
+        final fullName = [firstName, lastName].where((s) => s.isNotEmpty).join(' ');
+
+        return Lease(
+          id: m['id']?.toString() ?? '',
+          unitName: m['unit_name']?.toString() ?? m['unitName']?.toString() ?? 'N/A',
+          tenantName: fullName.isNotEmpty
+              ? fullName
+              : (tenantData['email']?.toString().split('@').first ?? 'Tenant'),
+          propertyName: m['property_name']?.toString() ?? m['propertyName']?.toString() ?? '',
+          rentAmount: ((m['rent_amount'] ?? m['rentAmount'] ?? 0) as num).toDouble(),
+          startDate: startDate,
+          endDate: endDate,
+          status: status,
+          daysLeft: daysLeft,
+        );
+      }).toList();
+
+      state = state.copyWith(
+        leases: leases,
+        activeLeaseCount: activeCount,
+        expiringLeaseCount: expiringCount,
+        isLeasesLoading: false,
+      );
+    } catch (e) {
+      debugPrint('[LandlordProvider] loadLeases error: $e');
+      state = state.copyWith(isLeasesLoading: false);
+    }
+  }
+
+  // ── 9. Load units for a specific property ─────────────────────────────────────
+  Future<void> loadUnits(String propertyId) async {
+    state = state.copyWith(isUnitsLoading: true);
+    try {
+      final resp =
+          await ApiClient().dio.get(ApiConstants.propertyUnits(propertyId));
+      final List<dynamic> rawList = (resp.data['data'] ?? []) as List<dynamic>;
+
+      final units = rawList.map((item) {
+        final m = item as Map<String, dynamic>;
+
+        // Try to get tenant name from embedded data
+        String tenantName = '';
+        final tenantData = m['tenant'] as Map<String, dynamic>?;
+        if (tenantData != null) {
+          final fn = tenantData['legal_first_name']?.toString() ?? '';
+          final ln = tenantData['legal_last_name']?.toString() ?? '';
+          tenantName = [fn, ln].where((s) => s.isNotEmpty).join(' ');
+          if (tenantName.isEmpty) {
+            tenantName = tenantData['email']?.toString().split('@').first ?? '';
+          }
+        }
+
+        return Unit(
+          id: m['id']?.toString() ?? '',
+          name: m['unit_number']?.toString() ?? m['unitNumber']?.toString() ?? 'Unit',
+          status: _capitalize(m['status']?.toString() ?? 'vacant'),
+          tenantName: tenantName,
+          rent: ((m['rent_amount'] ?? m['rentAmount'] ?? m['price'] ?? 0) as num).toDouble(),
+          amenities: [],
+          bedrooms: (m['bedrooms'] ?? 0) as int,
+          bathrooms: (m['bathrooms'] ?? 0) as int,
+          squareFeet: (m['square_feet'] ?? m['squareFeet'] ?? 0) as int,
+          depositAmount: ((m['deposit_amount'] ?? m['depositAmount'] ?? 0) as num).toDouble(),
+          availableDate: m['available_date']?.toString() ?? m['availableDate']?.toString() ?? '',
+          propertyId: propertyId,
+        );
+      }).toList();
+
+      state = state.copyWith(units: units, isUnitsLoading: false);
+    } catch (e) {
+      debugPrint('[LandlordProvider] loadUnits error: $e');
+      state = state.copyWith(isUnitsLoading: false);
+    }
+  }
+
+  // ── 10. Load bids for a work order ────────────────────────────────────────────
+  Future<void> loadBids(String workOrderId) async {
+    state = state.copyWith(isBidsLoading: true);
+    try {
+      final resp =
+          await ApiClient().dio.get(ApiConstants.workOrderBids(workOrderId));
+      final List<dynamic> rawList = (resp.data['data'] ?? []) as List<dynamic>;
+
+      final bids = rawList.map((item) {
+        final m = item as Map<String, dynamic>;
+        final vendorData = m['vendor'] as Map<String, dynamic>? ?? {};
+        final vendorProfile = vendorData['profile'] as Map<String, dynamic>? ?? {};
+
+        final fn = vendorProfile['legal_first_name']?.toString() ?? '';
+        final ln = vendorProfile['legal_last_name']?.toString() ?? '';
+        String vendorName = [fn, ln].where((s) => s.isNotEmpty).join(' ');
+        if (vendorName.isEmpty) {
+          vendorName = vendorData['email']?.toString().split('@').first ?? 'Vendor';
+        }
+
+        return Bid(
+          id: m['id']?.toString() ?? '',
+          vendorName: vendorName,
+          rating: ((m['rating'] ?? vendorData['rating'] ?? 4.0) as num).toDouble(),
+          totalJobs: (m['total_jobs'] ?? vendorData['total_jobs'] ?? 0) as int,
+          price: ((m['amount'] ?? 0) as num).toDouble(),
+          time: m['estimated_hours'] != null
+              ? '${m["estimated_hours"]}h est.'
+              : (m['proposed_date']?.toString() ?? 'Flexible'),
+          avatarUrl: vendorProfile['avatar_url']?.toString() ?? '',
+        );
+      }).toList();
+
+      state = state.copyWith(bids: bids, isBidsLoading: false);
+    } catch (e) {
+      debugPrint('[LandlordProvider] loadBids error: $e');
+      state = state.copyWith(isBidsLoading: false);
+    }
+  }
+
+  // ── Create Property ───────────────────────────────────────────────────────────
+  Future<void> createProperty({
+    required String name,
+    required String addressLine1,
+    required String city,
+    required String stateProvince,
+    required String postalCode,
+    String countryCode = 'US',
+    required String type,
+    String? description,
+    List<String>? amenities,
+    double? price,
+  }) async {
+    final payload = <String, dynamic>{
+      'name': name,
+      'addressLine1': addressLine1,
+      'city': city,
+      'stateProvince': stateProvince,
+      'postalCode': postalCode,
+      'countryCode': countryCode,
+      'type': type,
+      if (description != null && description.isNotEmpty)
+        'description': description,
+      if (amenities != null && amenities.isNotEmpty) 'amenities': amenities,
+    };
+    await ApiClient().dio.post(ApiConstants.properties, data: payload);
+    await loadProperties(); // Refresh the properties list
+  }
+
+  // ── Update Property ──────────────────────────────────────────────────────────
+  Future<void> updateProperty(String propertyId, Map<String, dynamic> data) async {
+    try {
+      await ApiClient().dio.put(ApiConstants.property(propertyId), data: data);
+      await loadProperties();
+    } catch (e) {
+      debugPrint('[LandlordProvider] updateProperty error: $e');
+      rethrow;
+    }
+  }
+
+  // ── Delete Property ──────────────────────────────────────────────────────────
+  Future<void> deleteProperty(String propertyId) async {
+    try {
+      await ApiClient().dio.delete(ApiConstants.property(propertyId));
+      await loadProperties();
+    } catch (e) {
+      debugPrint('[LandlordProvider] deleteProperty error: $e');
+      rethrow;
+    }
+  }
+
+  // ── Create Lease ─────────────────────────────────────────────────────────────
+  Future<void> createLease({
+    required String tenantId,
+    required String unitId,
+    required String startDate,
+    required String endDate,
+    required double rentAmount,
+    double depositAmount = 0.0,
+    String paymentSchedule = 'monthly',
+    bool autoRenew = false,
+  }) async {
+    final payload = <String, dynamic>{
+      'tenantId': tenantId,
+      'unitId': unitId,
+      'startDate': startDate,
+      'endDate': endDate,
+      'rentAmount': rentAmount,
+      'depositAmount': depositAmount,
+      'paymentSchedule': paymentSchedule,
+      'autoRenew': autoRenew,
+    };
+    await ApiClient().dio.post(ApiConstants.leases, data: payload);
+    await loadLeases();
+    await loadTenants();
+  }
+
+  // ── Renew Lease ──────────────────────────────────────────────────────────────
+  Future<void> renewLease(String leaseId, String newEndDate) async {
+    try {
+      await ApiClient().dio.post(
+        ApiConstants.leaseRenew(leaseId),
+        data: {'newEndDate': newEndDate},
+      );
+      await loadLeases();
+    } catch (e) {
+      debugPrint('[LandlordProvider] renewLease error: $e');
+      rethrow;
+    }
+  }
+
+  // ── Update Lease Status ──────────────────────────────────────────────────────
+  Future<void> updateLeaseStatus(String leaseId, String status) async {
+    try {
+      await ApiClient().dio.put(
+        ApiConstants.leaseStatus(leaseId),
+        data: {'status': status},
+      );
+      await loadLeases();
+    } catch (e) {
+      debugPrint('[LandlordProvider] updateLeaseStatus error: $e');
+      rethrow;
+    }
+  }
+
+  // ── Add Unit ─────────────────────────────────────────────────────────────────
+  Future<void> addUnit(String propertyId, Unit unit) async {
+    try {
+      final payload = {
+        'unitNumber': unit.name,
+        'price': unit.rent,
+        'status': unit.status.toLowerCase(),
+        if (unit.bedrooms > 0) 'bedrooms': unit.bedrooms,
+        if (unit.bathrooms > 0) 'bathrooms': unit.bathrooms,
+        if (unit.squareFeet > 0) 'squareFeet': unit.squareFeet,
+        if (unit.depositAmount > 0) 'depositAmount': unit.depositAmount,
+      };
+      await ApiClient().dio.post(
+        ApiConstants.propertyUnits(propertyId),
+        data: payload,
+      );
+      await loadUnits(propertyId);
+      await loadProperties();
+    } catch (e) {
+      debugPrint('[LandlordProvider] addUnit error: $e');
+      rethrow;
+    }
+  }
+
+  // ── Update Unit ──────────────────────────────────────────────────────────────
+  Future<void> updateUnit(String propertyId, String unitId, Map<String, dynamic> data) async {
+    try {
+      await ApiClient().dio.put(
+        ApiConstants.propertyUnit(propertyId, unitId),
+        data: data,
+      );
+      await loadUnits(propertyId);
+      await loadProperties();
+    } catch (e) {
+      debugPrint('[LandlordProvider] updateUnit error: $e');
+      rethrow;
+    }
+  }
+
+  // ── Delete Unit ──────────────────────────────────────────────────────────────
+  Future<void> deleteUnit(String propertyId, String unitId) async {
+    try {
+      await ApiClient().dio.delete(ApiConstants.propertyUnit(propertyId, unitId));
+      await loadUnits(propertyId);
+      await loadProperties();
+    } catch (e) {
+      debugPrint('[LandlordProvider] deleteUnit error: $e');
+      rethrow;
+    }
+  }
+
+  // ── Add Tenant Memo ──────────────────────────────────────────────────────────
   void addMemoToTenant(String tenantId, String memo) {
     final updatedTenants = state.tenants.map((t) {
       if (t.id == tenantId) {
@@ -242,28 +709,83 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
     state = state.copyWith(tenants: updatedTenants);
   }
 
-  // Create Work Order
-  void createWorkOrder(WorkOrder order) {
-    state = state.copyWith(workOrders: [order, ...state.workOrders]);
-  }
+  // ── Create Work Order ────────────────────────────────────────────────────────
+  Future<void> createWorkOrder(WorkOrder order) async {
+    try {
+      // Find property ID by matching name
+      final properties = state.properties;
+      final matchedProp = properties.isNotEmpty
+          ? properties.firstWhere(
+              (p) => p.name == order.propertyName,
+              orElse: () => properties.first,
+            )
+          : null;
 
-  // Assign Bid
-  void assignBidToWorkOrder(String orderId, Bid bid) {
-    final updatedOrders = state.workOrders.map((wo) {
-      if (wo.id == orderId) {
-        return wo.copyWith(
-          status: 'Assigned',
-          vendorName: bid.vendorName,
-          bidAmount: bid.price,
-          timeSlot: bid.time,
-        );
+      if (matchedProp == null) {
+        throw Exception('No property found. Please add a property first.');
       }
-      return wo;
-    }).toList();
-    state = state.copyWith(workOrders: updatedOrders);
+
+      // Find unit ID — units are loaded in state.units
+      final units = state.units;
+      final matchedUnit = units.isNotEmpty
+          ? units.firstWhere(
+              (u) => u.name == order.unitName,
+              orElse: () => units.first,
+            )
+          : null;
+
+      if (matchedUnit == null) {
+        throw Exception('No unit found. Please add a unit to this property first.');
+      }
+
+      // Map display category names to backend enum values
+      final categoryMap = {
+        'general repair': 'general_repair',
+        'plumbing': 'plumbing',
+        'electrical': 'electrical',
+        'hvac': 'hvac',
+        'appliance': 'appliance',
+        'painting': 'painting',
+        'other': 'other',
+      };
+      final mappedCategory = categoryMap[order.category.toLowerCase()] ?? 'general_repair';
+
+      final payload = {
+        'propertyId': matchedProp.id,
+        'unitId': matchedUnit.id,
+        'title': order.title,
+        'description': order.description,
+        'priority': order.priority.toLowerCase(),
+        'category': mappedCategory,
+        'currency': 'USD',
+        'accessInstructions': order.accessInstructions,
+        'notifyTenant': true,
+        'notifyVendor': true,
+      };
+
+      await ApiClient().dio.post(ApiConstants.workOrders, data: payload);
+      await loadWorkOrders();
+    } catch (e) {
+      if (e is DioException) {
+        debugPrint('[LandlordProvider] createWorkOrder response error data: ${e.response?.data}');
+      }
+      debugPrint('[LandlordProvider] createWorkOrder error: $e');
+      rethrow;
+    }
   }
 
-  // Chat message sending
+  // ── Assign Bid ───────────────────────────────────────────────────────────────
+  Future<void> assignBidToWorkOrder(String orderId, Bid bid) async {
+    try {
+      await ApiClient().dio.post(ApiConstants.bidAccept(bid.id));
+      await loadWorkOrders();
+    } catch (e) {
+      debugPrint('Error assigning bid: $e');
+      rethrow;
+    }
+  }
+
+  // ── Chat message sending ─────────────────────────────────────────────────────
   void sendMessage(String text) {
     final newMsg = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -275,15 +797,44 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
     state = state.copyWith(chatMessages: [...state.chatMessages, newMsg]);
   }
 
-  // Update Work Order Status
-  void updateWorkOrderStatus(String orderId, String newStatus) {
-    final updatedOrders = state.workOrders.map((wo) {
-      if (wo.id == orderId) {
-        return wo.copyWith(status: newStatus);
-      }
-      return wo;
-    }).toList();
-    state = state.copyWith(workOrders: updatedOrders);
+  // ── Update Work Order Status ─────────────────────────────────────────────────
+  Future<void> updateWorkOrderStatus(String orderId, String newStatus) async {
+    try {
+      final payload = {'status': newStatus.toLowerCase()};
+      await ApiClient().dio.put(
+        ApiConstants.workOrderStatus(orderId),
+        data: payload,
+      );
+      await loadWorkOrders();
+    } catch (e) {
+      debugPrint('Error updating work order status: $e');
+      rethrow;
+    }
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+  String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1);
+  }
+
+  String _formatStatus(String raw) {
+    switch (raw.toLowerCase()) {
+      case 'open':
+      case 'request':
+        return 'Request';
+      case 'assigned':
+        return 'Assigned';
+      case 'in_progress':
+      case 'in-progress':
+        return 'In-Progress';
+      case 'completed':
+        return 'Completed';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return _capitalize(raw);
+    }
   }
 }
 

@@ -1,0 +1,1068 @@
+{
+  "summary": {
+    "total_backend_endpoints": 188,
+    "matched_frontend_endpoints": 12,
+    "missing_frontend_endpoints": 176,
+    "coverage_percentage": 6.382978723404255
+  },
+  "matched": [
+    {
+      "method": "GET",
+      "path": "/api/v1/ads",
+      "source_file": "ad.routes.ts",
+      "found_in": [
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_windows\\example\\integration_test\\path_provider_test.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_linux\\lib\\src\\path_provider_linux.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_linux\\example\\lib\\main.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_linux\\test\\path_provider_linux_test.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\jni\\test\\global_env_test.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\jni.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_windows\\test\\path_provider_windows_test.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\nio\\jbyte_buffer.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\jni\\test\\global_env_test.dart",
+        "lib\\screens\\maintenance_request_screen.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_windows\\lib\\src\\path_provider_windows_real.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\nio\\jbyte_buffer.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\shared_preferences_windows\\lib\\shared_preferences_windows.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\flutter_secure_storage_windows\\test\\unit_test.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\jni.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\shared_preferences_linux\\lib\\shared_preferences_linux.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\jni.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_linux\\example\\integration_test\\path_provider_test.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\jni.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\shared_preferences_linux\\test\\fake_path_provider_linux.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\shared_preferences_windows\\test\\fake_path_provider_windows.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_windows\\lib\\src\\folders.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_windows\\example\\lib\\main.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\flutter_secure_storage_windows\\lib\\src\\flutter_secure_storage_windows_ffi.dart"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ads",
+      "source_file": "ad.routes.ts",
+      "found_in": [
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_windows\\example\\integration_test\\path_provider_test.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_linux\\lib\\src\\path_provider_linux.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_linux\\example\\lib\\main.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_linux\\test\\path_provider_linux_test.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\jni\\test\\global_env_test.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\jni.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_windows\\test\\path_provider_windows_test.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\nio\\jbyte_buffer.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\jni\\test\\global_env_test.dart",
+        "lib\\screens\\maintenance_request_screen.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_windows\\lib\\src\\path_provider_windows_real.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\nio\\jbyte_buffer.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\shared_preferences_windows\\lib\\shared_preferences_windows.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\flutter_secure_storage_windows\\test\\unit_test.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\jni.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\shared_preferences_linux\\lib\\shared_preferences_linux.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\jni.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_linux\\example\\integration_test\\path_provider_test.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\jni.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\shared_preferences_linux\\test\\fake_path_provider_linux.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\shared_preferences_windows\\test\\fake_path_provider_windows.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_windows\\lib\\src\\folders.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\path_provider_windows\\example\\lib\\main.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\flutter_secure_storage_windows\\lib\\src\\flutter_secure_storage_windows_ffi.dart"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "source_file": "auth.routes.ts",
+      "found_in": [
+        "lib\\core\\api_constants.dart"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "source_file": "auth.routes.ts",
+      "found_in": [
+        "lib\\core\\api_constants.dart"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "source_file": "auth.routes.ts",
+      "found_in": [
+        "lib\\core\\api_constants.dart"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "source_file": "auth.routes.ts",
+      "found_in": [
+        "lib\\core\\api_constants.dart",
+        "lib\\main.dart"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/leases",
+      "source_file": "lease.routes.ts",
+      "found_in": [
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\jimplementer.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\jobject.dart",
+        "lib\\screens\\landlord\\ai_smart_assistant_screen.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\jimplementer.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\jobject.dart"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/leases",
+      "source_file": "lease.routes.ts",
+      "found_in": [
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\jimplementer.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\jobject.dart",
+        "lib\\screens\\landlord\\ai_smart_assistant_screen.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\jimplementer.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\jobject.dart"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/notifications",
+      "source_file": "notification.routes.ts",
+      "found_in": [
+        "lib\\provider\\screens_provider.dart",
+        "lib\\screens\\search_screen.dart",
+        "lib\\screens\\home_dashboard_screen.dart",
+        "lib\\screens\\filter_screen.dart",
+        "lib\\screens\\notification_screen.dart",
+        "lib\\screens\\landlord\\portfolio_dashboard_screen.dart",
+        "lib\\main.dart",
+        "lib\\screens\\profile_screen.dart"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/properties",
+      "source_file": "property.routes.ts",
+      "found_in": [
+        "lib\\provider\\landlord_state.freezed.dart",
+        "lib\\screens\\search_screen.dart",
+        "lib\\screens\\landlord\\property_details_screen.dart",
+        "lib\\screens\\vendor\\vendor_performance_screen.dart",
+        "test\\widget_test.dart",
+        "lib\\provider\\landlord_state.dart",
+        "linux\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\nio\\jbuffer.dart",
+        "lib\\screens\\home_dashboard_screen.dart",
+        "lib\\screens\\auth\\welcome_screen.dart",
+        "lib\\screens\\auth\\role_selection_screen.dart",
+        "lib\\screens\\landlord\\property_portfolio_screen.dart",
+        "lib\\screens\\landlord\\ai_smart_assistant_screen.dart",
+        "windows\\flutter\\ephemeral\\.plugin_symlinks\\jni\\lib\\src\\nio\\jbuffer.dart",
+        "lib\\provider\\landlord_provider.dart",
+        "lib\\main.dart"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/me/onboarding/:step",
+      "source_file": "user.routes.ts",
+      "found_in": [
+        "lib\\provider\\basic_profile_provider.dart",
+        "lib\\provider\\employment_provider.dart",
+        "lib\\provider\\preferences_provider.dart"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/me/onboarding/{step}",
+      "source_file": "user.routes.ts",
+      "found_in": [
+        "lib\\provider\\basic_profile_provider.dart",
+        "lib\\provider\\employment_provider.dart",
+        "lib\\provider\\preferences_provider.dart"
+      ]
+    }
+  ],
+  "missing": [
+    {
+      "method": "GET",
+      "path": "/api-docs/swagger.json",
+      "source_file": "server.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/audit-logs",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/dashboard",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/properties/:id/reject",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/properties/{id}/reject",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/system-health",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/users",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/users/:id",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/admin/users/:id/suspend",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/users/{id}",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/admin/users/{id}/suspend",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/verification-queue",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/verification-queue/:id/approve",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/verification-queue/:id/reject",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/verification-queue/{id}/approve",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/verification-queue/{id}/reject",
+      "source_file": "admin.routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/ads/:id",
+      "source_file": "ad.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/ads/:id",
+      "source_file": "ad.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ads/display",
+      "source_file": "ad.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ads/webhook/location",
+      "source_file": "ad.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/ads/{id}",
+      "source_file": "ad.routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/ads/{id}",
+      "source_file": "ad.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai/chat",
+      "source_file": "ai.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/switch-role",
+      "source_file": "auth.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/calendar/events",
+      "source_file": "calendar.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/calendar/events",
+      "source_file": "calendar.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/calendar/google-link",
+      "source_file": "calendar.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chat/rooms",
+      "source_file": "chat.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/chat/rooms",
+      "source_file": "chat.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chat/rooms/:id/messages",
+      "source_file": "chat.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/chat/rooms/:id/messages",
+      "source_file": "chat.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/chat/rooms/:id/read",
+      "source_file": "chat.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chat/rooms/{id}/messages",
+      "source_file": "chat.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/chat/rooms/{id}/messages",
+      "source_file": "chat.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/chat/rooms/{id}/read",
+      "source_file": "chat.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/communications/email-templates",
+      "source_file": "communication.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/communications/email-templates",
+      "source_file": "communication.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/communications/sms",
+      "source_file": "communication.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/discussions",
+      "source_file": "discussion.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/discussions",
+      "source_file": "discussion.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/discussions/:id",
+      "source_file": "discussion.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/discussions/:id/replies",
+      "source_file": "discussion.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/discussions/replies/:id/upvote",
+      "source_file": "discussion.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/discussions/replies/{id}/upvote",
+      "source_file": "discussion.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/discussions/{id}",
+      "source_file": "discussion.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/discussions/{id}/replies",
+      "source_file": "discussion.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/finance/dashboard",
+      "source_file": "finance.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/finance/invoices",
+      "source_file": "finance.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/finance/payments/initiate",
+      "source_file": "finance.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/finance/vendor/earnings",
+      "source_file": "finance.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/leases/:id",
+      "source_file": "lease.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/leases/:id/renew",
+      "source_file": "lease.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/leases/:id/status",
+      "source_file": "lease.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/leases/dashboard",
+      "source_file": "lease.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/leases/expiring-soon",
+      "source_file": "lease.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/leases/{id}",
+      "source_file": "lease.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/leases/{id}/renew",
+      "source_file": "lease.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/leases/{id}/status",
+      "source_file": "lease.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lms/certificates",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lms/certificates/:number/verify",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lms/certificates/{number}/verify",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lms/courses",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/lms/courses",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lms/courses/:id",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/lms/courses/:id/enroll",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lms/courses/{id}",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/lms/courses/{id}/enroll",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lms/dashboard",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/lms/enrollments/:id/certificate",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/lms/enrollments/:id/progress",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/lms/enrollments/:id/quiz",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/lms/enrollments/{id}/certificate",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/lms/enrollments/{id}/progress",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/lms/enrollments/{id}/quiz",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lms/modules/:id/quiz",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/lms/modules/{id}/quiz",
+      "source_file": "lms.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maintenance/bids/:id/accept",
+      "source_file": "maintenance.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maintenance/bids/{id}/accept",
+      "source_file": "maintenance.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maintenance/vendor/jobs",
+      "source_file": "maintenance.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maintenance/work-orders",
+      "source_file": "maintenance.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maintenance/work-orders",
+      "source_file": "maintenance.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maintenance/work-orders/:id",
+      "source_file": "maintenance.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maintenance/work-orders/:id/bids",
+      "source_file": "maintenance.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/maintenance/work-orders/:id/status",
+      "source_file": "maintenance.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/maintenance/work-orders/{id}",
+      "source_file": "maintenance.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/maintenance/work-orders/{id}/bids",
+      "source_file": "maintenance.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/maintenance/work-orders/{id}/status",
+      "source_file": "maintenance.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/marketing/listings",
+      "source_file": "marketing.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/marketing/listings/:propertyId",
+      "source_file": "marketing.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/marketing/listings/{propertyId}",
+      "source_file": "marketing.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/marketing/showings",
+      "source_file": "marketing.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/marketing/showings",
+      "source_file": "marketing.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/move-in/checklists",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/move-in/checklists/:id",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/move-in/checklists/:id/sign",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/move-in/checklists/{id}",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/move-in/checklists/{id}/sign",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/move-in/deposit-returns",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/move-in/inspections",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/move-in/inspections/:id",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/move-out/checklists",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/move-out/checklists/:id",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/move-out/checklists/:id/sign",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/move-out/deposit-returns",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/move-out/inspections",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/move-out/inspections/:id",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/move-out/inspections/{id}",
+      "source_file": "move.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/notifications/:id/read",
+      "source_file": "notification.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/notifications/read-all",
+      "source_file": "notification.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/notifications/unread",
+      "source_file": "notification.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/notifications/unread-count",
+      "source_file": "notification.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/notifications/{id}/read",
+      "source_file": "notification.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/payments/late-notices",
+      "source_file": "late.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/payments/late-notices",
+      "source_file": "late.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/payments/late-notices/:id/send",
+      "source_file": "late.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/payments/late-notices/{id}/send",
+      "source_file": "late.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/properties/:id",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/properties/:id",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/properties/:id",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/properties/:id/save",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/properties/:id/units",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/properties/:id/units/:unitId",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/properties/:id/units/:unitId",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/properties/saved/me",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/properties/search",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/properties/{id}",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/properties/{id}",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/properties/{id}",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/properties/{id}/save",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/properties/{id}/units",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/properties/{id}/units/{unitId}",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/properties/{id}/units/{unitId}",
+      "source_file": "property.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/reports/custom",
+      "source_file": "report.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/financial",
+      "source_file": "report.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/property-performance",
+      "source_file": "report.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/tenant-behavior",
+      "source_file": "report.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reports/vendor-performance",
+      "source_file": "report.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/screening/applications",
+      "source_file": "screening.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/screening/applications/:id",
+      "source_file": "screening.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/screening/applications/:id/background-check",
+      "source_file": "screening.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/screening/applications/:id/credit-report",
+      "source_file": "screening.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/screening/applications/:id/decision",
+      "source_file": "screening.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/screening/applications/{id}",
+      "source_file": "screening.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/screening/applications/{id}/background-check",
+      "source_file": "screening.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/screening/applications/{id}/credit-report",
+      "source_file": "screening.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/screening/applications/{id}/decision",
+      "source_file": "screening.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/uploads/avatar",
+      "source_file": "upload.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/uploads/inspection/:id/photo",
+      "source_file": "upload.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/uploads/inspection/{id}/photo",
+      "source_file": "upload.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/uploads/kyc/:docType",
+      "source_file": "upload.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/uploads/kyc/{docType}",
+      "source_file": "upload.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/uploads/property/:id/image",
+      "source_file": "upload.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/uploads/property/{id}/image",
+      "source_file": "upload.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/uploads/work-order/:id/photo",
+      "source_file": "upload.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/uploads/work-order/{id}/photo",
+      "source_file": "upload.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/users/:id/roles",
+      "source_file": "user.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/:id/roles",
+      "source_file": "user.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/me/documents",
+      "source_file": "user.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/users/me/profile",
+      "source_file": "user.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/users/profile",
+      "source_file": "user.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/{id}/roles",
+      "source_file": "user.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/users/{id}/roles",
+      "source_file": "user.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/vendors/:id",
+      "source_file": "vendor.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/vendors/:id/insurance",
+      "source_file": "vendor_advanced.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/vendors/:id/insurance",
+      "source_file": "vendor_advanced.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/vendors/:id/ratings",
+      "source_file": "vendor_advanced.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/vendors/directory",
+      "source_file": "vendor_advanced.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/vendors/jobs",
+      "source_file": "vendor.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/vendors/my-bids",
+      "source_file": "vendor.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/vendors/stats",
+      "source_file": "vendor.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/vendors/{id}",
+      "source_file": "vendor.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/vendors/{id}/insurance",
+      "source_file": "vendor_advanced.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/vendors/{id}/insurance",
+      "source_file": "vendor_advanced.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/vendors/{id}/ratings",
+      "source_file": "vendor_advanced.routes.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/webhooks/stripe",
+      "source_file": "webhook.routes.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "source_file": "server.ts"
+    }
+  ]
+}

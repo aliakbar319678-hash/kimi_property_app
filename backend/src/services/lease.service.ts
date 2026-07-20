@@ -74,4 +74,13 @@ export class LeaseService {
       return newLeaseRes.rows[0];
     });
   }
+
+  static async updateStatus(id: string, status: string, landlordId: string) {
+    const res = await query(
+      'UPDATE leases SET status = $1, updated_at = NOW() WHERE id = $2 AND landlord_id = $3 RETURNING *',
+      [status, id, landlordId]
+    );
+    if (res.rows.length === 0) throw new AppError('Lease not found or access denied', 404);
+    return res.rows[0];
+  }
 }

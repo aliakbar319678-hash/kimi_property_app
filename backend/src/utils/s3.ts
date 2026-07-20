@@ -1,24 +1,35 @@
-import AWS from 'aws-sdk';
-import { config } from '../config';
+import fs from 'fs';
+import path from 'path';
 
-const s3 = new AWS.S3({
-  region: config.aws.region,
-  accessKeyId: config.aws.accessKeyId,
-  secretAccessKey: config.aws.secretAccessKey,
-});
+// Mock S3 by saving files to local 'uploads' directory
+const UPLOADS_DIR = path.join(__dirname, '../../uploads');
+
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
 export async function uploadToS3(key: string, body: Buffer, contentType: string, bucket?: string) {
-  const targetBucket = bucket || config.aws.s3Bucket;
-  await s3.putObject({ Bucket: targetBucket, Key: key, Body: body, ContentType: contentType }).promise();
-  return { key, bucket: targetBucket };
+  // Use replace to flatten the key into a single filename, or we could create subdirectories.
+  // Creating subdirectories is safer if keys have folders.
+  const filePath = path.join(UPLOADS_DIR, key);
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  
+  fs.writeFileSync(filePath, body);
+  return { key, bucket: bucket || 'local-bucket' };
 }
 
 export async function getSignedUrl(key: string, expiresInSeconds: number = 3600, bucket?: string) {
-  const targetBucket = bucket || config.aws.s3Bucket;
-  return s3.getSignedUrlPromise('getObject', { Bucket: targetBucket, Key: key, Expires: expiresInSeconds });
+  // Return a local mock URL
+  return `http://localhost:5000/uploads/${key}`;
 }
 
 export async function deleteFromS3(key: string, bucket?: string) {
-  const targetBucket = bucket || config.aws.s3Bucket;
-  await s3.deleteObject({ Bucket: targetBucket, Key: key }).promise();
+  const filePath = path.join(UPLOADS_DIR, key);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
 }
+

@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tenant_and_landlord_application/provider/payment_maintenance_provider.dart';
+import 'package:tenant_and_landlord_application/provider/tenant_lease_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
-class MaintenanceRequestScreen extends StatefulWidget {
+class MaintenanceRequestScreen extends ConsumerStatefulWidget {
   const MaintenanceRequestScreen({super.key});
 
   @override
-  State<MaintenanceRequestScreen> createState() =>
+  ConsumerState<MaintenanceRequestScreen> createState() =>
       _MaintenanceRequestScreenState();
 }
 
-class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
+class _MaintenanceRequestScreenState
+    extends ConsumerState<MaintenanceRequestScreen> {
   String? _selectedIssueType;
   final TextEditingController _descriptionController = TextEditingController();
   bool _isEmergency = false;
-  bool _hasPhoto = true; // mock photo already attached
+  bool _hasPhoto = false;
 
   final List<String> _issueTypes = [
     'Plumbing Issue',
@@ -34,6 +38,8 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final reqState = ref.watch(maintenanceRequestProvider);
+
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       body: SafeArea(
@@ -94,7 +100,7 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
                     const SizedBox(height: 32),
 
                     // ── Submit Button ──────────────────
-                    _buildSubmitButton(context),
+                    _buildSubmitButton(context, reqState.isLoading),
                     const SizedBox(height: 12),
 
                     // ── Cancel Button ──────────────────
@@ -125,9 +131,9 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Scaffold.of(context).openDrawer(),
+            onTap: () => Navigator.of(context).maybePop(),
             child: const Icon(
-              Icons.menu_rounded,
+              Icons.arrow_back_rounded,
               color: AppColors.textPrimary,
               size: 24,
             ),
@@ -240,7 +246,7 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
   Widget _buildPhotoUpload() {
     return GestureDetector(
       onTap: () {
-        // Mock: toggle photo
+        // Toggle mock photo for demonstration
         setState(() => _hasPhoto = !_hasPhoto);
       },
       child: Container(
@@ -252,7 +258,6 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
           border: Border.all(
             color: AppColors.border,
             width: 1.5,
-            // dashed effect via custom painter not needed for mock
           ),
         ),
         child: Column(
@@ -393,14 +398,12 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
   }
 
   // ── Submit Button ──────────────────────────────────
-  Widget _buildSubmitButton(BuildContext context) {
+  Widget _buildSubmitButton(BuildContext context, bool isLoading) {
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
-        onPressed: () {
-          _showSuccessDialog(context);
-        },
+        onPressed: isLoading ? null : () => _handleSubmit(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.white,
@@ -409,15 +412,52 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
           ),
           elevation: 0,
         ),
-        child: const Text(
-          'Submit Request',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: AppColors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Text(
+                'Submit Request',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
     );
+  }
+
+  Future<void> _handleSubmit(BuildContext context) async {
+    // Sync local state into the provider
+    final notifier = ref.read(maintenanceRequestProvider.notifier);
+    if (_selectedIssueType != null) notifier.setIssueType(_selectedIssueType!);
+    notifier.setDescription(_descriptionController.text);
+    if (_isEmergency) notifier.toggleEmergency();
+
+    // Get tenant's lease to extract property/unit IDs
+    final lease = ref.read(tenantLeaseProvider).asData?.value;
+
+    try {
+      await notifier.submit(
+        propertyId: '', // Property ID not needed when tenant submits (backend uses their lease)
+        unitId: '',
+      );
+      if (context.mounted) _showSuccessDialog(context);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   // ── Cancel Button ──────────────────────────────────

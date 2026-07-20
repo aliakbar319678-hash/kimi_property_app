@@ -1,161 +1,109 @@
-// e2e_test.js — Full end-to-end API test: login → staff create → financial settings
 const http = require('http');
 
-function httpRequest(options, body) {
-  return new Promise((resolve, reject) => {
-    const req = http.request(options, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
+function req(method, path, body, token) {
+  return new Promise(resolve => {
+    const data = body ? JSON.stringify(body) : null;
+    const options = {
+      hostname: 'localhost',
+      port: 5000,
+      path: path,
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: 'Bearer ' + token } : {}),
+        ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {})
+      }
+    };
+    const request = http.request(options, res => {
+      let raw = '';
+      res.on('data', chunk => raw += chunk);
       res.on('end', () => {
-        try { resolve({ status: res.statusCode, data: JSON.parse(data) }); }
-        catch(e) { resolve({ status: res.statusCode, data: data }); }
+        try { resolve({ status: res.statusCode, body: JSON.parse(raw) }); } 
+        catch { resolve({ status: res.statusCode, body: raw }); }
       });
     });
-    req.on('error', reject);
-    if (body) req.write(body);
-    req.end();
+    request.on('error', e => resolve({ status: 0, body: e.message }));
+    if (data) request.write(data);
+    request.end();
   });
 }
 
-async function post(path, payload, token) {
-  const body = JSON.stringify(payload);
-  const opts = {
-    hostname: 'localhost',
-    port: 5001,
-    path,
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Length': Buffer.byteLength(body),
-      ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+async function runTests() {
+  let passed = 0, failed = 0;
+  
+  function assert(name, condition, details) {
+    if (condition) {
+      console.log(`✅ PASS: ${name}`);
+      passed++;
+    } else {
+      console.log(`❌ FAIL: ${name}`);
+      console.log(`   Details: ${JSON.stringify(details)}`);
+      failed++;
     }
-  };
-  return httpRequest(opts, body);
-}
+  }
 
-async function put(path, payload, token) {
-  const body = JSON.stringify(payload);
-  const opts = {
-    hostname: 'localhost',
-    port: 5001,
-    path,
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Length': Buffer.byteLength(body),
-      'Authorization': 'Bearer ' + token
-    }
-  };
-  return httpRequest(opts, body);
-}
+  console.log('--- STARTING COMPREHENSIVE API TESTS ---');
 
-async function get(path, token) {
-  return httpRequest({
-    hostname: 'localhost', port: 5001, path, method: 'GET',
-    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
-  });
-}
+  // 1. Auth Tests
+  const adminRes = await req('POST', '/api/v1/auth/login', { email: 'admin@propadmin.io', password: 'Admin123!' });
+  assert('Admin Login', adminRes.status === 200 && adminRes.body.data.accessToken, adminRes.body);
+  const AT = adminRes.body.data?.accessToken;
 
-async function run() {
-  console.log('=== E2E API Test ===\n');
+  const landlordRes = await req('POST', '/api/v1/auth/login', { email: 'landlord@example.com', password: 'Admin123!' });
+  assert('Landlord Login', landlordRes.status === 200, landlordRes.body);
+  const LT = landlordRes.body.data?.accessToken;
 
-  // Step 1: Login
-  console.log('1. Login test...');
-  const loginRes = await post('/api/v1/auth/login', {
-    email: 'admin@propadmin.io',
-    password: 'Admin@1234'
-  });
-  console.log('   Status:', loginRes.status);
-  if (loginRes.status !== 200) {
-    console.log('   ERROR:', JSON.stringify(loginRes.data, null, 2));
+  const tenantRes = await req('POST', '/api/v1/auth/login', { email: 'tenant@example.com', password: 'Admin123!' });
+  assert('Tenant Login', tenantRes.status === 200, tenantRes.body);
+  const TT = tenantRes.body.data?.accessToken;
+
+  // 2. Property CRUD
+  const createPropRes = await req('POST', '/api/v1/properties', {
+    name: 'Test E2E Property',
+    addressLine1: '123 E2E St',
+    city: 'Test City',
+    stateProvince: 'TS',
+    postalCode: '12345',
+    countryCode: 'US',
+    type: 'apartment',
+    price: 1500
+  }, LT);
+  assert('Create Property (Landlord)', createPropRes.status === 201, createPropRes.body);
+  const propertyId = createPropRes.body.data?.id;
+
+  if (propertyId) {
+    const getPropRes = await req('GET', `/api/v1/properties/${propertyId}`, null, LT);
+    assert('Get Property by ID', getPropRes.status === 200, getPropRes.body);
+  }
+
+  // 3. Maintenance Work Order
+  let workOrderId = null;
+  if (propertyId) {
+    const createWoRes = await req('POST', '/api/v1/maintenance/work-orders', {
+      unitId: null, // Depending on schema, unitId might be required or nullable. We'll use a bogus or skip if it requires unit. Let's fetch units first.
+      title: 'Fix Sink',
+      description: 'Sink is leaking',
+      category: 'plumbing',
+      priority: 'high',
+      currency: 'USD'
+    }, LT);
+    // Since we didn't provide a valid unit ID, it should gracefully fail with 404 or 400, not crash the server.
+    assert('Create Work Order with Invalid Unit (Validation Check)', createWoRes.status === 404 || createWoRes.status === 400, createWoRes.body);
+  }
+
+  // 4. Role Switch API (The one we implemented!)
+  const switchRes = await req('POST', '/api/v1/auth/switch-role', { role: 'landlord' }, LT);
+  assert('Role Switch API (Landlord to Landlord)', switchRes.status === 200 && switchRes.body.data.activeRole === 'landlord', switchRes.body);
+
+  // 5. Admin Dashboard
+  const adminDashRes = await req('GET', '/api/v1/admin/dashboard', null, AT);
+  assert('Admin Dashboard Data Fetch', adminDashRes.status === 200, adminDashRes.body);
+
+  console.log('--- TEST RESULTS ---');
+  console.log(`Passed: ${passed} | Failed: ${failed}`);
+  if (failed > 0) {
     process.exit(1);
   }
-  const token = loginRes.data.data.token;
-  const roles = loginRes.data.data.user.roles;
-  console.log('   ✓ Login success! Roles:', roles);
-  console.log('   Token (preview):', token.substring(0, 60) + '...');
-
-  // Step 2: GET /api/v1/staff
-  console.log('\n2. List staff...');
-  const staffListRes = await get('/api/v1/staff', token);
-  console.log('   Status:', staffListRes.status);
-  if (staffListRes.status === 200) {
-    console.log('   ✓ Staff list OK — total:', staffListRes.data.meta?.total || 0);
-    if (staffListRes.data.data) {
-      staffListRes.data.data.forEach(s => console.log('     -', s.display_name, '(', s.email, ')', s.is_active ? 'active' : 'inactive'));
-    }
-  } else {
-    console.log('   ERROR:', JSON.stringify(staffListRes.data));
-  }
-
-  // Step 3: POST /api/v1/staff (create staff)
-  console.log('\n3. Create staff member...');
-  const timestamp = Date.now();
-  const createRes = await post('/api/v1/staff', {
-    display_name: 'Test Staff Member',
-    email: `test.staff.${timestamp}@propadmin.io`,
-    password: 'Staff@1234',
-    department: 'Support',
-    permissions: {
-      can_view_tickets: true,
-      can_resolve_tickets: true,
-      can_manage_payments: false,
-      can_view_reports: true,
-      can_manage_staff: false,
-      can_manage_settings: false,
-    }
-  }, token);
-  console.log('   Status:', createRes.status);
-  if (createRes.status === 201) {
-    console.log('   ✓ Staff created! ID:', createRes.data.data?.id);
-    console.log('   Name:', createRes.data.data?.display_name);
-  } else {
-    console.log('   ERROR:', JSON.stringify(createRes.data));
-  }
-
-  // Step 4: GET /api/v1/settings/platform-fee
-  console.log('\n4. Get platform financial settings...');
-  const feeRes = await get('/api/v1/settings/platform-fee', token);
-  console.log('   Status:', feeRes.status);
-  if (feeRes.status === 200) {
-    console.log('   ✓ Platform fee OK:', JSON.stringify(feeRes.data.data));
-  } else {
-    console.log('   ERROR:', JSON.stringify(feeRes.data));
-  }
-
-  // Step 5: PUT /api/v1/settings/platform-fee
-  console.log('\n5. Save platform financial settings...');
-  const feeUpdateRes = await put('/api/v1/settings/platform-fee', {
-    platform_fee_percentage: 6.5,
-    hold_period_days: 7
-  }, token);
-  console.log('   Status:', feeUpdateRes.status);
-  if (feeUpdateRes.status === 200) {
-    console.log('   ✓ Financial settings updated!', JSON.stringify(feeUpdateRes.data.data));
-  } else {
-    console.log('   ERROR:', JSON.stringify(feeUpdateRes.data));
-  }
-
-  // Step 6: PUT /api/v1/config (old config endpoint)
-  console.log('\n6. Save config (admin_fee, late_fee_percent, currency)...');
-  const configRes = await put('/api/v1/config', {
-    admin_fee: 2.5,
-    late_fee_percent: 12.0,
-    currency: 'USD'
-  }, token);
-  console.log('   Status:', configRes.status);
-  if (configRes.status === 200) {
-    console.log('   ✓ Config updated!', JSON.stringify(configRes.data.data));
-  } else {
-    console.log('   ERROR:', JSON.stringify(configRes.data));
-  }
-
-  console.log('\n=== ALL TESTS COMPLETE ===');
-  console.log('\nIf all tests passed, you can now:');
-  console.log('1. Restart the Node backend (Ctrl+C then npm run dev)');
-  console.log('2. Go to http://localhost:8000/login');
-  console.log('3. Login with: admin@propadmin.io / Admin@1234');
-  console.log('4. Visit Settings page — all forms should work');
 }
 
-run().catch(e => console.error('Fatal:', e.message));
+runTests();

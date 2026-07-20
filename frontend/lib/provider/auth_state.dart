@@ -20,6 +20,10 @@ abstract class RegisterState with _$RegisterState {
     @Default(false) bool isLogin,
     @Default('tenant') String selectedRole,
     String? errorMessage,
+    String? fullNameError,
+    String? emailError,
+    String? phoneError,
+    String? passwordError,
   }) = _RegisterState;
 }
 

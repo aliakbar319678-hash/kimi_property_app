@@ -310,24 +310,33 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           final success = await notif.submit();
                           if (!context.mounted) return;
 
+                          // Read fresh state after async to get the role set by the API
+                          final freshState = ref.read(registerProvider);
+
                           if (success) {
-                            if (state.isLogin) {
-                              // Route user to role home
-                              if (state.selectedRole == 'landlord') {
-                                Navigator.pushNamedAndRemoveUntil(context, '/landlord_home', (r) => false);
-                              } else if (state.selectedRole == 'vendor') {
-                                Navigator.pushNamedAndRemoveUntil(context, '/vendor_home', (r) => false);
+                            if (freshState.isLogin) {
+                              // Route user to role-specific home
+                              if (freshState.selectedRole == 'landlord') {
+                                Navigator.pushNamedAndRemoveUntil(
+                                    context, '/landlord_home', (r) => false);
+                              } else if (freshState.selectedRole == 'vendor') {
+                                Navigator.pushNamedAndRemoveUntil(
+                                    context, '/vendor_home', (r) => false);
                               } else {
-                                Navigator.pushNamedAndRemoveUntil(context, '/home', (r) => false);
+                                Navigator.pushNamedAndRemoveUntil(
+                                    context, '/home', (r) => false);
                               }
                             } else {
+                              // Registration succeeded → go to OTP verification
                               Navigator.pushNamed(context, '/otp');
                             }
                           } else {
                             ScaffoldMessenger.of(context).clearSnackBars();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(state.errorMessage ?? 'Authentication failed'),
+                                content: Text(
+                                    freshState.errorMessage ??
+                                        'Authentication failed'),
                                 backgroundColor: Colors.redAccent,
                               ),
                             );

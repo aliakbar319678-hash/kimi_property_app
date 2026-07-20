@@ -1,40 +1,96 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
+import 'package:tenant_and_landlord_application/core/api_constants.dart';
 
-class AISmartAssistantScreen extends StatefulWidget {
+class AISmartAssistantScreen extends ConsumerStatefulWidget {
   const AISmartAssistantScreen({super.key});
 
   @override
-  State<AISmartAssistantScreen> createState() => _AISmartAssistantScreenState();
+  ConsumerState<AISmartAssistantScreen> createState() =>
+      _AISmartAssistantScreenState();
 }
 
-class _AISmartAssistantScreenState extends State<AISmartAssistantScreen> {
-  final List<Map<String, dynamic>> _messages = [
-    {
-      'sender': 'ai',
-      'text':
-          "Good morning John. I've analyzed your portfolio today. You have 3 leases expiring within 30 days and 2 maintenance tickets flagged as high priority. How would you like to proceed?",
-      'time': 'Just now',
-    },
-  ];
+class _AISmartAssistantScreenState
+    extends ConsumerState<AISmartAssistantScreen> {
+  final List<Map<String, dynamic>> _messages = [];
   final _controller = TextEditingController();
+  bool _isInitialized = false;
+  bool _isGenerating = false;
 
-  void _submitQuery() {
-    if (_controller.text.trim().isNotEmpty) {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      final landlordName = ref.watch(landlordProvider).userName;
+      final greetingName = landlordName.isNotEmpty ? landlordName : 'Landlord';
+      _messages.add({
+        'sender': 'ai',
+        'text':
+            "Good morning $greetingName. I've analyzed your portfolio today. You have expiring leases and active maintenance tickets loaded from your properties. How would you like to proceed?",
+        'time': 'Just now',
+      });
+      _isInitialized = true;
+    }
+  }
+
+  Future<void> _submitQuery() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty || _isGenerating) return;
+
+    _controller.clear();
+
+    setState(() {
+      _messages.add({
+        'sender': 'user',
+        'text': text,
+        'time': 'Just now',
+      });
+      _isGenerating = true;
+    });
+
+    // Add a placeholder message for AI response
+    setState(() {
+      _messages.add({
+        'sender': 'ai',
+        'text': 'Thinking...',
+        'time': 'Just now',
+        'isLoading': true,
+      });
+    });
+
+    try {
+      final resp = await ApiClient().dio.post(
+        ApiConstants.aiChat,
+        data: {'message': text},
+      );
+      final rawData = resp.data;
+      final aiResponse = rawData['data']?.toString() ??
+          rawData['response']?.toString() ??
+          rawData['message']?.toString() ??
+          'I\'ve received your query, but could not parse a valid response.';
+
       setState(() {
-        _messages.add({
-          'sender': 'user',
-          'text': _controller.text.trim(),
-          'time': 'Just now',
-        });
+        _messages.removeLast(); // Remove "Thinking..." loading message
         _messages.add({
           'sender': 'ai',
-          'text':
-              'Checking properties data... Based on your inquiry, Sunset Apartments currently has the highest maintenance expense at SAR 1,200 this month. I recommend reviewing vendor contracts.',
+          'text': aiResponse,
           'time': 'Just now',
         });
+        _isGenerating = false;
       });
-      _controller.clear();
+    } catch (e) {
+      setState(() {
+        _messages.removeLast(); // Remove "Thinking..."
+        _messages.add({
+          'sender': 'ai',
+          'text': 'Sorry, I failed to reach the AI engine. Please check if your server is running.',
+          'time': 'Just now',
+        });
+        _isGenerating = false;
+      });
     }
   }
 
@@ -120,6 +176,7 @@ class _AISmartAssistantScreenState extends State<AISmartAssistantScreen> {
                     itemBuilder: (context, idx) {
                       final msg = _messages[idx];
                       final isAI = msg['sender'] == 'ai';
+                      final isLoading = msg['isLoading'] == true;
 
                       return Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,16 +213,28 @@ class _AISmartAssistantScreenState extends State<AISmartAssistantScreen> {
                                         ? Border.all(color: AppColors.border)
                                         : null,
                                   ),
-                                  child: Text(
-                                    msg['text'],
-                                    style: TextStyle(
-                                      color: isAI
-                                          ? AppColors.textPrimary
-                                          : Colors.white,
-                                      fontSize: 13,
-                                      height: 1.4,
-                                    ),
-                                  ),
+                                  child: isLoading
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              AppColors.primary,
+                                            ),
+                                          ),
+                                        )
+                                      : Text(
+                                          msg['text'],
+                                          style: TextStyle(
+                                            color: isAI
+                                                ? AppColors.textPrimary
+                                                : Colors.white,
+                                            fontSize: 13,
+                                            height: 1.4,
+                                          ),
+                                        ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -195,20 +264,23 @@ class _AISmartAssistantScreenState extends State<AISmartAssistantScreen> {
                   SizedBox(height: h * 0.03),
 
                   // Recommendations Chips
-                  const Text(
-                    'Suggestions',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildSuggestionChip('Tell me about the occupancy rate'),
-                      _buildSuggestionChip('Lease Expiry Analysis'),
-                      _buildSuggestionChip('Generate Rent Report'),
-                    ],
-                  ),
+                  if (!_isGenerating) ...[
+                    const Text(
+                      'Suggestions',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildSuggestionChip('Tell me about the occupancy rate'),
+                        _buildSuggestionChip('Lease Expiry Analysis'),
+                        _buildSuggestionChip('Generate Rent Report'),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -225,8 +297,9 @@ class _AISmartAssistantScreenState extends State<AISmartAssistantScreen> {
                     child: TextField(
                       controller: _controller,
                       onSubmitted: (_) => _submitQuery(),
+                      enabled: !_isGenerating,
                       decoration: InputDecoration(
-                        hintText: 'Ask anything...',
+                        hintText: _isGenerating ? 'AI is typing...' : 'Ask anything...',
                         fillColor: AppColors.scaffoldBg,
                         filled: true,
                         contentPadding: const EdgeInsets.symmetric(

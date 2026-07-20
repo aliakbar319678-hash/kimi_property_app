@@ -4,30 +4,31 @@ import * as path from 'path';
 
 async function migrate() {
   await initPostGIS();
-
-  let dir = path.join(__dirname, '../../src/migrations');
-  if (!fs.existsSync(dir)) {
-    dir = path.join(__dirname, '../migrations');
+  const migrationsDir = path.join(__dirname, '../../src/migrations');
+  
+  if (!fs.existsSync(migrationsDir)) {
+    throw new Error(`Migrations directory not found: ${migrationsDir}`);
   }
 
-  console.log('Scanning migrations in:', dir);
-  const files = fs.readdirSync(dir)
-    .filter(f => f.endsWith('.sql'))
+  const files = fs.readdirSync(migrationsDir)
+    .filter(file => file.endsWith('.sql'))
     .sort();
 
+  console.log(`🔍 Found ${files.length} migration files to run.`);
+
   for (const file of files) {
-    try {
-      console.log(`Running migration: ${file}...`);
-      const sql = fs.readFileSync(path.join(dir, file), 'utf-8');
-      await pool.query(sql);
-      console.log(`✅ Completed: ${file}`);
-    } catch (e: any) {
-      console.warn(`⚠️ Warning running migration ${file}:`, e.message || e);
-    }
+    console.log(`🏃 Running migration: ${file}`);
+    const filePath = path.join(migrationsDir, file);
+    const sql = fs.readFileSync(filePath, 'utf-8');
+    await pool.query(sql);
+    console.log(`✅ Completed: ${file}`);
   }
 
-  console.log('✅ All migrations completed successfully');
   await pool.end();
+  console.log('🎉 All migrations completed successfully');
 }
 
-migrate().catch(console.error);
+migrate().catch((err) => {
+  console.error('❌ Migration failed:', err);
+  process.exit(1);
+});

@@ -1,27 +1,8 @@
 import cron from 'node-cron';
 import { query } from '../db';
 import { NotificationService } from '../services/notification.service';
-import { releaseHeldPayments, sendHoldReleaseReminders } from '../workers/releaseHeldPayments';
 
 export function startCronJobs() {
-  // ── Vendor Payment Hold Release (every hour at :00) ───────────────────────
-  cron.schedule('0 * * * *', async () => {
-    try {
-      await releaseHeldPayments();
-    } catch (e) {
-      console.error('[cron] releaseHeldPayments failed:', e);
-    }
-  });
-
-  // ── 1-day-before hold reminder (daily at 08:00) ───────────────────────────
-  cron.schedule('0 8 * * *', async () => {
-    try {
-      await sendHoldReleaseReminders();
-    } catch (e) {
-      console.error('[cron] sendHoldReleaseReminders failed:', e);
-    }
-  });
-
   // Lease expiry monitor (daily at 00:00)
   cron.schedule('0 0 * * *', async () => {
     console.log('Running lease expiry monitor...');
@@ -98,6 +79,88 @@ export function startCronJobs() {
   cron.schedule('*/15 * * * *', async () => {
     await query('REFRESH MATERIALIZED VIEW CONCURRENTLY mv_rent_status');
     await query('REFRESH MATERIALIZED VIEW CONCURRENTLY mv_operational_overview');
+  });
+
+  // Rejected property deadline warning (daily at 10:00)
+  cron.schedule('0 10 * * *', async () => {
+    console.log('Running rejected property warning monitor...');
+    const warningRes = await query(
+      `SELECT id, landlord_id, name, rejection_deadline
+       FROM properties
+       WHERE status = 'rejected'
+         AND rejection_warning_sent = false
+         AND rejection_deadline <= NOW() + INTERVAL '24 hours'`
+    );
+    for (const prop of warningRes.rows) {
+      await NotificationService.create({
+        userId: prop.landlord_id,
+        type: 'system',
+        title: 'Property Rejection Deadline Warning',
+        message: `Your property "${prop.name}" removal deadline is tomorrow at ${new Date(prop.rejection_deadline).toLocaleString()}. Please correct the issues to prevent archiving.`,
+        priority: 'high',
+        channels: ['in_app'],
+      });
+      await query('UPDATE properties SET rejection_warning_sent = true WHERE id = $1', [prop.id]);
+    }
+  });
+
+  // Rejected property auto-archiver (daily at 02:00)
+  cron.schedule('0 2 * * *', async () => {
+    console.log('Running rejected property auto-archiver...');
+    const expiredRes = await query(
+      `SELECT id, landlord_id, name
+       FROM properties
+       WHERE status = 'rejected'
+         AND rejection_deadline < NOW()`
+    );
+    for (const prop of expiredRes.rows) {
+      await query("UPDATE properties SET status = 'archived', updated_at = NOW() WHERE id = $1", [prop.id]);
+      await NotificationService.create({
+        userId: prop.landlord_id,
+        type: 'system',
+        title: 'Property Archived',
+        message: `Your property "${prop.name}" has been archived because the deadline to correct rejection reasons has passed.`,
+        priority: 'high',
+        channels: ['in_app'],
+      });
+    }
+  });
+
+  // Late fee autocalculator (daily at 01:00)
+  cron.schedule('0 1 * * *', async () => {
+    console.log('Running automatic late fee calculator (Day 5 penalty)...');
+    try {
+      const lateRentPayments = await query(
+        `SELECT id, lease_id, tenant_id, amount_due, due_date FROM rent_payments
+         WHERE status IN ('pending', 'late')
+           AND due_date <= CURRENT_DATE - INTERVAL '5 days'
+           AND late_fee_applied = 0.00`
+      );
+
+      for (const payment of lateRentPayments.rows) {
+        const penaltyFee = 50.00;
+        const newAmount = parseFloat(payment.amount_due) + penaltyFee;
+
+        // Apply penalty to rent_payments
+        await query(
+          `UPDATE rent_payments 
+           SET amount_due = $1, late_fee_applied = $2, status = 'late'
+           WHERE id = $3`,
+          [newAmount, penaltyFee, payment.id]
+        );
+
+        // Record a late payment notice
+        await query(
+          `INSERT INTO late_payment_notices (lease_id, tenant_id, amount_due, late_fee_applied, days_late, notice_status)
+           VALUES ($1, $2, $3, $4, 5, 'SENT')`,
+          [payment.lease_id, payment.tenant_id, newAmount, penaltyFee]
+        );
+
+        console.log(`Successfully applied $50 late fee penalty to payment ID: ${payment.id}`);
+      }
+    } catch (err) {
+      console.error('Error calculating late fees:', err);
+    }
   });
 
   console.log('Cron jobs scheduled');

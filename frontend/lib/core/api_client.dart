@@ -9,6 +9,9 @@ class ApiClient {
   late Dio dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
+  static const String _accessTokenKey = 'auth_token';
+  static const String _refreshTokenKey = 'refresh_token';
+
   ApiClient._internal() {
     dio = Dio(BaseOptions(
       baseUrl: ApiConstants.baseUrl,
@@ -23,33 +26,71 @@ class ApiClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Add auth token to headers if it exists
-          final token = await _storage.read(key: 'auth_token');
+          // Attach Bearer token to every request if available
+          final token = await _storage.read(key: _accessTokenKey);
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
           return handler.next(options);
         },
         onError: (DioException e, handler) async {
-          // Handle token expiry / 401 errors globally here if needed
+          // On 401, attempt silent token refresh once
+          if (e.response?.statusCode == 401) {
+            final refreshToken = await _storage.read(key: _refreshTokenKey);
+            if (refreshToken != null && refreshToken.isNotEmpty) {
+              try {
+                final refreshResp = await Dio().post(
+                  '${ApiConstants.baseUrl}${ApiConstants.refresh}',
+                  data: {'refreshToken': refreshToken},
+                  options: Options(
+                    headers: {'Content-Type': 'application/json'},
+                  ),
+                );
+                final newToken =
+                    refreshResp.data['data']['accessToken'] as String;
+                await saveToken(newToken);
+
+                // Retry the original request with new token
+                final retryOptions = e.requestOptions.copyWith(
+                  headers: {
+                    ...e.requestOptions.headers,
+                    'Authorization': 'Bearer $newToken',
+                  },
+                );
+                final retryResp = await dio.fetch(retryOptions);
+                return handler.resolve(retryResp);
+              } catch (_) {
+                // Refresh failed — clear tokens so user must re-login
+                await clearToken();
+              }
+            }
+          }
           return handler.next(e);
         },
       ),
     );
   }
 
-  // Helper method to save token
+  // ── Token helpers ─────────────────────────────────────────────────────────
+
   Future<void> saveToken(String token) async {
-    await _storage.write(key: 'auth_token', value: token);
+    await _storage.write(key: _accessTokenKey, value: token);
   }
 
-  // Helper method to clear token (logout)
+  Future<void> saveRefreshToken(String token) async {
+    await _storage.write(key: _refreshTokenKey, value: token);
+  }
+
   Future<void> clearToken() async {
-    await _storage.delete(key: 'auth_token');
+    await _storage.delete(key: _accessTokenKey);
+    await _storage.delete(key: _refreshTokenKey);
   }
 
-  // Helper method to get token
   Future<String?> getToken() async {
-    return await _storage.read(key: 'auth_token');
+    return await _storage.read(key: _accessTokenKey);
+  }
+
+  Future<String?> getRefreshToken() async {
+    return await _storage.read(key: _refreshTokenKey);
   }
 }

@@ -5,6 +5,8 @@ import 'package:tenant_and_landlord_application/provider/auth_provider.dart';
 import 'package:tenant_and_landlord_application/provider/auth_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_primary_button.dart';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
+import 'package:tenant_and_landlord_application/core/api_constants.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   const OtpScreen({super.key});
@@ -29,6 +31,37 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       c.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _navigateAfterVerification(BuildContext context, WidgetRef ref) async {
+    String role = ref.read(registerProvider).selectedRole;
+
+    try {
+      final response = await ApiClient().dio.get(ApiConstants.me);
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        final List roles = data['roles'] ?? [];
+        if (roles.isNotEmpty) {
+          final primaryRoleObj = roles.firstWhere(
+            (r) => r['is_primary'] == true,
+            orElse: () => roles.first,
+          );
+          role = primaryRoleObj['role'] ?? 'tenant';
+        }
+      }
+    } catch (e) {
+      // fallback to registerProvider role
+    }
+
+    if (!context.mounted) return;
+
+    if (role == 'landlord') {
+      Navigator.pushReplacementNamed(context, '/landlord_home');
+    } else if (role == 'vendor') {
+      Navigator.pushReplacementNamed(context, '/vendor_onboarding');
+    } else {
+      Navigator.pushReplacementNamed(context, '/basic_profile');
+    }
   }
 
   void _onChanged(int index, String val) {
@@ -61,7 +94,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pushReplacementNamed(context, '/basic_profile');
+        _navigateAfterVerification(context, ref);
       }
     });
 

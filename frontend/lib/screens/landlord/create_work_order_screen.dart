@@ -22,8 +22,11 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
     text: 'Tenant is available after 1 PM. Vendor should call before arrival.',
   );
 
-  String _selectedProperty = 'Sunset Heights Apts, Unit 402';
-  String _selectedTenant = 'John Smith';
+  String _selectedProperty = '';
+  String _selectedPropertyId = '';
+  String _selectedUnitName = '';
+  String _selectedUnitId = '';
+  String _selectedTenant = '';
   String _selectedCategory = 'Plumbing';
   String _selectedPriority = 'High';
 
@@ -105,36 +108,107 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
             const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: AppColors.inputBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedProperty,
-                  isExpanded: true,
-                  items:
-                      [
-                        'Sunset Heights Apts, Unit 402',
-                        'Maple Residency, Unit 4',
-                      ].map((String val) {
-                        return DropdownMenuItem<String>(
-                          value: val,
-                          child: Text(
-                            val,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        );
-                      }).toList(),
-                  onChanged: (val) {
-                    if (val != null) setState(() => _selectedProperty = val);
-                  },
+            Builder(builder: (context) {
+              final state = ref.watch(landlordProvider);
+              final properties = state.properties;
+              // Auto-select first if nothing selected yet
+              if (_selectedPropertyId.isEmpty && properties.isNotEmpty) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    setState(() {
+                      _selectedPropertyId = properties.first.id;
+                      _selectedProperty = properties.first.name;
+                    });
+                  }
+                });
+              }
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.inputBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
                 ),
-              ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedPropertyId.isEmpty ? null : _selectedPropertyId,
+                    isExpanded: true,
+                    hint: const Text('Select Property'),
+                    items: properties.map((p) {
+                      return DropdownMenuItem<String>(
+                        value: p.id,
+                        child: Text(p.name, style: const TextStyle(fontSize: 14)),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        final prop = properties.firstWhere((p) => p.id == val);
+                        setState(() {
+                          _selectedPropertyId = prop.id;
+                          _selectedProperty = prop.name;
+                          _selectedUnitId = '';
+                          _selectedUnitName = '';
+                        });
+                      }
+                    },
+                  ),
+                ),
+              );
+            }),
+
+            const SizedBox(height: 16),
+
+            // Unit Selection Dropdown
+            const Text(
+              'Unit',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
+            const SizedBox(height: 6),
+            Builder(builder: (context) {
+              final state = ref.watch(landlordProvider);
+              final units = state.units;
+              // Auto-select first unit
+              if (_selectedUnitId.isEmpty && units.isNotEmpty) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    setState(() {
+                      _selectedUnitId = units.first.id;
+                      _selectedUnitName = units.first.name;
+                    });
+                  }
+                });
+              }
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.inputBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedUnitId.isEmpty ? null : _selectedUnitId,
+                    isExpanded: true,
+                    hint: const Text('Select Unit'),
+                    items: units.map((u) {
+                      return DropdownMenuItem<String>(
+                        value: u.id,
+                        child: Text(u.name, style: const TextStyle(fontSize: 14)),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        final unit = units.firstWhere((u) => u.id == val);
+                        setState(() {
+                          _selectedUnitId = unit.id;
+                          _selectedUnitName = unit.name;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              );
+            }),
 
             const SizedBox(height: 16),
 
@@ -144,29 +218,40 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
             const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: AppColors.inputBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedTenant,
-                  isExpanded: true,
-                  items: ['John Smith', 'Sarah Jenkins'].map((String val) {
-                    return DropdownMenuItem<String>(
-                      value: val,
-                      child: Text(val, style: const TextStyle(fontSize: 14)),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) setState(() => _selectedTenant = val);
-                  },
+            Builder(builder: (context) {
+              final state = ref.watch(landlordProvider);
+              final tenants = state.tenants;
+              // Auto-select first tenant
+              if (_selectedTenant.isEmpty && tenants.isNotEmpty) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) setState(() => _selectedTenant = tenants.first.name);
+                });
+              }
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.inputBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
                 ),
-              ),
-            ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedTenant.isEmpty ? null : _selectedTenant,
+                    isExpanded: true,
+                    hint: const Text('Select Tenant (optional)'),
+                    items: tenants.map((t) {
+                      return DropdownMenuItem<String>(
+                        value: t.name,
+                        child: Text(t.name, style: const TextStyle(fontSize: 14)),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedTenant = val);
+                    },
+                  ),
+                ),
+              );
+            }),
 
             const SizedBox(height: 20),
 
@@ -528,31 +613,64 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      if (_titleController.text.isEmpty || _descController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please fill in Title and Description')),
+                        );
+                        return;
+                      }
+                      if (_selectedPropertyId.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please select a property')),
+                        );
+                        return;
+                      }
+                      if (_selectedUnitId.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please select a unit')),
+                        );
+                        return;
+                      }
+
+                      // Build the work order with real IDs from dropdowns
                       final newWo = WorkOrder(
-                        id: DateTime.now().millisecondsSinceEpoch
-                            .toString()
-                            .substring(8),
-                        title: _titleController.text,
-                        description: _descController.text,
-                        propertyName: _selectedProperty.split(',')[0],
-                        unitName: _selectedProperty.split(',')[1].trim(),
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        title: _titleController.text.trim(),
+                        description: _descController.text.trim(),
+                        propertyName: _selectedProperty,   // matched to ID in provider
+                        unitName: _selectedUnitName,        // matched to ID in provider
                         tenantName: _selectedTenant,
                         priority: _selectedPriority,
-                        status: 'In-Progress',
-                        photos: [
-                          'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&q=80',
-                        ],
+                        status: 'Request',
+                        photos: [],
                         category: _selectedCategory,
-                        date: 'May 19, 2026',
-                        timeSlot: '2:00 PM - 4:00 PM',
-                        accessInstructions: _accessController.text,
-                        vendorName: 'QuickFix Maintenance',
-                        vendorPhone: '(555) 000-1111',
-                        bidAmount: 300.0,
+                        date: '',
+                        timeSlot: '',
+                        accessInstructions: _accessController.text.trim(),
                       );
-                      notifier.createWorkOrder(newWo);
-                      Navigator.pop(context);
+
+                      try {
+                        await notifier.createWorkOrder(newWo);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('✅ Work order created successfully!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          Navigator.pop(context);
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('❌ Failed: ${e.toString()}'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,

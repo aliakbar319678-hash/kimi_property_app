@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
@@ -290,7 +290,7 @@ class LandlordTenantDetailsScreen extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Monthly Rent', style: TextStyle(fontSize: w * 0.032, color: AppColors.textSecondary)),
-                      Text('\$1,200/mo', style: TextStyle(fontSize: w * 0.036, fontWeight: FontWeight.w700, color: Colors.green)),
+                      Text('\$${updatedTenant.rentAmount.toStringAsFixed(0)}/mo', style: TextStyle(fontSize: w * 0.036, fontWeight: FontWeight.w700, color: Colors.green)),
                     ],
                   ),
                   Divider(height: h * 0.025, color: AppColors.border),
@@ -302,7 +302,7 @@ class LandlordTenantDetailsScreen extends ConsumerWidget {
                         children: [
                           Text('Start Date', style: TextStyle(fontSize: w * 0.028, color: AppColors.textHint)),
                           const SizedBox(height: 2),
-                          Text('Jan 15, 2024', style: TextStyle(fontSize: w * 0.032, fontWeight: FontWeight.w600)),
+                          Text(updatedTenant.dateJoined.isNotEmpty ? updatedTenant.dateJoined : 'N/A', style: TextStyle(fontSize: w * 0.032, fontWeight: FontWeight.w600)),
                         ],
                       ),
                       Column(
@@ -310,7 +310,7 @@ class LandlordTenantDetailsScreen extends ConsumerWidget {
                         children: [
                           Text('End Date', style: TextStyle(fontSize: w * 0.028, color: AppColors.textHint)),
                           const SizedBox(height: 2),
-                          Text('Dec 31, 2024', style: TextStyle(fontSize: w * 0.032, fontWeight: FontWeight.w600)),
+                          Text(updatedTenant.leaseEndDate.isNotEmpty ? updatedTenant.leaseEndDate : 'N/A', style: TextStyle(fontSize: w * 0.032, fontWeight: FontWeight.w600)),
                         ],
                       ),
                     ],
@@ -334,9 +334,9 @@ class LandlordTenantDetailsScreen extends ConsumerWidget {
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: 3,
+              itemCount: updatedTenant.rentAmount > 0 ? 3 : 0,
               itemBuilder: (context, idx) {
-                final months = ['March Rent', 'February Rent', 'January Rent'];
+                final months = ['Current Month Rent', 'Previous Month Rent', 'Two Months Ago Rent'];
                 return Container(
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -354,7 +354,7 @@ class LandlordTenantDetailsScreen extends ConsumerWidget {
                           Text(months[idx], style: TextStyle(fontSize: w * 0.035, fontWeight: FontWeight.w600)),
                         ],
                       ),
-                      Text('\$1,200', style: TextStyle(fontSize: w * 0.035, fontWeight: FontWeight.w700)),
+                      Text('\$${updatedTenant.rentAmount.toStringAsFixed(0)}', style: TextStyle(fontSize: w * 0.035, fontWeight: FontWeight.w700)),
                     ],
                   ),
                 );
