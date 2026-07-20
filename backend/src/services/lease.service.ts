@@ -11,7 +11,7 @@ export class LeaseService {
       const leaseRes = await client.query(
         `INSERT INTO leases (tenant_id, unit_id, property_id, landlord_id, start_date, end_date, rent_amount, deposit_amount, payment_schedule, auto_renew, status)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft') RETURNING *`,
-        [data.tenantId, data.unitId, unitRes.rows[0].property_id, landlordId, data.startDate, data.endDate, data.rentAmount, data.depositAmount, data.paymentSchedule, data.autoRenew]
+        [data.tenantId, data.unitId, data.propertyId, landlordId, data.startDate, data.endDate, data.rentAmount, data.securityDeposit, data.paymentSchedule, data.autoRenew]
       );
       return leaseRes.rows[0];
     });

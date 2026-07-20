@@ -77,10 +77,11 @@ export const schemas = {
   leaseCreate: Joi.object({
     tenantId: Joi.string().uuid().required(),
     unitId: Joi.string().uuid().required(),
+    propertyId: Joi.string().uuid().required(),
     startDate: Joi.date().iso().required(),
     endDate: Joi.date().iso().greater(Joi.ref('startDate')).required(),
     rentAmount: Joi.number().positive().required(),
-    depositAmount: Joi.number().min(0).optional(),
+    securityDeposit: Joi.number().min(0).optional(),
     paymentSchedule: Joi.string().valid('monthly', 'weekly', 'bi_weekly').default('monthly'),
     autoRenew: Joi.boolean().default(false),
   }),

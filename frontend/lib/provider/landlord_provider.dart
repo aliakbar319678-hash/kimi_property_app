@@ -597,20 +597,22 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
   Future<void> createLease({
     required String tenantId,
     required String unitId,
+    required String propertyId,
     required String startDate,
     required String endDate,
     required double rentAmount,
-    double depositAmount = 0.0,
+    double securityDeposit = 0.0,
     String paymentSchedule = 'monthly',
     bool autoRenew = false,
   }) async {
     final payload = <String, dynamic>{
       'tenantId': tenantId,
       'unitId': unitId,
+      'propertyId': propertyId,
       'startDate': startDate,
       'endDate': endDate,
       'rentAmount': rentAmount,
-      'depositAmount': depositAmount,
+      'securityDeposit': securityDeposit,
       'paymentSchedule': paymentSchedule,
       'autoRenew': autoRenew,
     };

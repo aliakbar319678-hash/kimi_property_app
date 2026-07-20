@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
+import 'package:dio/dio.dart';
 
 class LeaseManagementScreen extends ConsumerStatefulWidget {
   const LeaseManagementScreen({super.key});
@@ -126,7 +127,7 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: allLeases.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, idx) {
                         return GestureDetector(
                           onTap: () => Navigator.pushNamed(
@@ -345,7 +346,6 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
   // ─── Create Lease Bottom Sheet ──────────────────────────────────────────────
   void _showCreateLeaseSheet(BuildContext context) {
     final state = ref.read(landlordProvider);
-    final tenantIdCtrl = TextEditingController();
     final unitIdCtrl = TextEditingController();
     final rentCtrl = TextEditingController();
     final depositCtrl = TextEditingController();
@@ -386,8 +386,13 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                 const Text('Create Lease', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                 const SizedBox(height: 20),
 
-                // Tenant selection or ID input
-                if (tenants.isNotEmpty) ...[
+                // Tenant selection
+                if (tenants.isEmpty) ...[
+                  const Text('Tenant *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  const Text('No tenants found. Ask tenant to register first.', style: TextStyle(color: AppColors.error, fontSize: 13)),
+                  const SizedBox(height: 16),
+                ] else ...[
                   const Text('Tenant *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
@@ -397,12 +402,8 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                     items: tenants.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name))).toList(),
                     onChanged: (v) => setSheetState(() => selectedTenantId = v),
                   ),
-                ] else ...[
-                  const Text('Tenant ID *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  TextField(controller: tenantIdCtrl, decoration: _sheetFieldDeco(hint: 'Paste tenant UUID')),
+                  const SizedBox(height: 16),
                 ],
-                const SizedBox(height: 16),
 
                 // Unit selection
                 const Text('Unit *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
@@ -551,7 +552,7 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                     onPressed: isLoading
                         ? null
                         : () async {
-                            final tId = selectedTenantId ?? tenantIdCtrl.text.trim();
+                            final tId = selectedTenantId ?? '';
                             final uId = selectedUnitId ?? unitIdCtrl.text.trim();
                             if (tId.isEmpty || uId.isEmpty || startDate == null || endDate == null || rentCtrl.text.trim().isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all required fields'), backgroundColor: AppColors.error));
@@ -561,13 +562,20 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                             try {
                               final sd = '${startDate!.year}-${startDate!.month.toString().padLeft(2, '0')}-${startDate!.day.toString().padLeft(2, '0')}';
                               final ed = '${endDate!.year}-${endDate!.month.toString().padLeft(2, '0')}-${endDate!.day.toString().padLeft(2, '0')}';
+                              
+                              String pId = '';
+                              if (selectedUnitId != null) {
+                                pId = units.firstWhere((u) => u.id == selectedUnitId).propertyId;
+                              }
+
                               await ref.read(landlordProvider.notifier).createLease(
                                     tenantId: tId,
                                     unitId: uId,
+                                    propertyId: pId,
                                     startDate: sd,
                                     endDate: ed,
                                     rentAmount: double.parse(rentCtrl.text.trim()),
-                                    depositAmount: double.tryParse(depositCtrl.text.trim()) ?? 0.0,
+                                    securityDeposit: double.tryParse(depositCtrl.text.trim()) ?? 0.0,
                                     paymentSchedule: schedule,
                                     autoRenew: autoRenew,
                                   );
@@ -732,11 +740,11 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
               Navigator.pop(context);
               try {
                 await ref.read(landlordProvider.notifier).updateLeaseStatus(lease.id, 'terminated');
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lease terminated.'), backgroundColor: AppColors.error));
                 }
               } catch (e) {
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
                 }
               }
