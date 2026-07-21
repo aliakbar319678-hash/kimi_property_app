@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
@@ -180,17 +182,23 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
 
   Future<void> _pickImage() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        withData: true,
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 80,
       );
 
-      if (result != null && result.files.single.bytes != null) {
+      if (image != null) {
+        final bytes = await image.readAsBytes();
         setState(() {
-          _pickedImageBytes = result.files.single.bytes;
-          _pickedFileName = result.files.single.name;
+          _pickedImageBytes = bytes;
+          _pickedFileName = image.name;
         });
       }
+    } on PlatformException catch (e) {
+      if (mounted) _showError('Permission denied or error: ${e.message}');
     } catch (e) {
       if (mounted) _showError('Failed to pick image: $e');
     }
