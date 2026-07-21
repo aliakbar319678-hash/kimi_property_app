@@ -22,6 +22,8 @@ abstract class Property with _$Property {
     // Approval workflow fields
     @Default('pending') String verificationStatus, // 'pending' | 'approved' | 'rejected'
     @Default(null) String? rejectionReason,
+    // Extra dynamic fields
+    @Default({}) Map<String, dynamic> metadata,
   }) = _Property;
 }
 

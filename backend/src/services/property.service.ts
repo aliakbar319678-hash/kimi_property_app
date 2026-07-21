@@ -8,10 +8,10 @@ export class PropertyService {
       const regionId = regionRes.rows[0]?.id;
 
       const propertyRes = await client.query(
-        `INSERT INTO properties (landlord_id, manager_id, region_id, name, address_line1, address_line2, city, state_province, postal_code, country_code, type, amenities, description, location, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, ST_SetSRID(ST_MakePoint($14, $15), 4326), 'pending_verification')
+        `INSERT INTO properties (landlord_id, manager_id, region_id, name, address_line1, address_line2, city, state_province, postal_code, country_code, type, amenities, description, location, status, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, ST_SetSRID(ST_MakePoint($14, $15), 4326), 'pending_verification', $16)
          RETURNING *`,
-        [landlordId, data.managerId || null, regionId, data.name, data.addressLine1, data.addressLine2 || null, data.city, data.stateProvince, data.postalCode, data.countryCode, data.type, JSON.stringify(data.amenities || []), data.description || null, data.location?.lng, data.location?.lat]
+        [landlordId, data.managerId || null, regionId, data.name, data.addressLine1, data.addressLine2 || null, data.city, data.stateProvince, data.postalCode, data.countryCode, data.type, JSON.stringify(data.amenities || []), data.description || null, data.location?.lng, data.location?.lat, JSON.stringify(data.metadata || {})]
       );
       return propertyRes.rows[0];
     });
@@ -122,7 +122,7 @@ export class PropertyService {
     const allowedFields = [
       'name', 'address_line1', 'address_line2', 'city', 'state_province',
       'postal_code', 'country_code', 'type', 'status', 'verification_status',
-      'amenities', 'description', 'images', 'rejection_reason', 'rejection_deadline'
+      'amenities', 'description', 'images', 'rejection_reason', 'rejection_deadline', 'metadata'
     ];
 
     const updates: string[] = [];
@@ -135,7 +135,7 @@ export class PropertyService {
 
       if (value !== undefined) {
         updates.push(`${field} = $${idx++}`);
-        values.push((field === 'amenities' || field === 'images') && typeof value === 'object' ? JSON.stringify(value) : value);
+        values.push((field === 'amenities' || field === 'images' || field === 'metadata') && typeof value === 'object' ? JSON.stringify(value) : value);
       }
     }
 

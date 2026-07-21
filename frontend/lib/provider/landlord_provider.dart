@@ -94,6 +94,15 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
           } catch (_) {}
         }
 
+        Map<String, dynamic> metadata = {};
+        if (m['metadata'] is Map) {
+          metadata = m['metadata'] as Map<String, dynamic>;
+        } else if (m['metadata'] is String && m['metadata'].toString().isNotEmpty) {
+          try {
+            metadata = jsonDecode(m['metadata']) as Map<String, dynamic>;
+          } catch (_) {}
+        }
+
         return Property(
           id: m['id']?.toString() ?? '',
           name: m['name']?.toString() ?? 'Unnamed Property',
@@ -111,6 +120,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
           status: m['status']?.toString() ?? 'active',
           verificationStatus: m['verification_status']?.toString() ?? 'pending',
           rejectionReason: m['rejection_reason']?.toString(),
+          metadata: metadata,
         );
       }).toList();
 
@@ -578,6 +588,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
     String? description,
     List<String>? amenities,
     double? price,
+    Map<String, dynamic>? metadata,
   }) async {
     final payload = <String, dynamic>{
       'name': name,
@@ -590,6 +601,8 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       if (description != null && description.isNotEmpty)
         'description': description,
       if (amenities != null && amenities.isNotEmpty) 'amenities': amenities,
+      if (price != null) 'price': price,
+      if (metadata != null) 'metadata': metadata,
     };
     final resp = await ApiClient().dio.post(ApiConstants.properties, data: payload);
     await loadProperties(); // Refresh the properties list

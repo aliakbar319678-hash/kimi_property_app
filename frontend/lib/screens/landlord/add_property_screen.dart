@@ -40,7 +40,20 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
   final Set<String> _selectedAmenities = {};
   bool _isSubmitting = false;
 
-  // ── Unit Controllers ─────────────────────────────────────────────────────
+  // ── Dynamic Property Controllers ─────────────────────────────────────────
+  final _houseBedsCtrl = TextEditingController();
+  final _houseBathsCtrl = TextEditingController();
+  final _houseSqftCtrl = TextEditingController();
+  final _houseYardCtrl = TextEditingController();
+
+  String _commercialCategory = 'Office';
+  final _commercialSqftCtrl = TextEditingController();
+  final _commercialZoningCtrl = TextEditingController();
+
+  final _aptTotalUnitsCtrl = TextEditingController();
+  final _aptFloorCountCtrl = TextEditingController();
+
+  // ── Unit Controllers (Apartment) ─────────────────────────────────────────
   final _unitNumberCtrl = TextEditingController();
   final _unitRentCtrl = TextEditingController();
   final _unitDepositCtrl = TextEditingController();
@@ -89,6 +102,14 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
     _unitBedsCtrl.dispose();
     _unitBathsCtrl.dispose();
     _unitSqftCtrl.dispose();
+    _houseBedsCtrl.dispose();
+    _houseBathsCtrl.dispose();
+    _houseSqftCtrl.dispose();
+    _houseYardCtrl.dispose();
+    _commercialSqftCtrl.dispose();
+    _commercialZoningCtrl.dispose();
+    _aptTotalUnitsCtrl.dispose();
+    _aptFloorCountCtrl.dispose();
     super.dispose();
   }
 
@@ -96,6 +117,27 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
     try {
+      Map<String, dynamic> metadata = {};
+      if (['house', 'loft', 'studio'].contains(_selectedType)) {
+        metadata = {
+          'bedrooms': int.tryParse(_houseBedsCtrl.text.trim()) ?? 0,
+          'bathrooms': int.tryParse(_houseBathsCtrl.text.trim()) ?? 0,
+          'square_feet': int.tryParse(_houseSqftCtrl.text.trim()) ?? 0,
+          'yard_parking': _houseYardCtrl.text.trim(),
+        };
+      } else if (_selectedType == 'commercial') {
+        metadata = {
+          'category': _commercialCategory,
+          'usable_sqft': int.tryParse(_commercialSqftCtrl.text.trim()) ?? 0,
+          'zoning': _commercialZoningCtrl.text.trim(),
+        };
+      } else if (_selectedType == 'apartment') {
+        metadata = {
+          'total_units': int.tryParse(_aptTotalUnitsCtrl.text.trim()) ?? 0,
+          'floor_count': int.tryParse(_aptFloorCountCtrl.text.trim()) ?? 0,
+        };
+      }
+
       _createdPropertyId = await ref.read(landlordProvider.notifier).createProperty(
             name: _nameCtrl.text.trim(),
             addressLine1: _addressCtrl.text.trim(),
@@ -107,6 +149,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
             description: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
             amenities: _selectedAmenities.toList(),
             price: double.tryParse(_priceCtrl.text.trim()),
+            metadata: metadata,
           );
 
       if (_pickedImageBytes != null && _pickedFileName != null) {
@@ -118,7 +161,16 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
       }
 
       if (mounted) {
-        setState(() => _currentStep = 1);
+        if (_selectedType != 'apartment') {
+          // Bypass add unit step for single-entity properties
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Property created successfully! 🎉'),
+            backgroundColor: Color(0xFF27AE60),
+          ));
+          Navigator.pop(context);
+        } else {
+          setState(() => _currentStep = 1);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -449,6 +501,73 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
 
           const SizedBox(height: 16),
 
+          // Dynamic Fields based on property type
+          if (['house', 'loft', 'studio'].contains(_selectedType))
+            _sectionCard(
+              title: '$_selectedType Details',
+              icon: Icons.home_rounded,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_label('Bedrooms'), _field('e.g. 3', _houseBedsCtrl, keyboardType: TextInputType.number, required: false, validator: (_) => null)])),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_label('Bathrooms'), _field('e.g. 2', _houseBathsCtrl, keyboardType: TextInputType.number, required: false, validator: (_) => null)])),
+                  ],
+                ),
+                _label('Square Feet'),
+                _field('e.g. 1500', _houseSqftCtrl, keyboardType: TextInputType.number, required: false, validator: (_) => null),
+                _label('Yard / Parking Info'),
+                _field('e.g. 2 car garage, fenced yard', _houseYardCtrl, required: false, validator: (_) => null),
+              ],
+            )
+          else if (_selectedType == 'commercial')
+            _sectionCard(
+              title: 'Commercial Details',
+              icon: Icons.storefront_rounded,
+              children: [
+                _label('Category'),
+                DropdownButtonFormField<String>(
+                  value: _commercialCategory,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: AppColors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'Office', child: Text('Office')),
+                    DropdownMenuItem(value: 'Retail', child: Text('Retail')),
+                    DropdownMenuItem(value: 'Industrial', child: Text('Industrial')),
+                    DropdownMenuItem(value: 'Warehouse', child: Text('Warehouse')),
+                  ],
+                  onChanged: (v) => setState(() => _commercialCategory = v ?? 'Office'),
+                ),
+                const SizedBox(height: 12),
+                _label('Usable Sq. Ft.'),
+                _field('e.g. 5000', _commercialSqftCtrl, keyboardType: TextInputType.number, required: false, validator: (_) => null),
+                _label('Zoning Code'),
+                _field('e.g. C-1, M-2', _commercialZoningCtrl, required: false, validator: (_) => null),
+              ],
+            )
+          else if (_selectedType == 'apartment')
+            _sectionCard(
+              title: 'Building Details',
+              icon: Icons.apartment_rounded,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_label('Total Units'), _field('e.g. 50', _aptTotalUnitsCtrl, keyboardType: TextInputType.number, required: false, validator: (_) => null)])),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_label('Floor Count'), _field('e.g. 5', _aptFloorCountCtrl, keyboardType: TextInputType.number, required: false, validator: (_) => null)])),
+                  ],
+                ),
+              ],
+            ),
+
+          if (['house', 'loft', 'studio', 'commercial', 'apartment'].contains(_selectedType))
+            const SizedBox(height: 16),
+
           // Amenities
           _sectionCard(
             title: 'Amenities',
@@ -511,12 +630,12 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
               ),
               child: _isSubmitting
                   ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                  : const Row(
+                  : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Next: Add Unit', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward_rounded, size: 20),
+                        Text(_selectedType == 'apartment' ? 'Next: Add Unit' : 'Create Property', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                        const SizedBox(width: 8),
+                        Icon(_selectedType == 'apartment' ? Icons.arrow_forward_rounded : Icons.check_circle_rounded, size: 20),
                       ],
                     ),
             ),

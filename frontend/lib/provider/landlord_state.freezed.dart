@@ -17,7 +17,8 @@ mixin _$Property {
  String get id; String get name; String get address; double get occupancyRate; String get imageUrl; int get totalUnits; int get occupiedUnits; int get vacantUnits; double get monthlyRent;// Extra backend fields
  String get type; List<String> get amenities; String get description; String get status;// Approval workflow fields
  String get verificationStatus;// 'pending' | 'approved' | 'rejected'
- String? get rejectionReason;
+ String? get rejectionReason;// Extra dynamic fields
+ Map<String, dynamic> get metadata;
 /// Create a copy of Property
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +29,16 @@ $PropertyCopyWith<Property> get copyWith => _$PropertyCopyWithImpl<Property>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Property&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.totalUnits, totalUnits) || other.totalUnits == totalUnits)&&(identical(other.occupiedUnits, occupiedUnits) || other.occupiedUnits == occupiedUnits)&&(identical(other.vacantUnits, vacantUnits) || other.vacantUnits == vacantUnits)&&(identical(other.monthlyRent, monthlyRent) || other.monthlyRent == monthlyRent)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other.amenities, amenities)&&(identical(other.description, description) || other.description == description)&&(identical(other.status, status) || other.status == status)&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Property&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.totalUnits, totalUnits) || other.totalUnits == totalUnits)&&(identical(other.occupiedUnits, occupiedUnits) || other.occupiedUnits == occupiedUnits)&&(identical(other.vacantUnits, vacantUnits) || other.vacantUnits == vacantUnits)&&(identical(other.monthlyRent, monthlyRent) || other.monthlyRent == monthlyRent)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other.amenities, amenities)&&(identical(other.description, description) || other.description == description)&&(identical(other.status, status) || other.status == status)&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&const DeepCollectionEquality().equals(other.metadata, metadata));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,address,occupancyRate,imageUrl,totalUnits,occupiedUnits,vacantUnits,monthlyRent,type,const DeepCollectionEquality().hash(amenities),description,status,verificationStatus,rejectionReason);
+int get hashCode => Object.hash(runtimeType,id,name,address,occupancyRate,imageUrl,totalUnits,occupiedUnits,vacantUnits,monthlyRent,type,const DeepCollectionEquality().hash(amenities),description,status,verificationStatus,rejectionReason,const DeepCollectionEquality().hash(metadata));
 
 @override
 String toString() {
-  return 'Property(id: $id, name: $name, address: $address, occupancyRate: $occupancyRate, imageUrl: $imageUrl, totalUnits: $totalUnits, occupiedUnits: $occupiedUnits, vacantUnits: $vacantUnits, monthlyRent: $monthlyRent, type: $type, amenities: $amenities, description: $description, status: $status, verificationStatus: $verificationStatus, rejectionReason: $rejectionReason)';
+  return 'Property(id: $id, name: $name, address: $address, occupancyRate: $occupancyRate, imageUrl: $imageUrl, totalUnits: $totalUnits, occupiedUnits: $occupiedUnits, vacantUnits: $vacantUnits, monthlyRent: $monthlyRent, type: $type, amenities: $amenities, description: $description, status: $status, verificationStatus: $verificationStatus, rejectionReason: $rejectionReason, metadata: $metadata)';
 }
 
 
@@ -48,7 +49,7 @@ abstract mixin class $PropertyCopyWith<$Res>  {
   factory $PropertyCopyWith(Property value, $Res Function(Property) _then) = _$PropertyCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String address, double occupancyRate, String imageUrl, int totalUnits, int occupiedUnits, int vacantUnits, double monthlyRent, String type, List<String> amenities, String description, String status, String verificationStatus, String? rejectionReason
+ String id, String name, String address, double occupancyRate, String imageUrl, int totalUnits, int occupiedUnits, int vacantUnits, double monthlyRent, String type, List<String> amenities, String description, String status, String verificationStatus, String? rejectionReason, Map<String, dynamic> metadata
 });
 
 
@@ -65,7 +66,7 @@ class _$PropertyCopyWithImpl<$Res>
 
 /// Create a copy of Property
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? address = null,Object? occupancyRate = null,Object? imageUrl = null,Object? totalUnits = null,Object? occupiedUnits = null,Object? vacantUnits = null,Object? monthlyRent = null,Object? type = null,Object? amenities = null,Object? description = null,Object? status = null,Object? verificationStatus = null,Object? rejectionReason = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? address = null,Object? occupancyRate = null,Object? imageUrl = null,Object? totalUnits = null,Object? occupiedUnits = null,Object? vacantUnits = null,Object? monthlyRent = null,Object? type = null,Object? amenities = null,Object? description = null,Object? status = null,Object? verificationStatus = null,Object? rejectionReason = freezed,Object? metadata = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -82,7 +83,8 @@ as List<String>,description: null == description ? _self.description : descripti
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,verificationStatus: null == verificationStatus ? _self.verificationStatus : verificationStatus // ignore: cast_nullable_to_non_nullable
 as String,rejectionReason: freezed == rejectionReason ? _self.rejectionReason : rejectionReason // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,metadata: null == metadata ? _self.metadata : metadata // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>,
   ));
 }
 
@@ -167,10 +169,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason,  Map<String, dynamic> metadata)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Property() when $default != null:
-return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason);case _:
+return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason,_that.metadata);case _:
   return orElse();
 
 }
@@ -188,10 +190,10 @@ return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imag
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason,  Map<String, dynamic> metadata)  $default,) {final _that = this;
 switch (_that) {
 case _Property():
-return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason);case _:
+return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason,_that.metadata);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +210,10 @@ return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imag
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason,  Map<String, dynamic> metadata)?  $default,) {final _that = this;
 switch (_that) {
 case _Property() when $default != null:
-return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason);case _:
+return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason,_that.metadata);case _:
   return null;
 
 }
@@ -223,7 +225,7 @@ return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imag
 
 
 class _Property implements Property {
-  const _Property({required this.id, required this.name, required this.address, required this.occupancyRate, required this.imageUrl, required this.totalUnits, required this.occupiedUnits, required this.vacantUnits, required this.monthlyRent, this.type = 'apartment', final  List<String> amenities = const [], this.description = '', this.status = 'active', this.verificationStatus = 'pending', this.rejectionReason = null}): _amenities = amenities;
+  const _Property({required this.id, required this.name, required this.address, required this.occupancyRate, required this.imageUrl, required this.totalUnits, required this.occupiedUnits, required this.vacantUnits, required this.monthlyRent, this.type = 'apartment', final  List<String> amenities = const [], this.description = '', this.status = 'active', this.verificationStatus = 'pending', this.rejectionReason = null, final  Map<String, dynamic> metadata = const {}}): _amenities = amenities,_metadata = metadata;
   
 
 @override final  String id;
@@ -250,6 +252,15 @@ class _Property implements Property {
 @override@JsonKey() final  String verificationStatus;
 // 'pending' | 'approved' | 'rejected'
 @override@JsonKey() final  String? rejectionReason;
+// Extra dynamic fields
+ final  Map<String, dynamic> _metadata;
+// Extra dynamic fields
+@override@JsonKey() Map<String, dynamic> get metadata {
+  if (_metadata is EqualUnmodifiableMapView) return _metadata;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_metadata);
+}
+
 
 /// Create a copy of Property
 /// with the given fields replaced by the non-null parameter values.
@@ -261,16 +272,16 @@ _$PropertyCopyWith<_Property> get copyWith => __$PropertyCopyWithImpl<_Property>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Property&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.totalUnits, totalUnits) || other.totalUnits == totalUnits)&&(identical(other.occupiedUnits, occupiedUnits) || other.occupiedUnits == occupiedUnits)&&(identical(other.vacantUnits, vacantUnits) || other.vacantUnits == vacantUnits)&&(identical(other.monthlyRent, monthlyRent) || other.monthlyRent == monthlyRent)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other._amenities, _amenities)&&(identical(other.description, description) || other.description == description)&&(identical(other.status, status) || other.status == status)&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Property&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.totalUnits, totalUnits) || other.totalUnits == totalUnits)&&(identical(other.occupiedUnits, occupiedUnits) || other.occupiedUnits == occupiedUnits)&&(identical(other.vacantUnits, vacantUnits) || other.vacantUnits == vacantUnits)&&(identical(other.monthlyRent, monthlyRent) || other.monthlyRent == monthlyRent)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other._amenities, _amenities)&&(identical(other.description, description) || other.description == description)&&(identical(other.status, status) || other.status == status)&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&const DeepCollectionEquality().equals(other._metadata, _metadata));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,address,occupancyRate,imageUrl,totalUnits,occupiedUnits,vacantUnits,monthlyRent,type,const DeepCollectionEquality().hash(_amenities),description,status,verificationStatus,rejectionReason);
+int get hashCode => Object.hash(runtimeType,id,name,address,occupancyRate,imageUrl,totalUnits,occupiedUnits,vacantUnits,monthlyRent,type,const DeepCollectionEquality().hash(_amenities),description,status,verificationStatus,rejectionReason,const DeepCollectionEquality().hash(_metadata));
 
 @override
 String toString() {
-  return 'Property(id: $id, name: $name, address: $address, occupancyRate: $occupancyRate, imageUrl: $imageUrl, totalUnits: $totalUnits, occupiedUnits: $occupiedUnits, vacantUnits: $vacantUnits, monthlyRent: $monthlyRent, type: $type, amenities: $amenities, description: $description, status: $status, verificationStatus: $verificationStatus, rejectionReason: $rejectionReason)';
+  return 'Property(id: $id, name: $name, address: $address, occupancyRate: $occupancyRate, imageUrl: $imageUrl, totalUnits: $totalUnits, occupiedUnits: $occupiedUnits, vacantUnits: $vacantUnits, monthlyRent: $monthlyRent, type: $type, amenities: $amenities, description: $description, status: $status, verificationStatus: $verificationStatus, rejectionReason: $rejectionReason, metadata: $metadata)';
 }
 
 
@@ -281,7 +292,7 @@ abstract mixin class _$PropertyCopyWith<$Res> implements $PropertyCopyWith<$Res>
   factory _$PropertyCopyWith(_Property value, $Res Function(_Property) _then) = __$PropertyCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String address, double occupancyRate, String imageUrl, int totalUnits, int occupiedUnits, int vacantUnits, double monthlyRent, String type, List<String> amenities, String description, String status, String verificationStatus, String? rejectionReason
+ String id, String name, String address, double occupancyRate, String imageUrl, int totalUnits, int occupiedUnits, int vacantUnits, double monthlyRent, String type, List<String> amenities, String description, String status, String verificationStatus, String? rejectionReason, Map<String, dynamic> metadata
 });
 
 
@@ -298,7 +309,7 @@ class __$PropertyCopyWithImpl<$Res>
 
 /// Create a copy of Property
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? address = null,Object? occupancyRate = null,Object? imageUrl = null,Object? totalUnits = null,Object? occupiedUnits = null,Object? vacantUnits = null,Object? monthlyRent = null,Object? type = null,Object? amenities = null,Object? description = null,Object? status = null,Object? verificationStatus = null,Object? rejectionReason = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? address = null,Object? occupancyRate = null,Object? imageUrl = null,Object? totalUnits = null,Object? occupiedUnits = null,Object? vacantUnits = null,Object? monthlyRent = null,Object? type = null,Object? amenities = null,Object? description = null,Object? status = null,Object? verificationStatus = null,Object? rejectionReason = freezed,Object? metadata = null,}) {
   return _then(_Property(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -315,7 +326,8 @@ as List<String>,description: null == description ? _self.description : descripti
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,verificationStatus: null == verificationStatus ? _self.verificationStatus : verificationStatus // ignore: cast_nullable_to_non_nullable
 as String,rejectionReason: freezed == rejectionReason ? _self.rejectionReason : rejectionReason // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,metadata: null == metadata ? _self._metadata : metadata // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>,
   ));
 }
 
