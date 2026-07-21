@@ -214,14 +214,12 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       final data = resp.data['data'] as Map<String, dynamic>? ?? {};
 
       final collectedMap = data['total_collected'] ?? data['totalCollected'] ?? {'amount': 0};
-      final totalCollected = ((collectedMap is Map ? collectedMap['amount'] : collectedMap) as num).toDouble();
+      final totalCollected = double.tryParse((collectedMap is Map ? collectedMap['amount'] : collectedMap).toString()) ?? 0.0;
 
       final outstandingMap = data['total_outstanding'] ?? data['totalOutstanding'] ?? {'amount': 0};
-      final totalOutstanding = ((outstandingMap is Map ? outstandingMap['amount'] : outstandingMap) as num).toDouble();
+      final totalOutstanding = double.tryParse((outstandingMap is Map ? outstandingMap['amount'] : outstandingMap).toString()) ?? 0.0;
 
-      final rentPercent =
-          ((data['rent_collection_percent'] ?? data['rentCollectionPercent'] ?? data['rentStatus']?['pct_paid'] ?? 0) as num)
-              .toDouble();
+      final rentPercent = double.tryParse((data['rent_collection_percent'] ?? data['rentCollectionPercent'] ?? data['rentStatus']?['pct_paid'] ?? 0).toString()) ?? 0.0;
 
       // Backend may return 0–100 scale; normalise to 0.0–1.0
       final normalised = rentPercent > 1.0 ? rentPercent / 100.0 : rentPercent;
@@ -437,7 +435,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
               ? fullName
               : (tenantData['email']?.toString().split('@').first ?? 'Tenant'),
           propertyName: m['property_name']?.toString() ?? m['propertyName']?.toString() ?? '',
-          rentAmount: ((m['rent_amount'] ?? m['rentAmount'] ?? 0) as num).toDouble(),
+          rentAmount: double.tryParse((m['rent_amount'] ?? m['rentAmount'] ?? 0).toString()) ?? 0.0,
           startDate: startDate,
           endDate: endDate,
           status: status,
