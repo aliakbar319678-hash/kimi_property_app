@@ -915,24 +915,47 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
 
   String _parsePhotoUrl(dynamic p) {
     String str = p.toString();
-    String relativePath = '';
-    if (str.startsWith('{') && str.contains('"key"')) {
+    String relativePath = str;
+    
+    if (str.startsWith('{')) {
       try {
         final decoded = jsonDecode(str);
-        relativePath = decoded['key'] ?? '';
+        relativePath = decoded['key'] ?? str;
+        if (decoded['url'] != null) {
+          String url = decoded['url'];
+          if (url.startsWith('http://localhost')) {
+            url = url.replaceFirst('http://localhost:5000', ApiConstants.baseUrl.replaceAll('/api/v1', ''));
+          }
+          return url;
+        }
       } catch (_) {
-        relativePath = str;
+        final urlMatch = RegExp(r'url:\s*([^,}]+)').firstMatch(str);
+        if (urlMatch != null && urlMatch.group(1) != null) {
+          String url = urlMatch.group(1)!.trim();
+          if (url.startsWith('http://localhost')) {
+            url = url.replaceFirst('http://localhost:5000', ApiConstants.baseUrl.replaceAll('/api/v1', ''));
+          }
+          return url;
+        }
+        final keyMatch = RegExp(r'key:\s*([^,}]+)').firstMatch(str);
+        if (keyMatch != null && keyMatch.group(1) != null) {
+          relativePath = keyMatch.group(1)!.trim();
+        }
       }
-    } else {
-      relativePath = str;
     }
     
-    if (relativePath.startsWith('http')) return relativePath;
+    if (relativePath.startsWith('http')) {
+       if (relativePath.startsWith('http://localhost')) {
+         relativePath = relativePath.replaceFirst('http://localhost:5000', ApiConstants.baseUrl.replaceAll('/api/v1', ''));
+       }
+       return relativePath;
+    }
     if (relativePath.startsWith('/')) relativePath = relativePath.substring(1);
     
     final base = ApiConstants.baseUrl.replaceAll('/api/v1', '');
     return '$base/$relativePath';
   }
+
 
   // ── Work Order details & Bids ────────────────────────────────────────────────
   Future<WorkOrder> fetchWorkOrderById(String id) async {
