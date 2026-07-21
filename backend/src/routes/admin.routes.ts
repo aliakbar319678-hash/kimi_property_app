@@ -337,7 +337,7 @@ router.get('/users/:id', authenticate, requireRole('admin', 'super_admin'), asyn
  *     security:
  *       - bearerAuth: []
  */
-router.post('/properties/:id/request-revision', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+router.post('/properties/:id/request-revision', authenticate, requireRole('admin', 'super_admin', 'landlord'), async (req: AuthRequest, res, next) => {
   try {
     const { reason, requestedDocuments } = req.body;
     const result = await AdminService.requestRevisionProperty(req.params.id, req.user!.id, reason, requestedDocuments);
@@ -354,7 +354,7 @@ router.post('/properties/:id/request-revision', authenticate, requireRole('admin
  *     security:
  *       - bearerAuth: []
  */
-router.post('/properties/:id/permanent-reject', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+router.post('/properties/:id/permanent-reject', authenticate, requireRole('admin', 'super_admin', 'landlord'), async (req: AuthRequest, res, next) => {
   try {
     const { reason } = req.body;
     const result = await AdminService.permanentRejectProperty(req.params.id, req.user!.id, reason);
@@ -371,7 +371,7 @@ router.post('/properties/:id/permanent-reject', authenticate, requireRole('admin
  *     security:
  *       - bearerAuth: []
  */
-router.post('/properties/:id/approve', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+router.post('/properties/:id/approve', authenticate, requireRole('admin', 'super_admin', 'landlord'), async (req: AuthRequest, res, next) => {
   try {
     const result = await AdminService.approveProperty(req.params.id, req.user!.id);
     res.json({ success: true, data: result });

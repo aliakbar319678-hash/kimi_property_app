@@ -999,7 +999,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
     }
   }
 
-  Future<void> adminRequestRevision(String propertyId, String reason, String requestedDocuments) async {
+  Future<void> adminRequestRevision(String propertyId, String reason, List<String> requestedDocuments) async {
     try {
       await ApiClient().dio.post('/admin/properties/$propertyId/request-revision', data: {
         'reason': reason,

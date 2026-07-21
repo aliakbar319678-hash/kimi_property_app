@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
@@ -38,7 +39,11 @@ class _LandlordPropertyDetailsScreenState
     final state = ref.watch(landlordProvider);
     final notifier = ref.read(landlordProvider.notifier);
 
-    final property = _property;
+    final propertyId = _property?.id;
+    final property = propertyId != null 
+        ? state.properties.firstWhere((p) => p.id == propertyId, orElse: () => _property!) 
+        : null;
+
     if (property == null) {
       return const Scaffold(
         body: Center(child: Text('No property found')),
@@ -1029,7 +1034,9 @@ class _LandlordPropertyDetailsScreenState
                           try {
                             await notifier.adminApproveProperty(property.id);
                             if (ctx.mounted) Navigator.pop(ctx);
-                          } catch (_) { }
+                          } catch (e) {
+                            if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+                          }
                           if (ctx.mounted) setSheetState(() => isLoading = false);
                         },
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
@@ -1042,9 +1049,20 @@ class _LandlordPropertyDetailsScreenState
                         onPressed: isLoading ? null : () async {
                           setSheetState(() => isLoading = true);
                           try {
-                            await notifier.adminRequestRevision(property.id, reasonCtrl.text, docsCtrl.text.isEmpty ? '[]' : docsCtrl.text);
+                            List<String> parsedDocs = [];
+                            try {
+                              if (docsCtrl.text.isNotEmpty) {
+                                final decoded = jsonDecode(docsCtrl.text);
+                                if (decoded is List) {
+                                  parsedDocs = decoded.map((e) => e.toString()).toList();
+                                }
+                              }
+                            } catch (_) { }
+                            await notifier.adminRequestRevision(property.id, reasonCtrl.text, parsedDocs);
                             if (ctx.mounted) Navigator.pop(ctx);
-                          } catch (_) { }
+                          } catch (e) {
+                            if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+                          }
                           if (ctx.mounted) setSheetState(() => isLoading = false);
                         },
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
@@ -1062,7 +1080,9 @@ class _LandlordPropertyDetailsScreenState
                       try {
                         await notifier.adminPermanentReject(property.id, reasonCtrl.text);
                         if (ctx.mounted) Navigator.pop(ctx);
-                      } catch (_) { }
+                      } catch (e) {
+                        if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+                      }
                       if (ctx.mounted) setSheetState(() => isLoading = false);
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
