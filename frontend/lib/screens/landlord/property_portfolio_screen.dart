@@ -37,6 +37,9 @@ class _PropertyPortfolioScreenState
     switch (status.toLowerCase()) {
       case 'approved': return Icons.verified_rounded;
       case 'rejected': return Icons.cancel_rounded;
+      case 'needs_revision': 
+      case 'resubmitted': return Icons.assignment_return_rounded;
+      case 'permanently_rejected': return Icons.block_rounded;
       default: return Icons.hourglass_empty_rounded;
     }
   }
@@ -57,14 +60,16 @@ class _PropertyPortfolioScreenState
       switch (_selectedTab) {
         case 'Pending': return prop.verificationStatus.toLowerCase() == 'pending';
         case 'Approved': return prop.verificationStatus.toLowerCase() == 'approved';
-        case 'Rejected': return prop.verificationStatus.toLowerCase() == 'rejected';
+        case 'Rejected': return prop.verificationStatus.toLowerCase() == 'rejected' || prop.verificationStatus.toLowerCase() == 'permanently_rejected';
+        case 'Under Revision': return prop.verificationStatus.toLowerCase() == 'needs_revision' || prop.verificationStatus.toLowerCase() == 'resubmitted';
         default: return true;
       }
     }).toList();
 
     final pendingCount  = state.properties.where((p) => p.verificationStatus == 'pending').length;
     final approvedCount = state.properties.where((p) => p.verificationStatus == 'approved').length;
-    final rejectedCount = state.properties.where((p) => p.verificationStatus == 'rejected').length;
+    final rejectedCount = state.properties.where((p) => p.verificationStatus == 'rejected' || p.verificationStatus == 'permanently_rejected').length;
+    final revisionCount = state.properties.where((p) => p.verificationStatus == 'needs_revision' || p.verificationStatus == 'resubmitted').length;
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -120,6 +125,8 @@ class _PropertyPortfolioScreenState
                   _filterTab('Pending', pendingCount, AppColors.secondary, w),
                   const SizedBox(width: 8),
                   _filterTab('Approved', approvedCount, Colors.green, w),
+                  const SizedBox(width: 8),
+                  _filterTab('Under Revision', revisionCount, Colors.orange, w),
                   const SizedBox(width: 8),
                   _filterTab('Rejected', rejectedCount, AppColors.error, w),
                 ]),

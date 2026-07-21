@@ -328,4 +328,54 @@ router.get('/users/:id', authenticate, requireRole('admin', 'super_admin'), asyn
   } catch (e) { next(e); }
 });
 
+/**
+ * @swagger
+ * /api/v1/admin/properties/{id}/request-revision:
+ *   post:
+ *     summary: Request a revision for a property
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/properties/:id/request-revision', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+  try {
+    const { reason, requestedDocuments } = req.body;
+    const result = await AdminService.requestRevisionProperty(req.params.id, req.user!.id, reason, requestedDocuments);
+    res.json({ success: true, data: result });
+  } catch (e) { next(e); }
+});
+
+/**
+ * @swagger
+ * /api/v1/admin/properties/{id}/permanent-reject:
+ *   post:
+ *     summary: Permanently reject a property
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/properties/:id/permanent-reject', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+  try {
+    const { reason } = req.body;
+    const result = await AdminService.permanentRejectProperty(req.params.id, req.user!.id, reason);
+    res.json({ success: true, data: result });
+  } catch (e) { next(e); }
+});
+
+/**
+ * @swagger
+ * /api/v1/admin/properties/{id}/approve:
+ *   post:
+ *     summary: Approve a property
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/properties/:id/approve', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+  try {
+    const result = await AdminService.approveProperty(req.params.id, req.user!.id);
+    res.json({ success: true, data: result });
+  } catch (e) { next(e); }
+});
+
 export { router as adminRouter };

@@ -111,4 +111,94 @@ export class AdminService {
 
     return { success: true };
   }
+  static async requestRevisionProperty(propertyId: string, adminId: string, reason: string, requestedDocuments: string) {
+    const propRes = await query('SELECT * FROM properties WHERE id = $1', [propertyId]);
+    if (propRes.rows.length === 0) throw new AppError('Property not found', 404);
+    
+    const property = propRes.rows[0];
+    const historyEntry = { action: 'request_revision', reason, requested_documents: requestedDocuments, by: adminId, timestamp: new Date().toISOString() };
+    
+    await query(
+      `UPDATE properties
+       SET verification_status = 'needs_revision',
+           rejection_reason = $1,
+           requested_documents = $2,
+           revision_history = COALESCE(revision_history, '[]'::jsonb) || $3::jsonb,
+           updated_at = NOW()
+       WHERE id = $4`,
+      [reason, JSON.stringify(requestedDocuments), JSON.stringify([historyEntry]), propertyId]
+    );
+
+    // Send Notification
+    await NotificationService.create({
+      userId: property.landlord_id,
+      type: 'system',
+      title: 'Action Required: Property Needs Revision',
+      message: `Your property "${property.name}" needs revision. Reason: ${reason}. Please update and resubmit.`,
+      priority: 'high',
+      channels: ['in_app'],
+    });
+
+    return { success: true };
+  }
+
+  static async permanentRejectProperty(propertyId: string, adminId: string, reason: string) {
+    const propRes = await query('SELECT * FROM properties WHERE id = $1', [propertyId]);
+    if (propRes.rows.length === 0) throw new AppError('Property not found', 404);
+    
+    const property = propRes.rows[0];
+    const historyEntry = { action: 'permanent_reject', reason, by: adminId, timestamp: new Date().toISOString() };
+    
+    await query(
+      `UPDATE properties
+       SET verification_status = 'permanently_rejected',
+           is_permanently_rejected = true,
+           rejection_reason = $1,
+           revision_history = COALESCE(revision_history, '[]'::jsonb) || $2::jsonb,
+           updated_at = NOW()
+       WHERE id = $3`,
+      [reason, JSON.stringify([historyEntry]), propertyId]
+    );
+
+    // Send Notification
+    await NotificationService.create({
+      userId: property.landlord_id,
+      type: 'system',
+      title: 'Property Permanently Rejected',
+      message: `Your property "${property.name}" has been permanently rejected. Reason: ${reason}.`,
+      priority: 'high',
+      channels: ['in_app'],
+    });
+
+    return { success: true };
+  }
+
+  static async approveProperty(propertyId: string, adminId: string) {
+    const propRes = await query('SELECT * FROM properties WHERE id = $1', [propertyId]);
+    if (propRes.rows.length === 0) throw new AppError('Property not found', 404);
+    
+    const property = propRes.rows[0];
+    const historyEntry = { action: 'approve', by: adminId, timestamp: new Date().toISOString() };
+    
+    await query(
+      `UPDATE properties
+       SET verification_status = 'approved',
+           revision_history = COALESCE(revision_history, '[]'::jsonb) || $1::jsonb,
+           updated_at = NOW()
+       WHERE id = $2`,
+      [JSON.stringify([historyEntry]), propertyId]
+    );
+
+    // Send Notification
+    await NotificationService.create({
+      userId: property.landlord_id,
+      type: 'system',
+      title: 'Property Approved!',
+      message: `Your property "${property.name}" has been verified and approved.`,
+      priority: 'normal',
+      channels: ['in_app'],
+    });
+
+    return { success: true };
+  }
 }

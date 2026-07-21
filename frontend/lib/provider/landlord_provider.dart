@@ -103,6 +103,21 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
           } catch (_) {}
         }
 
+        // Parse approval workflow lists
+        List<dynamic> requestedDocs = [];
+        if (m['requested_documents'] is List) {
+          requestedDocs = m['requested_documents'];
+        } else if (m['requested_documents'] is String && m['requested_documents'].toString().isNotEmpty) {
+          try { requestedDocs = jsonDecode(m['requested_documents']) as List; } catch (_) {}
+        }
+
+        List<dynamic> revisionHist = [];
+        if (m['revision_history'] is List) {
+          revisionHist = m['revision_history'];
+        } else if (m['revision_history'] is String && m['revision_history'].toString().isNotEmpty) {
+          try { revisionHist = jsonDecode(m['revision_history']) as List; } catch (_) {}
+        }
+
         return Property(
           id: m['id']?.toString() ?? '',
           name: m['name']?.toString() ?? 'Unnamed Property',
@@ -120,6 +135,10 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
           status: m['status']?.toString() ?? 'active',
           verificationStatus: m['verification_status']?.toString() ?? 'pending',
           rejectionReason: m['rejection_reason']?.toString(),
+          resubmissionCount: (m['resubmission_count'] ?? 0) as int,
+          isPermanentlyRejected: m['is_permanently_rejected'] == true || m['is_permanently_rejected'] == 'true',
+          requestedDocuments: requestedDocs,
+          revisionHistory: revisionHist,
           metadata: metadata,
         );
       }).toList();
@@ -969,6 +988,51 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
     return '$base/$relativePath';
   }
 
+  // ── Approval Workflow & Admin Actions ──────────────────────────────────────────
+  Future<void> resubmitProperty(String propertyId) async {
+    try {
+      await ApiClient().dio.post('${ApiConstants.properties}/$propertyId/resubmit');
+      await loadProperties(); // Refresh the list
+    } catch (e) {
+      debugPrint('[LandlordProvider] resubmitProperty error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> adminRequestRevision(String propertyId, String reason, String requestedDocuments) async {
+    try {
+      await ApiClient().dio.post('/admin/properties/$propertyId/request-revision', data: {
+        'reason': reason,
+        'requestedDocuments': requestedDocuments,
+      });
+      await loadProperties();
+    } catch (e) {
+      debugPrint('[LandlordProvider] adminRequestRevision error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> adminPermanentReject(String propertyId, String reason) async {
+    try {
+      await ApiClient().dio.post('/admin/properties/$propertyId/permanent-reject', data: {
+        'reason': reason,
+      });
+      await loadProperties();
+    } catch (e) {
+      debugPrint('[LandlordProvider] adminPermanentReject error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> adminApproveProperty(String propertyId) async {
+    try {
+      await ApiClient().dio.post('/admin/properties/$propertyId/approve');
+      await loadProperties();
+    } catch (e) {
+      debugPrint('[LandlordProvider] adminApproveProperty error: $e');
+      rethrow;
+    }
+  }
 
   // ── Work Order details & Bids ────────────────────────────────────────────────
   Future<WorkOrder> fetchWorkOrderById(String id) async {

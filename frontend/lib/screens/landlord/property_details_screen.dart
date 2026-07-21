@@ -114,10 +114,13 @@ class _LandlordPropertyDetailsScreenState
                               _confirmDelete(context, notifier, property, messenger, navigator);
                             } else if (v == 'edit') {
                               Navigator.pushNamed(context, '/landlord_edit_property', arguments: property);
+                            } else if (v == 'admin_test') {
+                              _showAdminTestModal(context, notifier, property);
                             }
                           },
                           itemBuilder: (_) => const [
                             PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit_rounded, color: AppColors.primary, size: 18), SizedBox(width: 8), Text('Edit Property')])),
+                            PopupMenuItem(value: 'admin_test', child: Row(children: [Icon(Icons.admin_panel_settings_rounded, color: Colors.orange, size: 18), SizedBox(width: 8), Text('Admin Review (Test)', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))])),
                             PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_rounded, color: Colors.red, size: 18), SizedBox(width: 8), Text('Delete Property', style: TextStyle(color: Colors.red))])),
                           ],
                         ),
@@ -175,50 +178,92 @@ class _LandlordPropertyDetailsScreenState
                     ],
                   ),
 
-                  // ── Rejection callout (only when rejected) ────────────
-                  if (property.verificationStatus == 'rejected') ...[
+                  // ── Rejection & Revision callout ────────────
+                  if (property.verificationStatus == 'rejected' || property.verificationStatus == 'needs_revision' || property.verificationStatus == 'permanently_rejected') ...[
                     SizedBox(height: h * 0.02),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.06),
+                        color: property.verificationStatus == 'needs_revision' ? Colors.orange.withValues(alpha: 0.1) : AppColors.error.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                        border: Border.all(color: property.verificationStatus == 'needs_revision' ? Colors.orange.withValues(alpha: 0.3) : AppColors.error.withValues(alpha: 0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(children: [
-                            const Icon(Icons.cancel_rounded, color: AppColors.error, size: 18),
+                            Icon(property.verificationStatus == 'needs_revision' ? Icons.assignment_return_rounded : (property.verificationStatus == 'permanently_rejected' ? Icons.block_rounded : Icons.cancel_rounded), 
+                                 color: property.verificationStatus == 'needs_revision' ? Colors.orange.shade800 : AppColors.error, size: 18),
                             const SizedBox(width: 8),
-                            Text('Property Rejected by Admin', style: TextStyle(fontSize: w * 0.035, fontWeight: FontWeight.w700, color: AppColors.error)),
+                            Text(property.verificationStatus == 'needs_revision' ? 'Admin Action Required' : (property.verificationStatus == 'permanently_rejected' ? 'Permanently Rejected' : 'Property Rejected'), 
+                                 style: TextStyle(fontSize: w * 0.035, fontWeight: FontWeight.w700, color: property.verificationStatus == 'needs_revision' ? Colors.orange.shade800 : AppColors.error)),
                           ]),
+                          if (property.resubmissionCount > 0) ...[
+                            const SizedBox(height: 4),
+                            Text('Resubmission #${property.resubmissionCount}', style: TextStyle(fontSize: w * 0.025, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                          ],
                           if (property.rejectionReason?.isNotEmpty ?? false) ...[
                             const SizedBox(height: 8),
-                            Text('Reason: ${property.rejectionReason}', style: TextStyle(fontSize: w * 0.03, color: AppColors.error.withValues(alpha: 0.85), height: 1.4)),
+                            Text('Reason: ${property.rejectionReason}', style: TextStyle(fontSize: w * 0.03, color: AppColors.textPrimary, height: 1.4)),
                           ],
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: () => Navigator.pushNamed(context, '/landlord_edit_property', arguments: property),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.error,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                          if (property.requestedDocuments.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text('Requested Fixes/Documents:', style: TextStyle(fontSize: w * 0.03, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                            ...property.requestedDocuments.map((doc) => Padding(
+                              padding: const EdgeInsets.only(top: 4, left: 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('• ', style: TextStyle(fontSize: 14)),
+                                  Expanded(child: Text(doc.toString(), style: TextStyle(fontSize: w * 0.028, color: AppColors.textSecondary))),
+                                ],
                               ),
-                              icon: const Icon(Icons.edit_rounded, color: Colors.white, size: 16),
-                              label: const Text('Edit & Resubmit', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                            )),
+                          ],
+                          if (property.verificationStatus != 'permanently_rejected') ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () async {
+                                  try {
+                                    await notifier.resubmitProperty(property.id);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Property resubmitted successfully!'), backgroundColor: Colors.green));
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+                                    }
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: property.verificationStatus == 'needs_revision' ? Colors.orange.shade600 : AppColors.error,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                                icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 16),
+                                label: const Text('Quick Resubmit Appeal', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              child: TextButton.icon(
+                                onPressed: () => Navigator.pushNamed(context, '/landlord_edit_property', arguments: property),
+                                icon: const Icon(Icons.edit_rounded, color: AppColors.textSecondary, size: 16),
+                                label: const Text('Edit Property Details first', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
                   ],
 
                   // ── Pending notice ────────────────────────────────────
-                  if (property.verificationStatus == 'pending') ...[
+                  if (property.verificationStatus == 'pending' || property.verificationStatus == 'resubmitted') ...[
                     SizedBox(height: h * 0.02),
                     Container(
                       width: double.infinity,
@@ -231,7 +276,7 @@ class _LandlordPropertyDetailsScreenState
                       child: Row(children: [
                         const Icon(Icons.hourglass_empty_rounded, color: AppColors.secondary, size: 16),
                         const SizedBox(width: 8),
-                        Expanded(child: Text('Awaiting admin approval. Tenants cannot see this property until it is approved.', style: TextStyle(fontSize: w * 0.028, color: AppColors.secondary, height: 1.4))),
+                        Expanded(child: Text(property.verificationStatus == 'resubmitted' ? 'Under Review: Resubmitted for admin approval.' : 'Awaiting admin approval. Tenants cannot see this property until it is approved.', style: TextStyle(fontSize: w * 0.028, color: AppColors.secondary, height: 1.4))),
                       ]),
                     ),
                   ],
@@ -508,6 +553,17 @@ class _LandlordPropertyDetailsScreenState
         color = AppColors.error;
         icon = Icons.cancel_rounded;
         label = 'Rejected';
+        break;
+      case 'needs_revision':
+      case 'resubmitted':
+        color = Colors.orange;
+        icon = Icons.assignment_return_rounded;
+        label = status.toLowerCase() == 'resubmitted' ? 'Resubmitted' : 'Needs Revision';
+        break;
+      case 'permanently_rejected':
+        color = AppColors.error;
+        icon = Icons.block_rounded;
+        label = 'Permanently Rejected';
         break;
       default:
         color = AppColors.secondary;
@@ -918,6 +974,105 @@ class _LandlordPropertyDetailsScreenState
             child: const Text('Delete', style: TextStyle(color: Colors.white)),
           ),
         ],
+      ),
+    );
+  }
+
+  // ─── Admin Test Modal ───────────────────────────────────────────────────
+  void _showAdminTestModal(BuildContext context, LandlordNotifier notifier, Property property) {
+    final reasonCtrl = TextEditingController();
+    final docsCtrl = TextEditingController();
+    bool isLoading = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Container(
+          padding: EdgeInsets.only(left: 20, right: 20, top: 24, bottom: MediaQuery.of(ctx).viewInsets.bottom + 24),
+          decoration: const BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)))),
+                const SizedBox(height: 20),
+                const Row(
+                  children: [
+                    Icon(Icons.admin_panel_settings_rounded, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Text('Admin Review (Test)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text('Simulate admin actions for the approval workflow.', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                const SizedBox(height: 24),
+
+                const Text('Rejection / Revision Reason', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                TextField(controller: reasonCtrl, decoration: _deco('e.g. Blurry images')),
+                const SizedBox(height: 14),
+
+                const Text('Requested Documents (JSON array)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                TextField(controller: docsCtrl, decoration: _deco('e.g. ["Title Deed", "Utility Bill"]')),
+                const SizedBox(height: 24),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : () async {
+                          setSheetState(() => isLoading = true);
+                          try {
+                            await notifier.adminApproveProperty(property.id);
+                            if (ctx.mounted) Navigator.pop(ctx);
+                          } catch (_) { }
+                          if (ctx.mounted) setSheetState(() => isLoading = false);
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                        child: const Text('Approve', style: TextStyle(color: Colors.white)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : () async {
+                          setSheetState(() => isLoading = true);
+                          try {
+                            await notifier.adminRequestRevision(property.id, reasonCtrl.text, docsCtrl.text.isEmpty ? '[]' : docsCtrl.text);
+                            if (ctx.mounted) Navigator.pop(ctx);
+                          } catch (_) { }
+                          if (ctx.mounted) setSheetState(() => isLoading = false);
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                        child: const Text('Req Revision', style: TextStyle(color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: isLoading ? null : () async {
+                      setSheetState(() => isLoading = true);
+                      try {
+                        await notifier.adminPermanentReject(property.id, reasonCtrl.text);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      } catch (_) { }
+                      if (ctx.mounted) setSheetState(() => isLoading = false);
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+                    child: const Text('Permanently Reject', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

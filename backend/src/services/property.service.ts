@@ -182,4 +182,31 @@ export class PropertyService {
     );
     return res.rows;
   }
+
+  static async resubmitProperty(propertyId: string, landlordId: string) {
+    const propRes = await query('SELECT * FROM properties WHERE id = $1', [propertyId]);
+    if (propRes.rows.length === 0) throw new AppError('Property not found', 404);
+    
+    if (propRes.rows[0].landlord_id !== landlordId) {
+      throw new AppError('Unauthorized', 403);
+    }
+
+    if (propRes.rows[0].is_permanently_rejected) {
+      throw new AppError('Property is permanently rejected and cannot be resubmitted', 400);
+    }
+    
+    const historyEntry = { action: 'resubmit', by: landlordId, timestamp: new Date().toISOString() };
+    
+    await query(
+      `UPDATE properties
+       SET verification_status = 'resubmitted',
+           resubmission_count = COALESCE(resubmission_count, 0) + 1,
+           revision_history = COALESCE(revision_history, '[]'::jsonb) || $1::jsonb,
+           updated_at = NOW()
+       WHERE id = $2`,
+      [JSON.stringify([historyEntry]), propertyId]
+    );
+
+    return { success: true };
+  }
 }

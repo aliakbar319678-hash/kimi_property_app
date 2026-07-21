@@ -20,8 +20,12 @@ abstract class Property with _$Property {
     @Default('') String description,
     @Default('active') String status,
     // Approval workflow fields
-    @Default('pending') String verificationStatus, // 'pending' | 'approved' | 'rejected'
+    @Default('pending') String verificationStatus, // 'pending' | 'approved' | 'rejected' | 'needs_revision' | 'resubmitted' | 'permanently_rejected'
     @Default(null) String? rejectionReason,
+    @Default(0) int resubmissionCount,
+    @Default([]) List<dynamic> requestedDocuments,
+    @Default(false) bool isPermanentlyRejected,
+    @Default([]) List<dynamic> revisionHistory,
     // Extra dynamic fields
     @Default({}) Map<String, dynamic> metadata,
   }) = _Property;

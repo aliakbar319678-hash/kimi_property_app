@@ -470,4 +470,29 @@ router.delete('/:id/units/:unitId', authenticate, requireRole('landlord', 'prope
   } catch (e) { next(e); }
 });
 
+/**
+ * @swagger
+ * /api/v1/properties/{id}/resubmit:
+ *   post:
+ *     summary: Resubmit a property for verification
+ *     tags: [Properties]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Resubmitted successfully
+ */
+router.post('/:id/resubmit', authenticate, requireRole('landlord', 'property_manager'), async (req: AuthRequest, res, next) => {
+  try {
+    const result = await PropertyService.resubmitProperty(req.params.id, req.user!.id);
+    res.json({ success: true, data: result });
+  } catch (e) { next(e); }
+});
+
 export { router as propertyRouter };
