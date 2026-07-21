@@ -87,8 +87,9 @@ export class MaintenanceService {
 
   static async updateStatus(workOrderId: string, status: string, userId: string) {
     const validTransitions: Record<string, string[]> = {
-      open: ['scheduled', 'cancelled'],
-      scheduled: ['in_progress', 'cancelled'],
+      open: ['scheduled', 'cancelled', 'completed'],
+      assigned: ['scheduled', 'in_progress', 'cancelled', 'completed'],
+      scheduled: ['in_progress', 'cancelled', 'completed'],
       in_progress: ['waiting_parts', 'completed'],
       waiting_parts: ['in_progress', 'completed'],
     };

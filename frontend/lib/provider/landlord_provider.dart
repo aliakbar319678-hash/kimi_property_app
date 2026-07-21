@@ -158,11 +158,11 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
         List<String> photos = [];
         final rawPhotos = m['photos'];
         if (rawPhotos is List) {
-          photos = rawPhotos.map((p) => p.toString()).toList();
+          photos = rawPhotos.map((p) => _parsePhotoUrl(p)).toList();
         } else if (rawPhotos is String && rawPhotos.isNotEmpty) {
           try {
             final parsed = jsonDecode(rawPhotos);
-            if (parsed is List) photos = parsed.map((p) => p.toString()).toList();
+            if (parsed is List) photos = parsed.map((p) => _parsePhotoUrl(p)).toList();
           } catch (_) {}
         }
 
@@ -913,6 +913,27 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
     }
   }
 
+  String _parsePhotoUrl(dynamic p) {
+    String str = p.toString();
+    String relativePath = '';
+    if (str.startsWith('{') && str.contains('"key"')) {
+      try {
+        final decoded = jsonDecode(str);
+        relativePath = decoded['key'] ?? '';
+      } catch (_) {
+        relativePath = str;
+      }
+    } else {
+      relativePath = str;
+    }
+    
+    if (relativePath.startsWith('http')) return relativePath;
+    if (relativePath.startsWith('/')) relativePath = relativePath.substring(1);
+    
+    final base = ApiConstants.baseUrl.replaceAll('/api/v1', '');
+    return '$base/$relativePath';
+  }
+
   // ── Work Order details & Bids ────────────────────────────────────────────────
   Future<WorkOrder> fetchWorkOrderById(String id) async {
     try {
@@ -929,7 +950,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
         priority: _capitalize(m['priority']?.toString() ?? 'medium'),
         status: _formatStatus(m['status']?.toString() ?? 'request'),
         tenantName: m['tenant_name']?.toString() ?? m['tenantName']?.toString() ?? 'Tenant',
-        photos: (m['photos'] as List<dynamic>?)?.map((p) => p.toString()).toList() ?? const [],
+        photos: (m['photos'] as List<dynamic>?)?.map((p) => _parsePhotoUrl(p)).toList() ?? const [],
         date: m['created_at']?.toString() ?? '',
         timeSlot: 'Anytime',
         accessInstructions: 'N/A',

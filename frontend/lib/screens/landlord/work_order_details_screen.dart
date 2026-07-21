@@ -153,7 +153,7 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
             ),
             const SizedBox(height: 4),
             Text(
-              '${updatedOrder.propertyName} â€¢ ${updatedOrder.unitName}',
+              '${updatedOrder.propertyName} • ${updatedOrder.unitName}',
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
 
@@ -183,18 +183,24 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
             if (updatedOrder.photos.isNotEmpty) ...[
               const Text('Photos', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
               const SizedBox(height: 8),
-              Row(
-                children: updatedOrder.photos.map((photoUrl) {
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      photoUrl,
-                      width: w * 0.22,
-                      height: w * 0.22,
-                      fit: BoxFit.cover,
-                    ),
-                  );
-                }).toList(),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: updatedOrder.photos.map((photoUrl) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          photoUrl,
+                          width: w * 0.22,
+                          height: w * 0.22,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
               SizedBox(height: h * 0.03),
             ],
@@ -247,7 +253,7 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
                         ),
                     ],
                   ),
-                  if (updatedOrder.vendorName == null) ...[
+                  if (updatedOrder.vendorName == null || updatedOrder.vendorName == 'Unassigned' || updatedOrder.status.toLowerCase() == 'open' || updatedOrder.status.toLowerCase() == 'request') ...[
                     const SizedBox(height: 12),
                     ElevatedButton(
                       onPressed: () {
