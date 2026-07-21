@@ -66,15 +66,17 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
             'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80';
         final rawImages = m['images'];
         if (rawImages is List && rawImages.isNotEmpty) {
-          imageUrl = rawImages[0]?.toString() ?? imageUrl;
+          imageUrl = _parsePhotoUrl(rawImages[0]);
         } else if (rawImages is String && rawImages.isNotEmpty) {
           try {
             final parsed = jsonDecode(rawImages);
             if (parsed is List && parsed.isNotEmpty) {
-              imageUrl = parsed[0]?.toString() ?? imageUrl;
+              imageUrl = _parsePhotoUrl(parsed[0]);
+            } else {
+              imageUrl = _parsePhotoUrl(rawImages);
             }
           } catch (_) {
-            imageUrl = rawImages;
+            imageUrl = _parsePhotoUrl(rawImages);
           }
         }
 
