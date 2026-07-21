@@ -213,14 +213,14 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       final resp = await ApiClient().dio.get(ApiConstants.financeDashboard);
       final data = resp.data['data'] as Map<String, dynamic>? ?? {};
 
-      final totalCollected =
-          ((data['total_collected'] ?? data['totalCollected'] ?? 0) as num)
-              .toDouble();
-      final totalOutstanding =
-          ((data['total_outstanding'] ?? data['totalOutstanding'] ?? 0) as num)
-              .toDouble();
+      final collectedMap = data['total_collected'] ?? data['totalCollected'] ?? {'amount': 0};
+      final totalCollected = ((collectedMap is Map ? collectedMap['amount'] : collectedMap) as num).toDouble();
+
+      final outstandingMap = data['total_outstanding'] ?? data['totalOutstanding'] ?? {'amount': 0};
+      final totalOutstanding = ((outstandingMap is Map ? outstandingMap['amount'] : outstandingMap) as num).toDouble();
+
       final rentPercent =
-          ((data['rent_collection_percent'] ?? data['rentCollectionPercent'] ?? 0) as num)
+          ((data['rent_collection_percent'] ?? data['rentCollectionPercent'] ?? data['rentStatus']?['pct_paid'] ?? 0) as num)
               .toDouble();
 
       // Backend may return 0–100 scale; normalise to 0.0–1.0
@@ -485,12 +485,12 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
           name: m['unit_number']?.toString() ?? m['unitNumber']?.toString() ?? 'Unit',
           status: _capitalize(m['status']?.toString() ?? 'vacant'),
           tenantName: tenantName,
-          rent: ((m['rent_amount'] ?? m['rentAmount'] ?? m['price'] ?? 0) as num).toDouble(),
+          rent: double.tryParse((m['rent_amount'] ?? m['rentAmount'] ?? m['price'] ?? 0).toString()) ?? 0.0,
           amenities: [],
-          bedrooms: (m['bedrooms'] ?? 0) as int,
-          bathrooms: (m['bathrooms'] ?? 0) as int,
-          squareFeet: (m['square_feet'] ?? m['squareFeet'] ?? 0) as int,
-          depositAmount: ((m['deposit_amount'] ?? m['depositAmount'] ?? 0) as num).toDouble(),
+          bedrooms: int.tryParse((m['bedrooms'] ?? 0).toString()) ?? 0,
+          bathrooms: int.tryParse((m['bathrooms'] ?? 0).toString()) ?? 0,
+          squareFeet: int.tryParse((m['square_feet'] ?? m['squareFeet'] ?? 0).toString()) ?? 0,
+          depositAmount: double.tryParse((m['deposit_amount'] ?? m['depositAmount'] ?? 0).toString()) ?? 0.0,
           availableDate: m['available_date']?.toString() ?? m['availableDate']?.toString() ?? '',
           propertyId: propertyId,
         );
@@ -919,7 +919,6 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       final resp = await ApiClient().dio.get(ApiConstants.workOrderById(id));
       final m = resp.data['data'] as Map<String, dynamic>;
       
-      // We parse the work order similarly to loadWorkOrders.
       final w = WorkOrder(
         id: m['id']?.toString() ?? '',
         title: m['title']?.toString() ?? 'Work Order',
@@ -929,8 +928,8 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
         category: _capitalize(m['category']?.toString() ?? 'repair'),
         priority: _capitalize(m['priority']?.toString() ?? 'medium'),
         status: _formatStatus(m['status']?.toString() ?? 'request'),
-        tenantName: 'Tenant', // Fallback if unavailable
-        photos: const [],
+        tenantName: m['tenant_name']?.toString() ?? m['tenantName']?.toString() ?? 'Tenant',
+        photos: (m['photos'] as List<dynamic>?)?.map((p) => p.toString()).toList() ?? const [],
         date: m['created_at']?.toString() ?? '',
         timeSlot: 'Anytime',
         accessInstructions: 'N/A',

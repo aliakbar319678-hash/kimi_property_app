@@ -13,6 +13,7 @@ class ConfirmAssignmentScreen extends ConsumerStatefulWidget {
 
 class _ConfirmAssignmentScreenState extends ConsumerState<ConfirmAssignmentScreen> {
   bool _includeTenant = true;
+  bool _isAssigning = false;
 
   @override
   Widget build(BuildContext context) {
@@ -179,14 +180,29 @@ class _ConfirmAssignmentScreenState extends ConsumerState<ConfirmAssignmentScree
 
             // Action Buttons
             ElevatedButton(
-              onPressed: () {
-                // Update work order state: Assign vendor bid!
-                ref.read(landlordProvider.notifier).assignBidToWorkOrder(order.id, bid);
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/landlord_home',
-                  (route) => false,
-                );
+              onPressed: _isAssigning ? null : () async {
+                setState(() => _isAssigning = true);
+                try {
+                  await ref.read(landlordProvider.notifier).assignBidToWorkOrder(order.id, bid);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Job successfully assigned!'), backgroundColor: Colors.green),
+                    );
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/landlord_home',
+                      (route) => false,
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to assign job: $e'), backgroundColor: Colors.red),
+                    );
+                  }
+                } finally {
+                  if (mounted) setState(() => _isAssigning = false);
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -195,7 +211,9 @@ class _ConfirmAssignmentScreenState extends ConsumerState<ConfirmAssignmentScree
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 elevation: 0,
               ),
-              child: const Text('Confirm & Assign Job', style: TextStyle(fontWeight: FontWeight.w600)),
+              child: _isAssigning 
+                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('Confirm & Assign Job', style: TextStyle(fontWeight: FontWeight.w600)),
             ),
             const SizedBox(height: 12),
             Center(

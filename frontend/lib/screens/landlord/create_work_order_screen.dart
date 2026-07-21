@@ -59,7 +59,10 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(landlordProvider.notifier).loadVendors();
+      final notifier = ref.read(landlordProvider.notifier);
+      notifier.loadVendors();
+      notifier.loadProperties();
+      notifier.loadTenants();
     });
   }
 
@@ -156,16 +159,20 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value: _selectedPropertyId.isEmpty ? null : _selectedPropertyId,
+                    value: _selectedPropertyId.isEmpty 
+                        ? null 
+                        : (properties.any((p) => p.id == _selectedPropertyId) ? _selectedPropertyId : null),
                     isExpanded: true,
                     hint: const Text('Select Property'),
-                    items: properties.map((p) {
-                      return DropdownMenuItem<String>(
-                        value: p.id,
-                        child: Text(p.name, style: const TextStyle(fontSize: 14)),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
+                    items: properties.isEmpty
+                        ? [const DropdownMenuItem<String>(value: null, child: Text('No Properties Available'))]
+                        : properties.map((p) {
+                            return DropdownMenuItem<String>(
+                              value: p.id,
+                              child: Text(p.name, style: const TextStyle(fontSize: 14)),
+                            );
+                          }).toList(),
+                    onChanged: properties.isEmpty ? (_) {} : (val) {
                       if (val != null) {
                         final prop = properties.firstWhere((p) => p.id == val);
                         setState(() {
@@ -219,16 +226,20 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value: _selectedUnitId.isEmpty ? null : _selectedUnitId,
+                    value: _selectedUnitId.isEmpty 
+                        ? null 
+                        : (units.any((u) => u.id == _selectedUnitId) ? _selectedUnitId : null),
                     isExpanded: true,
                     hint: const Text('Select Unit'),
-                    items: units.map((u) {
-                      return DropdownMenuItem<String>(
-                        value: u.id,
-                        child: Text(u.name, style: const TextStyle(fontSize: 14)),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
+                    items: units.isEmpty
+                        ? [const DropdownMenuItem<String>(value: null, child: Text('No Units Available'))]
+                        : units.map((u) {
+                            return DropdownMenuItem<String>(
+                              value: u.id,
+                              child: Text(u.name, style: const TextStyle(fontSize: 14)),
+                            );
+                          }).toList(),
+                    onChanged: units.isEmpty ? (_) {} : (val) {
                       if (val != null) {
                         final unit = units.firstWhere((u) => u.id == val);
                         setState(() {
@@ -268,16 +279,20 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value: _selectedTenant.isEmpty ? null : _selectedTenant,
+                    value: _selectedTenant.isEmpty 
+                        ? null 
+                        : (tenants.any((t) => t.name == _selectedTenant) ? _selectedTenant : null),
                     isExpanded: true,
                     hint: const Text('Select Tenant (optional)'),
-                    items: tenants.map((t) {
-                      return DropdownMenuItem<String>(
-                        value: t.name,
-                        child: Text(t.name, style: const TextStyle(fontSize: 14)),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
+                    items: tenants.isEmpty
+                        ? [const DropdownMenuItem<String>(value: null, child: Text('No Tenants Available'))]
+                        : tenants.map((t) {
+                            return DropdownMenuItem<String>(
+                              value: t.name,
+                              child: Text(t.name, style: const TextStyle(fontSize: 14)),
+                            );
+                          }).toList(),
+                    onChanged: tenants.isEmpty ? (_) {} : (val) {
                       if (val != null) setState(() => _selectedTenant = val);
                     },
                   ),
@@ -467,14 +482,18 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                 child: DropdownButton<String>(
                   isExpanded: true,
                   hint: const Text('Select a Vendor (Optional)'),
-                  value: _selectedVendorId,
-                  items: state.vendors.map((v) {
-                    return DropdownMenuItem(
-                      value: v.id,
-                      child: Text('${v.displayName} (⭐ ${v.avgRating})'),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
+                  value: _selectedVendorId == null 
+                      ? null 
+                      : (ref.watch(landlordProvider).vendors.any((v) => v.id == _selectedVendorId) ? _selectedVendorId : null),
+                  items: ref.watch(landlordProvider).vendors.isEmpty
+                      ? [const DropdownMenuItem<String>(value: null, child: Text('No Vendors Available'))]
+                      : ref.watch(landlordProvider).vendors.map((v) {
+                          return DropdownMenuItem<String>(
+                            value: v.id,
+                            child: Text('${v.displayName} (⭐ ${v.avgRating})'),
+                          );
+                        }).toList(),
+                  onChanged: ref.watch(landlordProvider).vendors.isEmpty ? (_) {} : (val) {
                     setState(() => _selectedVendorId = val);
                   },
                 ),

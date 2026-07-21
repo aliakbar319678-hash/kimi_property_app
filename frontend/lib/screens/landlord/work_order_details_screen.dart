@@ -15,6 +15,7 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
   WorkOrder? _order;
   bool _isLoading = true;
   String? _error;
+  bool _isUpdating = false;
 
   @override
   void didChangeDependencies() {
@@ -344,10 +345,27 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: updatedOrder.status == 'Completed'
+                    onPressed: updatedOrder.status == 'Completed' || _isUpdating
                         ? null
-                        : () {
-                            notifier.updateWorkOrderStatus(updatedOrder.id, 'Completed');
+                        : () async {
+                            setState(() => _isUpdating = true);
+                            try {
+                              await notifier.updateWorkOrderStatus(updatedOrder.id, 'Completed');
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Work order marked as completed'), backgroundColor: Colors.green),
+                                );
+                                _fetchFreshData(updatedOrder.id);
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Failed to update status: $e'), backgroundColor: Colors.red),
+                                );
+                              }
+                            } finally {
+                              if (mounted) setState(() => _isUpdating = false);
+                            }
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
@@ -356,7 +374,9 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       elevation: 0,
                     ),
-                    child: const Text('Mark Completed', style: TextStyle(fontWeight: FontWeight.w600)),
+                    child: _isUpdating
+                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('Mark Completed', style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
