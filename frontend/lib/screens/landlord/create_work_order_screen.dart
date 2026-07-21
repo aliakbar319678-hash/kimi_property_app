@@ -119,6 +119,7 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                       _selectedPropertyId = properties.first.id;
                       _selectedProperty = properties.first.name;
                     });
+                    notifier.loadUnits(properties.first.id);
                   }
                 });
               }
@@ -149,6 +150,7 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                           _selectedUnitId = '';
                           _selectedUnitName = '';
                         });
+                        notifier.loadUnits(prop.id);
                       }
                     },
                   ),
@@ -166,7 +168,7 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
             const SizedBox(height: 6),
             Builder(builder: (context) {
               final state = ref.watch(landlordProvider);
-              final units = state.units;
+              final units = state.units.where((u) => u.propertyId == _selectedPropertyId).toList();
               // Auto-select first unit
               if (_selectedUnitId.isEmpty && units.isNotEmpty) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
