@@ -103,6 +103,16 @@ abstract class Bid with _$Bid {
 }
 
 @freezed
+abstract class VendorProfile with _$VendorProfile {
+  const factory VendorProfile({
+    required String id,
+    required String displayName,
+    required String email,
+    required double avgRating,
+  }) = _VendorProfile;
+}
+
+@freezed
 abstract class ChatMessage with _$ChatMessage {
   const factory ChatMessage({
     required String id,
@@ -166,6 +176,7 @@ abstract class LandlordState with _$LandlordState {
     @Default([]) List<Tenant> tenants,
     @Default([]) List<WorkOrder> workOrders,
     @Default([]) List<Bid> bids,
+    @Default([]) List<VendorProfile> vendors,
     @Default([]) List<ChatMessage> chatMessages,
     @Default([]) List<Lease> leases,
 

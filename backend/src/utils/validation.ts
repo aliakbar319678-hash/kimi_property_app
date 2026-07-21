@@ -63,6 +63,8 @@ export const schemas = {
     accessInstructions: Joi.string().optional(),
     notifyTenant: Joi.boolean().default(true),
     notifyVendor: Joi.boolean().default(true),
+    assignedVendorId: Joi.string().uuid().optional(),
+    scheduledDate: Joi.date().iso().optional(),
   }),
 
   bidCreate: Joi.object({

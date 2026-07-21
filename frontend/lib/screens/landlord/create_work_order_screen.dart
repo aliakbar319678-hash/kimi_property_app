@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
@@ -44,6 +47,21 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
     'Other',
   ];
   final List<String> _priorities = ['Low', 'Medium', 'High', 'Emergency'];
+
+  final List<XFile> _selectedImages = [];
+  final ImagePicker _picker = ImagePicker();
+
+  String? _selectedVendorId;
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(landlordProvider.notifier).loadVendors();
+    });
+  }
 
   @override
   void dispose() {
@@ -377,32 +395,54 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Container(
-                  width: w * 0.22,
-                  height: w * 0.22,
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.border,
-                      style: BorderStyle.solid,
+                GestureDetector(
+                  onTap: () async {
+                    final List<XFile> images = await _picker.pickMultiImage();
+                    if (images.isNotEmpty) {
+                      setState(() {
+                        _selectedImages.addAll(images);
+                      });
+                    }
+                  },
+                  child: Container(
+                    width: w * 0.22,
+                    height: w * 0.22,
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.border,
+                        style: BorderStyle.solid,
+                      ),
                     ),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.add_photo_alternate_outlined,
-                      color: AppColors.textHint,
+                    child: const Center(
+                      child: Icon(
+                        Icons.add_photo_alternate_outlined,
+                        color: AppColors.textHint,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=200&q=80',
-                    width: w * 0.22,
-                    height: w * 0.22,
-                    fit: BoxFit.cover,
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _selectedImages.map((img) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              File(img.path),
+                              width: w * 0.22,
+                              height: w * 0.22,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
               ],
@@ -417,82 +457,27 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
             ),
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.border),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.scaffoldBg,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.build_rounded,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'QuickFix Maintenance',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.star_rounded,
-                              color: Colors.amber,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 2),
-                            const Text(
-                              '4.8',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'Available Today',
-                                style: TextStyle(
-                                  color: Colors.green,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.keyboard_arrow_right_rounded),
-                    onPressed: () {},
-                  ),
-                ],
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  hint: const Text('Select a Vendor (Optional)'),
+                  value: _selectedVendorId,
+                  items: state.vendors.map((v) {
+                    return DropdownMenuItem(
+                      value: v.id,
+                      child: Text('${v.displayName} (⭐ ${v.avgRating})'),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() => _selectedVendorId = val);
+                  },
+                ),
               ),
             ),
 
@@ -504,49 +489,73 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
             const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: const Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today_rounded,
-                    size: 16,
-                    color: AppColors.textHint,
-                  ),
-                  SizedBox(width: 10),
-                  Text(
-                    'Today, May 19',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                ],
+            GestureDetector(
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (date != null) {
+                  setState(() => _selectedDate = date);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_rounded,
+                      size: 16,
+                      color: AppColors.textHint,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      _selectedDate == null ? 'Select Date' : DateFormat('MMM dd, yyyy').format(_selectedDate!),
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: const Row(
-                children: [
-                  Icon(
-                    Icons.access_time_rounded,
-                    size: 16,
-                    color: AppColors.textHint,
-                  ),
-                  SizedBox(width: 10),
-                  Text(
-                    '2:00 PM - 4:00 PM',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                ],
+            GestureDetector(
+              onTap: () async {
+                final time = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                );
+                if (time != null) {
+                  setState(() => _selectedTime = time);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.access_time_rounded,
+                      size: 16,
+                      color: AppColors.textHint,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      _selectedTime == null ? 'Select Time' : _selectedTime!.format(context),
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 10),
@@ -647,6 +656,16 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                         return;
                       }
 
+                      // Combine date and time
+                      String? scheduledDateTimeIso;
+                      if (_selectedDate != null) {
+                        var dt = _selectedDate!;
+                        if (_selectedTime != null) {
+                          dt = DateTime(dt.year, dt.month, dt.day, _selectedTime!.hour, _selectedTime!.minute);
+                        }
+                        scheduledDateTimeIso = dt.toIso8601String();
+                      }
+
                       // Build the work order with real IDs from dropdowns
                       final newWo = WorkOrder(
                         id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -656,7 +675,7 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                         unitName: _selectedUnitName,        // matched to ID in provider
                         tenantName: _selectedTenant,
                         priority: _selectedPriority,
-                        status: 'Request',
+                        status: _selectedVendorId != null ? 'Assigned' : 'Request',
                         photos: [],
                         category: _selectedCategory,
                         date: '',
@@ -665,7 +684,18 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                       );
 
                       try {
-                        await notifier.createWorkOrder(newWo);
+                        final newOrderId = await notifier.createWorkOrder(
+                          newWo,
+                          assignedVendorId: _selectedVendorId,
+                          scheduledDate: scheduledDateTimeIso,
+                        );
+
+                        // Upload photos sequentially
+                        for (var img in _selectedImages) {
+                          final bytes = await File(img.path).readAsBytes();
+                          await notifier.uploadWorkOrderPhoto(newOrderId, bytes, img.name);
+                        }
+
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(

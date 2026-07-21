@@ -6,10 +6,18 @@ export class MaintenanceService {
     const unitRes = await query('SELECT property_id FROM units WHERE id = $1', [data.unitId]);
     if (unitRes.rows.length === 0) throw new AppError('Unit not found', 404);
 
+    const status = data.assignedVendorId ? 'scheduled' : 'open';
+
     const res = await query(
-      `INSERT INTO work_orders (property_id, unit_id, tenant_id, landlord_id, title, description, category, priority, budget_min, budget_max, currency, access_instructions, notify_tenant, notify_vendor)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *`,
-      [unitRes.rows[0].property_id, data.unitId, data.tenantId || null, landlordId, data.title, data.description, data.category, data.priority, data.budgetMin || null, data.budgetMax || null, data.currency, data.accessInstructions || null, data.notifyTenant, data.notifyVendor]
+      `INSERT INTO work_orders (property_id, unit_id, tenant_id, landlord_id, title, description, category, priority, budget_min, budget_max, currency, access_instructions, notify_tenant, notify_vendor, assigned_vendor_id, scheduled_date, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *`,
+      [
+        unitRes.rows[0].property_id, data.unitId, data.tenantId || null, landlordId,
+        data.title, data.description, data.category, data.priority,
+        data.budgetMin || null, data.budgetMax || null, data.currency || 'USD',
+        data.accessInstructions || null, data.notifyTenant !== false, data.notifyVendor !== false,
+        data.assignedVendorId || null, data.scheduledDate || null, status
+      ]
     );
     return res.rows[0];
   }

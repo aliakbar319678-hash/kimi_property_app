@@ -504,6 +504,28 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
     }
   }
 
+  // ── 9.5 Load Vendors ─────────────────────────────────────────────────────────
+  Future<void> loadVendors() async {
+    try {
+      final resp = await ApiClient().dio.get('/vendors/directory');
+      final List<dynamic> rawList = (resp.data['data'] ?? []) as List<dynamic>;
+
+      final vendors = rawList.map((item) {
+        final m = item as Map<String, dynamic>;
+        return VendorProfile(
+          id: m['id']?.toString() ?? '',
+          displayName: m['display_name']?.toString() ?? '',
+          email: m['email']?.toString() ?? '',
+          avgRating: ((m['avg_rating'] ?? 0) as num).toDouble(),
+        );
+      }).toList();
+
+      state = state.copyWith(vendors: vendors);
+    } catch (e) {
+      debugPrint('[LandlordProvider] loadVendors error: $e');
+    }
+  }
+
   // ── 10. Load bids for a work order ────────────────────────────────────────────
   Future<void> loadBids(String workOrderId) async {
     state = state.copyWith(isBidsLoading: true);
@@ -730,7 +752,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
   }
 
   // ── Create Work Order ────────────────────────────────────────────────────────
-  Future<void> createWorkOrder(WorkOrder order) async {
+  Future<String> createWorkOrder(WorkOrder order, {String? assignedVendorId, String? scheduledDate}) async {
     try {
       // Find property ID by matching name
       final properties = state.properties;
@@ -781,15 +803,33 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
         'accessInstructions': order.accessInstructions,
         'notifyTenant': true,
         'notifyVendor': true,
+        if (assignedVendorId != null) 'assignedVendorId': assignedVendorId,
+        if (scheduledDate != null) 'scheduledDate': scheduledDate,
       };
 
-      await ApiClient().dio.post(ApiConstants.workOrders, data: payload);
+      final resp = await ApiClient().dio.post(ApiConstants.workOrders, data: payload);
       await loadWorkOrders();
+      final createdData = resp.data['data'] as Map<String, dynamic>? ?? {};
+      return createdData['id']?.toString() ?? '';
     } catch (e) {
       if (e is DioException) {
         debugPrint('[LandlordProvider] createWorkOrder response error data: ${e.response?.data}');
       }
       debugPrint('[LandlordProvider] createWorkOrder error: $e');
+      rethrow;
+    }
+  }
+
+  // ── Upload Work Order Photo ─────────────────────────────────────────────────
+  Future<void> uploadWorkOrderPhoto(String workOrderId, List<int> bytes, String fileName) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: fileName),
+      });
+      await ApiClient().dio.post('/uploads/work-order/$workOrderId/photo', data: formData);
+      await loadWorkOrders();
+    } catch (e) {
+      debugPrint('[LandlordProvider] uploadWorkOrderPhoto error: $e');
       rethrow;
     }
   }
