@@ -1,5 +1,4 @@
-import 'dart:convert';
-import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:intl/intl.dart';
@@ -256,9 +255,6 @@ class VendorNotifier extends StateNotifier<VendorState> {
 
   // Clock In for GPS Check-In
   void clockIn(String jobId) {
-    final nowStr =
-        "${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}";
-
     // Update locally or call clock-in API if available
     updateWorkOrderStatus(jobId, 'in_progress');
 

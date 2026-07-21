@@ -47,17 +47,16 @@ const router = Router();
 router.get('/tenants', authenticate, async (req: AuthRequest, res, next) => {
   try {
     const tenants = await query(
-      `SELECT u.id, u.first_name, u.last_name, u.email 
+      `SELECT u.id, u.legal_first_name, u.legal_last_name, u.email 
        FROM users u 
        JOIN user_roles ur ON u.id = ur.user_id 
        WHERE ur.role = 'tenant' AND u.is_active = true`
     );
-    // map to match what the frontend expects
     const formatted = tenants.rows.map(t => ({
       tenant: {
         id: t.id,
-        first_name: t.first_name,
-        last_name: t.last_name,
+        legal_first_name: t.legal_first_name,
+        legal_last_name: t.legal_last_name,
         email: t.email
       },
       status: 'active'

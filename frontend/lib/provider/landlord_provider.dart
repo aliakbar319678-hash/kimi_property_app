@@ -500,6 +500,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
     } catch (e) {
       debugPrint('[LandlordProvider] loadUnits error: $e');
       state = state.copyWith(isUnitsLoading: false);
+      rethrow;
     }
   }
 
@@ -544,7 +545,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
   }
 
   // ── Create Property ───────────────────────────────────────────────────────────
-  Future<void> createProperty({
+  Future<String> createProperty({
     required String name,
     required String addressLine1,
     required String city,
@@ -568,8 +569,24 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
         'description': description,
       if (amenities != null && amenities.isNotEmpty) 'amenities': amenities,
     };
-    await ApiClient().dio.post(ApiConstants.properties, data: payload);
+    final resp = await ApiClient().dio.post(ApiConstants.properties, data: payload);
     await loadProperties(); // Refresh the properties list
+    final createdData = resp.data['data'] as Map<String, dynamic>? ?? {};
+    return createdData['id']?.toString() ?? (state.properties.isNotEmpty ? state.properties.first.id : '');
+  }
+
+  // ── Upload Property Image ───────────────────────────────────────────────────
+  Future<void> uploadPropertyImage(String propertyId, List<int> bytes, String fileName) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: fileName),
+      });
+      await ApiClient().dio.post('/uploads/property/$propertyId/image', data: formData);
+      await loadProperties();
+    } catch (e) {
+      debugPrint('[LandlordProvider] uploadPropertyImage error: $e');
+      rethrow;
+    }
   }
 
   // ── Update Property ──────────────────────────────────────────────────────────
@@ -872,7 +889,11 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
         category: _capitalize(m['category']?.toString() ?? 'repair'),
         priority: _capitalize(m['priority']?.toString() ?? 'medium'),
         status: _formatStatus(m['status']?.toString() ?? 'request'),
-        createdAt: m['created_at']?.toString() ?? '',
+        tenantName: 'Tenant', // Fallback if unavailable
+        photos: const [],
+        date: m['created_at']?.toString() ?? '',
+        timeSlot: 'Anytime',
+        accessInstructions: 'N/A',
         vendorName: m['vendor_name']?.toString() ?? 'Unassigned',
       );
       
@@ -894,12 +915,11 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       final bids = rawBids.map((b) => Bid(
         id: b['id']?.toString() ?? '',
         vendorName: b['vendor_name']?.toString() ?? 'Vendor',
-        vendorAvatar: b['vendor_avatar']?.toString() ?? 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=50&q=80',
-        amount: ((b['amount'] ?? 0) as num).toDouble(),
-        description: b['message']?.toString() ?? '',
+        avatarUrl: b['vendor_avatar']?.toString() ?? 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=50&q=80',
+        price: ((b['amount'] ?? 0) as num).toDouble(),
         rating: 4.8, // backend doesn't provide rating yet
-        jobsCompleted: 12,
-        estimatedTime: '${b['estimated_hours']} hours',
+        totalJobs: 12,
+        time: '${b['estimated_hours'] ?? 1} hours',
       )).toList();
       
       state = state.copyWith(bids: bids, isBidsLoading: false);

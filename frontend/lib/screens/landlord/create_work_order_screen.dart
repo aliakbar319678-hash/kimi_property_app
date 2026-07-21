@@ -119,7 +119,13 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                       _selectedPropertyId = properties.first.id;
                       _selectedProperty = properties.first.name;
                     });
-                    notifier.loadUnits(properties.first.id);
+                    notifier.loadUnits(properties.first.id).catchError((e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to load units: $e'), backgroundColor: Colors.red),
+                        );
+                      }
+                    });
                   }
                 });
               }
@@ -150,7 +156,13 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                           _selectedUnitId = '';
                           _selectedUnitName = '';
                         });
-                        notifier.loadUnits(prop.id);
+                        notifier.loadUnits(prop.id).catchError((e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to load units: $e'), backgroundColor: Colors.red),
+                            );
+                          }
+                        });
                       }
                     },
                   ),

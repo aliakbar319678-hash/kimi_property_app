@@ -63,11 +63,19 @@ class _LandlordPropertyDetailsScreenState
                   width: double.infinity,
                   height: h * 0.35,
                   decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage(property.imageUrl),
-                      fit: BoxFit.cover,
-                    ),
+                    color: AppColors.primary,
+                    image: property.imageUrl.startsWith('http')
+                        ? DecorationImage(
+                            image: NetworkImage(property.imageUrl),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
+                  child: !property.imageUrl.startsWith('http')
+                      ? Center(
+                          child: Icon(Icons.apartment_rounded, size: 72, color: AppColors.white.withValues(alpha: 0.5)),
+                        )
+                      : null,
                 ),
                 Container(
                   width: double.infinity,
@@ -105,7 +113,7 @@ class _LandlordPropertyDetailsScreenState
                               final navigator = Navigator.of(context);
                               _confirmDelete(context, notifier, property, messenger, navigator);
                             } else if (v == 'edit') {
-                              _showEditResubmitSheet(context, notifier, property);
+                              Navigator.pushNamed(context, '/landlord_edit_property', arguments: property);
                             }
                           },
                           itemBuilder: (_) => const [
@@ -194,7 +202,7 @@ class _LandlordPropertyDetailsScreenState
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
-                              onPressed: () => _showEditResubmitSheet(context, notifier, property),
+                              onPressed: () => Navigator.pushNamed(context, '/landlord_edit_property', arguments: property),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.error,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -344,18 +352,39 @@ class _LandlordPropertyDetailsScreenState
                                           ),
                                         ],
                                       ),
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                      Row(
                                         children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                            decoration: BoxDecoration(color: badgeColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
-                                            child: Text(unit.status, style: TextStyle(fontSize: w * 0.028, fontWeight: FontWeight.w700, color: badgeColor)),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                decoration: BoxDecoration(color: badgeColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
+                                                child: Text(unit.status, style: TextStyle(fontSize: w * 0.028, fontWeight: FontWeight.w700, color: badgeColor)),
+                                              ),
+                                              if (unit.rent > 0) ...[
+                                                const SizedBox(height: 4),
+                                                Text('\$${unit.rent.toStringAsFixed(0)}/mo', style: TextStyle(fontSize: w * 0.028, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                                              ],
+                                            ],
                                           ),
-                                          if (unit.rent > 0) ...[
-                                            const SizedBox(height: 4),
-                                            Text('\$${unit.rent.toStringAsFixed(0)}/mo', style: TextStyle(fontSize: w * 0.028, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-                                          ],
+                                          const SizedBox(width: 6),
+                                          PopupMenuButton<String>(
+                                            icon: const Icon(Icons.more_vert_rounded, size: 20, color: AppColors.textSecondary),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                            onSelected: (v) {
+                                              if (v == 'edit') {
+                                                _showEditUnitDialog(context, notifier, property, unit);
+                                              } else if (v == 'delete') {
+                                                _confirmDeleteUnit(context, notifier, property, unit);
+                                              }
+                                            },
+                                            itemBuilder: (_) => const [
+                                              PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit_outlined, color: AppColors.primary, size: 18), SizedBox(width: 8), Text('Edit Unit')])),
+                                              PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_outline_rounded, color: Colors.red, size: 18), SizedBox(width: 8), Text('Delete Unit', style: TextStyle(color: Colors.red))])),
+                                            ],
+                                          ),
                                         ],
                                       ),
                                     ],
@@ -744,4 +773,152 @@ class _LandlordPropertyDetailsScreenState
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
       );
+
+  void _showEditUnitDialog(BuildContext context, LandlordNotifier notifier, Property property, Unit unit) {
+    final unitNumCtrl = TextEditingController(text: unit.name);
+    final rentCtrl = TextEditingController(text: unit.rent > 0 ? unit.rent.toStringAsFixed(0) : '');
+    final depositCtrl = TextEditingController(text: unit.depositAmount > 0 ? unit.depositAmount.toStringAsFixed(0) : '');
+    final bedsCtrl = TextEditingController(text: unit.bedrooms > 0 ? unit.bedrooms.toString() : '');
+    final bathsCtrl = TextEditingController(text: unit.bathrooms > 0 ? unit.bathrooms.toString() : '');
+    final sqftCtrl = TextEditingController(text: unit.squareFeet > 0 ? unit.squareFeet.toString() : '');
+    String status = unit.status.toLowerCase();
+    bool isLoading = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Container(
+          padding: EdgeInsets.only(left: 20, right: 20, top: 24, bottom: MediaQuery.of(ctx).viewInsets.bottom + 24),
+          decoration: const BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)))),
+                const SizedBox(height: 20),
+                Text('Edit Unit - ${unit.name}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                const SizedBox(height: 16),
+
+                const Text('Unit Number *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                TextField(controller: unitNumCtrl, decoration: _deco('e.g. Unit 101 or Apt A')),
+                const SizedBox(height: 12),
+
+                Row(
+                  children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Monthly Rent (\$) *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), const SizedBox(height: 6), TextField(controller: rentCtrl, keyboardType: TextInputType.number, decoration: _deco('1500'))])),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Deposit (\$)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), const SizedBox(height: 6), TextField(controller: depositCtrl, keyboardType: TextInputType.number, decoration: _deco('3000'))])),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                Row(
+                  children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Beds', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), const SizedBox(height: 6), TextField(controller: bedsCtrl, keyboardType: TextInputType.number, decoration: _deco('0'))])),
+                    const SizedBox(width: 8),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Baths', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), const SizedBox(height: 6), TextField(controller: bathsCtrl, keyboardType: TextInputType.number, decoration: _deco('0'))])),
+                    const SizedBox(width: 8),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Sq.Ft.', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), const SizedBox(height: 6), TextField(controller: sqftCtrl, keyboardType: TextInputType.number, decoration: _deco('0'))])),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                const Text('Status', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  initialValue: ['vacant', 'occupied', 'maintenance', 'reserved'].contains(status) ? status : 'vacant',
+                  decoration: _deco(''),
+                  items: const [
+                    DropdownMenuItem(value: 'vacant', child: Text('Vacant')),
+                    DropdownMenuItem(value: 'occupied', child: Text('Occupied')),
+                    DropdownMenuItem(value: 'maintenance', child: Text('Maintenance')),
+                    DropdownMenuItem(value: 'reserved', child: Text('Reserved')),
+                  ],
+                  onChanged: (v) => setSheetState(() => status = v ?? 'vacant'),
+                ),
+                const SizedBox(height: 24),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            if (unitNumCtrl.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unit number is required'), backgroundColor: AppColors.error));
+                              return;
+                            }
+                            setSheetState(() => isLoading = true);
+                            try {
+                              final data = <String, dynamic>{
+                                'unitNumber': unitNumCtrl.text.trim(),
+                                if (rentCtrl.text.trim().isNotEmpty) 'rentAmount': double.tryParse(rentCtrl.text.trim()) ?? 0.0,
+                                if (depositCtrl.text.trim().isNotEmpty) 'depositAmount': double.tryParse(depositCtrl.text.trim()) ?? 0.0,
+                                if (bedsCtrl.text.trim().isNotEmpty) 'bedrooms': int.tryParse(bedsCtrl.text.trim()) ?? 0,
+                                if (bathsCtrl.text.trim().isNotEmpty) 'bathrooms': int.tryParse(bathsCtrl.text.trim()) ?? 0,
+                                if (sqftCtrl.text.trim().isNotEmpty) 'squareFeet': int.tryParse(sqftCtrl.text.trim()) ?? 0,
+                                'status': status,
+                              };
+                              await notifier.updateUnit(property.id, unit.id, data);
+                              if (ctx.mounted) {
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unit updated successfully! ✅'), backgroundColor: Color(0xFF27AE60)));
+                              }
+                            } catch (e) {
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+                              }
+                            } finally {
+                              if (ctx.mounted) setSheetState(() => isLoading = false);
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                    child: isLoading
+                        ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                        : const Text('Save Unit Changes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmDeleteUnit(BuildContext context, LandlordNotifier notifier, Property property, Unit unit) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Delete Unit', style: TextStyle(fontWeight: FontWeight.w700)),
+        content: Text('Are you sure you want to delete "${unit.name}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary))),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(dialogCtx);
+              try {
+                await notifier.deleteUnit(property.id, unit.id);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unit deleted successfully.'), backgroundColor: Color(0xFF27AE60)));
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error deleting unit: $e'), backgroundColor: AppColors.error));
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
-import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
+
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
 class PropertyPortfolioScreen extends ConsumerStatefulWidget {

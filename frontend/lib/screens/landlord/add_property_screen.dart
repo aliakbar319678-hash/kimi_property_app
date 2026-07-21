@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
@@ -17,6 +19,10 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
   // ── Step tracking ────────────────────────────────────────────────────────
   int _currentStep = 0; // 0 = property info, 1 = add first unit
   String? _createdPropertyId;
+
+  // ── Image picking ────────────────────────────────────────────────────────
+  Uint8List? _pickedImageBytes;
+  String? _pickedFileName;
 
   // ── Property Controllers ─────────────────────────────────────────────────
   final _nameCtrl = TextEditingController();
@@ -88,7 +94,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
     try {
-      await ref.read(landlordProvider.notifier).createProperty(
+      _createdPropertyId = await ref.read(landlordProvider.notifier).createProperty(
             name: _nameCtrl.text.trim(),
             addressLine1: _addressCtrl.text.trim(),
             city: _cityCtrl.text.trim(),
@@ -101,10 +107,12 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
             price: double.tryParse(_priceCtrl.text.trim()),
           );
 
-      // Get the freshly created property id
-      final props = ref.read(landlordProvider).properties;
-      if (props.isNotEmpty) {
-        _createdPropertyId = props.first.id;
+      if (_pickedImageBytes != null && _pickedFileName != null) {
+        await ref.read(landlordProvider.notifier).uploadPropertyImage(
+          _createdPropertyId!,
+          _pickedImageBytes!,
+          _pickedFileName!,
+        );
       }
 
       if (mounted) {
@@ -168,6 +176,24 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
       content: Text(msg),
       backgroundColor: AppColors.error,
     ));
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        withData: true,
+      );
+
+      if (result != null && result.files.single.bytes != null) {
+        setState(() {
+          _pickedImageBytes = result.files.single.bytes;
+          _pickedFileName = result.files.single.name;
+        });
+      }
+    } catch (e) {
+      if (mounted) _showError('Failed to pick image: $e');
+    }
   }
 
   // ── Shared Widgets ────────────────────────────────────────────────────────
@@ -253,6 +279,52 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
           // Progress indicator
           _buildStepIndicator(),
           const SizedBox(height: 20),
+
+          // Property Image Card
+          _sectionCard(
+            title: 'Property Image',
+            icon: Icons.image_rounded,
+            children: [
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  width: double.infinity,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    color: AppColors.scaffoldBg,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border, width: 1.5),
+                    image: _pickedImageBytes != null
+                        ? DecorationImage(image: MemoryImage(_pickedImageBytes!), fit: BoxFit.cover)
+                        : null,
+                  ),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            _pickedImageBytes != null ? 'Change Image' : 'Pick Property Image',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
 
           // Basic Info
           _sectionCard(

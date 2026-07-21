@@ -59,7 +59,6 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(landlordProvider);
     final notifier = ref.read(landlordProvider.notifier);
 
     final size = MediaQuery.of(context).size;
@@ -85,8 +84,6 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
 
     final updatedOrder = _order!;
 
-    // Stages matching the mockup: Request, Assigned, In-Progress, Completed
-    final stages = ['Request', 'Assigned', 'In-Progress', 'Completed'];
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,

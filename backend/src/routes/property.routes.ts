@@ -193,6 +193,33 @@ router.get('/:id', authenticate, async (req: AuthRequest, res, next) => {
 /**
  * @swagger
  * /api/v1/properties/{id}/units:
+ *   get:
+ *     summary: Get all units for a property
+ *     tags: [Properties]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Property ID
+ *     responses:
+ *       200:
+ *         description: List of units
+ */
+router.get('/:id/units', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const db = require('../db');
+    const unitsRes = await db.query('SELECT * FROM units WHERE property_id = $1', [req.params.id]);
+    res.json({ success: true, data: unitsRes.rows });
+  } catch (e) { next(e); }
+});
+
+/**
+ * @swagger
+ * /api/v1/properties/{id}/units:
  *   post:
  *     summary: Create a unit within a property
  *     tags: [Properties]

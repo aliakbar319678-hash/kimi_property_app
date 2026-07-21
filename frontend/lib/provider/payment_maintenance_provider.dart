@@ -18,11 +18,10 @@ class LeaseSummaryNotifier extends StateNotifier<LeaseSummaryState> {
     try {
       final resp = await ApiClient().dio.get(ApiConstants.leasesDashboard);
       final data = resp.data['data'];
-      Map<String, dynamic>? lease;
       if (data is List && data.isNotEmpty) {
-        lease = data.first as Map<String, dynamic>;
+        // lease = data.first as Map<String, dynamic>;
       } else if (data is Map<String, dynamic>) {
-        lease = data;
+        // lease = data;
       }
       // document_url may be stored in lease or its signed_url
       // final docUrl = lease?['document_url'] ?? lease?['lease_document_url'];
