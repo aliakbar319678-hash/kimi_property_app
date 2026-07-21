@@ -5,7 +5,7 @@ import { query } from '../db';
 export class UploadService {
   static async uploadFile(buffer: Buffer, originalName: string, mimeType: string, entityType: string, entityId: string, userId: string) {
     const ext = originalName.split('.').pop() || 'bin';
-    const key = `uploads/${entityType}/${entityId}/${uuidv4()}.${ext}`;
+    const key = `${entityType}/${entityId}/${uuidv4()}.${ext}`;
     await uploadToS3(key, buffer, mimeType);
     const url = await getSignedUrl(key, 86400 * 7); // 7 days
 
