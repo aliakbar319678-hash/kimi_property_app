@@ -22,8 +22,9 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
   final TextEditingController _phoneCtrl = TextEditingController();
   final TextEditingController _emailCtrl = TextEditingController();
 
-  String _avatarUrl = '';
   XFile? _newAvatar;
+  Uint8List? _newAvatarBytes;
+  String _avatarUrl = '';
 
   @override
   void initState() {
@@ -58,7 +59,11 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 800, maxHeight: 800);
     if (image != null) {
-      setState(() => _newAvatar = image);
+      final bytes = await image.readAsBytes();
+      setState(() {
+        _newAvatar = image;
+        _newAvatarBytes = bytes;
+      });
     }
   }
 
@@ -75,9 +80,8 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
         'phoneNumber': _phoneCtrl.text.trim(),
       });
 
-      if (_newAvatar != null) {
-        final bytes = await _newAvatar!.readAsBytes();
-        await notifier.uploadAvatar(bytes, _newAvatar!.name);
+      if (_newAvatarBytes != null) {
+        await notifier.uploadAvatar(_newAvatarBytes!, _newAvatar!.name);
       }
 
       if (mounted) {
@@ -111,6 +115,7 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
                 padding: EdgeInsets.symmetric(horizontal: pad, vertical: h * 0.02),
                 child: Form(
                   key: _formKey,
@@ -137,11 +142,11 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
                               CircleAvatar(
                                 radius: w * 0.12,
                                 backgroundColor: AppColors.secondary.withOpacity(0.1),
-                                backgroundImage: _newAvatar != null
-                                    ? null
+                                backgroundImage: _newAvatarBytes != null
+                                    ? MemoryImage(_newAvatarBytes!)
                                     : (_avatarUrl.isNotEmpty ? NetworkImage(_avatarUrl) : null) as ImageProvider?,
-                                child: _newAvatar != null
-                                    ? const Icon(Icons.image, size: 40)
+                                child: _newAvatarBytes != null
+                                    ? null
                                     : (_avatarUrl.isEmpty
                                         ? const Icon(Icons.person, size: 40, color: AppColors.secondary)
                                         : null),

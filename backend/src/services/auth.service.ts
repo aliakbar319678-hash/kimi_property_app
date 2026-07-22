@@ -22,10 +22,19 @@ export class AuthService {
       const userId = uuidv4();
       const otpCode = this.generateOtpCode();
 
+      const displayName = (data as any).display_name || data.email.split('@')[0];
+      let firstName = '';
+      let lastName = '';
+      if ((data as any).display_name) {
+        const parts = (data as any).display_name.trim().split(' ');
+        firstName = parts[0];
+        lastName = parts.slice(1).join(' ');
+      }
+
       const userRes = await client.query(
-        `INSERT INTO users (id, email, phone, password_hash, region_id, display_name, kyc_status, otp_code, otp_expires_at)
-         VALUES ($1, $2, $3, $4, $5, $6, 'approved', $7, NOW() + INTERVAL '10 minutes') RETURNING id, email, kyc_status`,
-        [userId, data.email, data.phone || null, hash, regionId, data.email.split('@')[0], otpCode]
+        `INSERT INTO users (id, email, phone, password_hash, region_id, display_name, legal_first_name, legal_last_name, kyc_status, otp_code, otp_expires_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'approved', $9, NOW() + INTERVAL '10 minutes') RETURNING id, email, kyc_status`,
+        [userId, data.email, data.phone || null, hash, regionId, displayName, firstName || null, lastName || null, otpCode]
       );
 
       console.log(`\n[OTP] Generated verification code for ${data.email}: ${otpCode}\n`);

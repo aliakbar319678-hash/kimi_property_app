@@ -7,11 +7,24 @@ export class PropertyService {
       const regionRes = await client.query('SELECT id FROM regions WHERE code = $1', [data.regionCode || 'US-NYC']);
       const regionId = regionRes.rows[0]?.id;
 
+      let locationSql = 'NULL';
+      const values: any[] = [
+        landlordId, data.managerId || null, regionId, data.name || 'Unnamed Property', 
+        data.addressLine1 || '', data.addressLine2 || null, data.city || '', 
+        data.stateProvince || '', data.postalCode || '', data.countryCode || 'US', 
+        data.type || 'residential', JSON.stringify(data.amenities || []), 
+        data.description || null, JSON.stringify(data.metadata || {})
+      ];
+      if (data.location?.lng !== undefined && data.location?.lat !== undefined) {
+        locationSql = `ST_SetSRID(ST_MakePoint($15, $16), 4326)`;
+        values.push(data.location.lng, data.location.lat);
+      }
+
       const propertyRes = await client.query(
-        `INSERT INTO properties (landlord_id, manager_id, region_id, name, address_line1, address_line2, city, state_province, postal_code, country_code, type, amenities, description, location, status, metadata)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, ST_SetSRID(ST_MakePoint($14, $15), 4326), 'pending_verification', $16)
+        `INSERT INTO properties (landlord_id, manager_id, region_id, name, address_line1, address_line2, city, state_province, postal_code, country_code, type, amenities, description, metadata, status, location)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'pending_verification', ${locationSql})
          RETURNING *`,
-        [landlordId, data.managerId || null, regionId, data.name, data.addressLine1, data.addressLine2 || null, data.city, data.stateProvince, data.postalCode, data.countryCode, data.type, JSON.stringify(data.amenities || []), data.description || null, data.location?.lng, data.location?.lat, JSON.stringify(data.metadata || {})]
+        values
       );
       return propertyRes.rows[0];
     });
@@ -104,7 +117,17 @@ export class PropertyService {
     const res = await query(
       `INSERT INTO units (property_id, unit_number, bedrooms, bathrooms, square_feet, rent_amount, deposit_amount, status, available_date)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [propertyId, data.unitNumber, data.bedrooms, data.bathrooms, data.squareFeet, rentAmount || null, depositAmount || null, data.status || 'vacant', data.availableDate]
+      [
+        propertyId, 
+        data.unitNumber || 'Unit 1', 
+        data.bedrooms || 0, 
+        data.bathrooms || 0, 
+        data.squareFeet || 0, 
+        rentAmount || null, 
+        depositAmount || null, 
+        data.status || 'vacant', 
+        data.availableDate || null
+      ]
     );
     return res.rows[0];
   }

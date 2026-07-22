@@ -61,7 +61,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(bytes, filename: fileName),
       });
-      await ApiClient().dio.post('/uploads/user/avatar', data: formData);
+      await ApiClient().dio.post('/uploads/avatar', data: formData);
       await loadUserProfile(); // refresh data
     } catch (e) {
       debugPrint('[LandlordProvider] uploadAvatar error: $e');

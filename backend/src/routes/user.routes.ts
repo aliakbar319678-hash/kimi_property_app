@@ -135,6 +135,13 @@ router.put('/me/profile', authenticate, async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.put('/me', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const result = await UserService.updateProfile(req.user!.id, req.body);
+    res.json({ success: true, data: result });
+  } catch (e) { next(e); }
+});
+
 /**
  * @swagger
  * /api/v1/users/me/onboarding/{step}:
