@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
+import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
 
@@ -21,6 +22,9 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
   void initState() {
     super.initState();
     _fetchInvoices();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(landlordProvider.notifier).loadLeases();
+    });
   }
 
   Future<void> _fetchInvoices() async {
@@ -29,8 +33,8 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
       final data = resp.data['data'] as Map<String, dynamic>? ?? {};
       if (mounted) {
         setState(() {
-          _totalCollected = (data['totalCollected'] as num?)?.toDouble() ?? 0.0;
-          _totalOutstanding = (data['totalOutstanding'] as num?)?.toDouble() ?? 0.0;
+          _totalCollected = double.tryParse(data['totalCollected']?.toString() ?? '0') ?? 0.0;
+          _totalOutstanding = double.tryParse(data['totalOutstanding']?.toString() ?? '0') ?? 0.0;
           _invoices = data['invoices'] as List<dynamic>? ?? [];
           _isLoadingInvoices = false;
         });
@@ -41,11 +45,18 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
     }
   }
 
-  void _showRecordPaymentModal() {
+  void _showRecordPaymentModal(LandlordState state) {
     final amountCtrl = TextEditingController();
     final notesCtrl = TextEditingController();
     String paymentMethod = 'cash';
+    String? selectedLeaseId;
+    DateTime selectedDate = DateTime.now();
     bool isSubmitting = false;
+
+    // Trigger loadLeases if empty
+    if (state.leases.isEmpty) {
+      ref.read(landlordProvider.notifier).loadLeases();
+    }
 
     showModalBottomSheet(
       context: context,
@@ -57,6 +68,14 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final currentLeases = ref.watch(landlordProvider).leases;
+            final activeLeases = currentLeases.where((l) => l.status.toLowerCase() == 'active' || l.status.isEmpty).toList();
+            final dropdownItems = activeLeases.isNotEmpty ? activeLeases : currentLeases;
+
+            if (dropdownItems.isNotEmpty && (selectedLeaseId == null || !dropdownItems.any((l) => l.id == selectedLeaseId))) {
+              selectedLeaseId = dropdownItems.first.id;
+            }
+
             return Padding(
               padding: EdgeInsets.only(
                 left: 20,
@@ -84,6 +103,28 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
                       ],
                     ),
                     const SizedBox(height: 16),
+                    const Text('Select Lease / Unit', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      value: dropdownItems.any((l) => l.id == selectedLeaseId) ? selectedLeaseId : null,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: AppColors.inputBg,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                      ),
+                      items: dropdownItems.isEmpty
+                          ? [const DropdownMenuItem(value: null, child: Text('No active leases available', style: TextStyle(color: AppColors.textHint)))]
+                          : dropdownItems.map((l) => DropdownMenuItem(
+                              value: l.id,
+                              child: Text('${l.unitName.isNotEmpty ? l.unitName : "Unit"} - ${l.tenantName.isNotEmpty ? l.tenantName : "Tenant"}', overflow: TextOverflow.ellipsis),
+                            )).toList(),
+                      onChanged: dropdownItems.isEmpty
+                          ? null
+                          : (val) {
+                              if (val != null) setModalState(() => selectedLeaseId = val);
+                            },
+                    ),
+                    const SizedBox(height: 14),
                     const Text('Amount Received (\$)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     TextField(
@@ -101,7 +142,7 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
                     const Text('Payment Method', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
-                      value: paymentMethod,
+                      initialValue: paymentMethod,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: AppColors.inputBg,
@@ -115,6 +156,40 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
                       onChanged: (val) {
                         if (val != null) setModalState(() => paymentMethod = val);
                       },
+                    ),
+                    const SizedBox(height: 14),
+                    const Text('Payment Date', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) {
+                          setModalState(() => selectedDate = picked);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppColors.inputBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}",
+                              style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
+                            ),
+                            const Icon(Icons.calendar_today_rounded, size: 20, color: AppColors.textHint),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     const Text('Notes / Reference', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
@@ -140,8 +215,8 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
                         onPressed: isSubmitting
                             ? null
                             : () async {
-                                final amt = double.tryParse(amountCtrl.text.trim());
-                                if (amt == null || amt <= 0) {
+                                final amt = double.tryParse(amountCtrl.text) ?? 0;
+                                if (amt <= 0) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text('Please enter a valid amount'), backgroundColor: AppColors.error),
                                   );
@@ -150,22 +225,30 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
                                 setModalState(() => isSubmitting = true);
                                 try {
                                   await ApiClient().dio.post('/finance/invoices/record-manual', data: {
+                                    if (selectedLeaseId != null) 'leaseId': selectedLeaseId,
                                     'amount': amt,
                                     'paymentMethod': paymentMethod,
+                                    'paymentDate': selectedDate.toIso8601String(),
                                     'notes': notesCtrl.text.trim(),
                                   });
                                   if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Offline payment recorded successfully! 🎉'),
+                                        backgroundColor: Color(0xFF27AE60),
+                                      ),
+                                    );
                                     Navigator.pop(context);
-                                    _fetchPayout();
                                   }
+                                  _fetchInvoices();
                                 } catch (e) {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Failed to record payment: $e'), backgroundColor: AppColors.error),
+                                      const SnackBar(content: Text('Failed to record payment.'), backgroundColor: AppColors.error),
                                     );
                                   }
                                 } finally {
-                                  setModalState(() => isSubmitting = false);
+                                  if (mounted) setModalState(() => isSubmitting = false);
                                 }
                               },
                         child: isSubmitting
@@ -181,11 +264,6 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
         );
       },
     );
-  }
-
-  void _fetchPayout() {
-    _fetchInvoices();
-    ref.read(landlordProvider.notifier).loadFinanceDashboard();
   }
 
   @override
@@ -274,7 +352,7 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: _showRecordPaymentModal,
+                      onPressed: () => _showRecordPaymentModal(state),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.white,
@@ -311,16 +389,16 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: _invoices.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          separatorBuilder: (context, index) => const SizedBox(height: 12),
                           itemBuilder: (context, idx) {
                             final inv = _invoices[idx];
-                            final isPaid = inv['status'] == 'paid';
-                            final tenantName = inv['tenant_name'] ?? 'Tenant';
-                            final propName = inv['property_name'] ?? 'Property';
-                            final amt = (inv['amount_paid'] != null && (inv['amount_paid'] as num) > 0)
-                                ? (inv['amount_paid'] as num).toDouble()
-                                : (inv['amount_due'] as num?)?.toDouble() ?? 0.0;
-                            final method = inv['payment_method'] ?? 'offline';
+                            final isPaid = (inv['status']?.toString().toLowerCase() ?? '') == 'paid';
+                            final tenantName = inv['tenant_name'] ?? inv['tenantName'] ?? 'Tenant';
+                            final propName = inv['property_name'] ?? inv['propertyName'] ?? 'Property';
+                            final rawPaid = double.tryParse((inv['amount_paid'] ?? inv['amountPaid'])?.toString() ?? '0') ?? 0.0;
+                            final rawDue = double.tryParse((inv['amount_due'] ?? inv['amountDue'] ?? inv['amount'] ?? inv['total'])?.toString() ?? '0') ?? 0.0;
+                            final amt = rawPaid > 0 ? rawPaid : rawDue;
+                            final method = inv['payment_method'] ?? inv['paymentMethod'] ?? 'offline';
 
                             return Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -373,20 +451,6 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildProgressBar(String label, String pctText, String amtText, Color color, double w) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-            Text('$pctText ($amtText)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
-          ],
-        ),
-      ],
     );
   }
 }

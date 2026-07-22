@@ -53,7 +53,7 @@ class _LandlordChatbotScreenState extends ConsumerState<LandlordChatbotScreen> {
 
     try {
       final resp = await ApiClient().dio.post('/ai/landlord-chat', data: {'message': userMsg});
-      final reply = resp.data['data']?['reply']?.toString() ?? 'I could not process that request. Please try again.';
+      final reply = resp.data['reply']?.toString() ?? 'I could not process that request. Please try again.';
 
       if (mounted) {
         setState(() {

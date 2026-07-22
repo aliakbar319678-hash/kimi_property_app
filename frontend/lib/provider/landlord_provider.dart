@@ -947,7 +947,12 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       )).toList();
       
       final unreadCountResp = await ApiClient().dio.get(ApiConstants.notificationsUnreadCount);
-      final unreadCount = (unreadCountResp.data['data'] as num?)?.toInt() ?? 0;
+      int unreadCount = 0;
+      if (unreadCountResp.data['data'] is num) {
+        unreadCount = (unreadCountResp.data['data'] as num).toInt();
+      } else if (unreadCountResp.data['data'] is Map && unreadCountResp.data['data']['count'] != null) {
+        unreadCount = int.tryParse(unreadCountResp.data['data']['count'].toString()) ?? 0;
+      }
       
       state = state.copyWith(notifications: notifications, unreadNotifications: unreadCount);
     } catch (e) {

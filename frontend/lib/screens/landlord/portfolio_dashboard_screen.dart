@@ -31,6 +31,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_dashboard',
         onPressed: () => Navigator.pushNamed(context, '/landlord_chatbot'),
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.smart_toy_rounded, color: Colors.white),

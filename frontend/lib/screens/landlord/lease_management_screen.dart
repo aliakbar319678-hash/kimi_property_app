@@ -46,6 +46,7 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_lease',
         onPressed: () => _showCreateLeaseSheet(context),
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add_rounded, color: Colors.white),

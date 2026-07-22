@@ -52,7 +52,7 @@ router.post('/chat', authenticate, async (req: AuthRequest, res, next) => {
 router.post('/landlord-chat', authenticate, async (req: AuthRequest, res, next) => {
   try {
     const result = await AIService.landlordChat(req.user!.id, req.body.message || req.body.prompt || '');
-    res.json({ success: true, data: result });
+    res.status(200).json({ success: true, reply: result.reply });
   } catch (e) { next(e); }
 });
 

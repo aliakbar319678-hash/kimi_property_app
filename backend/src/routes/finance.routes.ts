@@ -198,9 +198,17 @@ router.get('/invoices', authenticate, async (req: AuthRequest, res, next) => {
 
 router.post('/invoices/record-manual', authenticate, async (req: AuthRequest, res, next) => {
   try {
+    console.log('[FINANCE] Record manual payment payload:', req.body);
     const payment = await FinanceService.recordManualPayment(req.user!.id, req.body);
     res.status(201).json({ success: true, data: payment });
-  } catch (e) { next(e); }
+  } catch (e: any) { 
+    console.error('[FINANCE] Error recording manual payment:', e.message || e);
+    if (e.statusCode) {
+      res.status(e.statusCode).json({ success: false, error: e.message });
+    } else {
+      res.status(400).json({ success: false, error: e.message || 'Failed to record payment' });
+    }
+  }
 });
 
 export { router as financeRouter };

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
 import 'package:tenant_and_landlord_application/core/api_constants.dart';
@@ -108,8 +108,8 @@ class _LandlordLeaseDetailScreenState
                       title: 'Financial',
                       icon: Icons.monetization_on_outlined,
                       children: [
-                        _detailRow('Rent / Month', '\$${((_detail?['rent_amount'] ?? lease?.rentAmount ?? 0) as num).toStringAsFixed(0)}'),
-                        _detailRow('Security Deposit', '\$${((_detail?['security_deposit'] ?? _detail?['deposit_amount'] ?? 0) as num).toStringAsFixed(0)}'),
+                        _detailRow('Rent / Month', '\$${(double.tryParse((_detail?['rent_amount'] ?? lease?.rentAmount ?? 0).toString()) ?? 0.0).toStringAsFixed(0)}'),
+                        _detailRow('Security Deposit', '\$${(double.tryParse((_detail?['security_deposit'] ?? _detail?['deposit_amount'] ?? 0).toString()) ?? 0.0).toStringAsFixed(0)}'),
                         _detailRow('Days Until Expiry', _daysLeft(lease)),
                       ],
                     ),

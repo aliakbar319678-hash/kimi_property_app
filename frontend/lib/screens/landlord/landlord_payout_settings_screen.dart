@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
+import 'package:dio/dio.dart';
 
 class LandlordPayoutSettingsScreen extends ConsumerStatefulWidget {
   const LandlordPayoutSettingsScreen({super.key});
@@ -28,14 +29,22 @@ class _LandlordPayoutSettingsScreenState extends ConsumerState<LandlordPayoutSet
   Future<void> _fetchPayoutAccount() async {
     try {
       final resp = await ApiClient().dio.get('/finance/payout-account');
-      final data = resp.data['data'] as Map<String, dynamic>?;
-      if (data != null) {
+      if (resp.data != null && resp.data['data'] != null) {
+        final data = resp.data['data'];
         _bankNameCtrl.text = data['bank_name']?.toString() ?? '';
         _accountHolderCtrl.text = data['account_holder']?.toString() ?? '';
         _ibanCtrl.text = data['iban_account_no']?.toString() ?? '';
       }
     } catch (e) {
       debugPrint('Error loading payout info: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load payout settings. Please try again.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -60,11 +69,21 @@ class _LandlordPayoutSettingsScreenState extends ConsumerState<LandlordPayoutSet
           ),
         );
       }
+    } on DioException catch (e) {
+      if (mounted) {
+        final msg = e.response?.data['message'] ?? e.response?.data['error'] ?? e.message ?? 'Unknown network error';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save payout settings: $msg'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save payout settings: $e'),
+            content: Text('Failed to save payout settings. Please try again.'),
             backgroundColor: AppColors.error,
           ),
         );

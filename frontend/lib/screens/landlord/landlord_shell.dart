@@ -56,8 +56,8 @@ class _LandlordShellState extends State<LandlordShell> {
         backgroundColor: AppColors.white,
         selectedItemColor: AppColors.secondary,
         unselectedItemColor: AppColors.textHint,
-        selectedFontSize: 11.0,
-        unselectedFontSize: 10.0,
+        selectedFontSize: 10.0,
+        unselectedFontSize: 9.0,
         elevation: 12,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home_rounded), label: 'Home'),

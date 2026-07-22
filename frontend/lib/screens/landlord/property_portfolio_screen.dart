@@ -74,6 +74,7 @@ class _PropertyPortfolioScreenState
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_property',
         onPressed: () => Navigator.pushNamed(context, '/landlord_add_property'),
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add_rounded, color: Colors.white),

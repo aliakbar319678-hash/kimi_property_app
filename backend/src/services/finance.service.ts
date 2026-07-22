@@ -208,7 +208,7 @@ export class FinanceService {
     };
   }
 
-  static async recordManualPayment(landlordId: string, data: { leaseId?: string; propertyId?: string; unitId?: string; tenantId?: string; amount: number; paymentMethod: string; notes?: string }) {
+  static async recordManualPayment(landlordId: string, data: { leaseId?: string; propertyId?: string; unitId?: string; tenantId?: string; amount: number; paymentMethod: string; paymentDate?: string; notes?: string }) {
     return withTransaction(async (client) => {
       let leaseId = data.leaseId;
       let propertyId = data.propertyId;
@@ -229,22 +229,23 @@ export class FinanceService {
         // Fallback: Pick landlord's first property
         const propRes = await client.query('SELECT id FROM properties WHERE landlord_id = $1 LIMIT 1', [landlordId]);
         if (propRes.rows.length > 0) propertyId = propRes.rows[0].id;
-        else throw new AppError('Landlord has no properties configured to record payment against', 400);
+        else throw new AppError('No active lease or property found. Please create a property and lease first.', 400);
       }
 
       const amount = Number(data.amount) || 0;
       const paymentMethod = data.paymentMethod || 'cash';
+      const paymentDate = data.paymentDate || new Date().toISOString();
 
       const paymentRes = await client.query(
         `INSERT INTO rent_payments (lease_id, tenant_id, property_id, unit_id, amount_due, amount_paid, status, due_date, paid_date, payment_method)
-         VALUES ($1, $2, $3, $4, $5, $5, 'paid', CURRENT_DATE, CURRENT_DATE, $6) RETURNING *`,
-        [leaseId || null, tenantId || null, propertyId, unitId || null, amount, paymentMethod]
+         VALUES ($1, $2, $3, $4, $5, $5, 'paid', $7, $7, $6) RETURNING *`,
+        [leaseId || null, tenantId || null, propertyId, unitId || null, amount, paymentMethod, paymentDate]
       );
 
       await client.query(
-        `INSERT INTO transactions (payer_id, payee_id, property_id, unit_id, lease_id, type, amount, currency, status, gateway, notes)
-         VALUES ($1, $2, $3, $4, $5, 'rent', $6, 'USD', 'completed', $7, $8)`,
-        [tenantId || null, landlordId, propertyId, unitId || null, leaseId || null, amount, paymentMethod, data.notes || 'Manual Rent Payment']
+        `INSERT INTO transactions (payer_id, payee_id, property_id, unit_id, lease_id, type, amount, currency, status, gateway)
+         VALUES ($1, $2, $3, $4, $5, 'rent', $6, 'USD', 'completed', $7)`,
+        [tenantId || null, landlordId, propertyId, unitId || null, leaseId || null, amount, paymentMethod]
       );
 
       return paymentRes.rows[0];
