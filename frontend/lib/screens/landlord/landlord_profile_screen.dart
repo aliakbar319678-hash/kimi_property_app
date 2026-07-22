@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -178,13 +179,13 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
                       _buildTextField('Phone Number', _phoneCtrl, Icons.phone_outlined),
                       const SizedBox(height: 16),
                       // Email is read-only usually, but we'll show it
-                      _buildTextField('Email', _emailCtrl, Icons.email_outlined, readOnly: true),
+                      _buildTextField('Email', _emailCtrl, Icons.email_outlined, readOnly: true, hintText: 'Email cannot be changed'),
                       const SizedBox(height: 32),
 
                       // Save Button
                       SizedBox(
                         width: double.infinity,
-                        height: h * 0.06,
+                        height: 50,
                         child: ElevatedButton(
                           onPressed: _isSaving ? null : _saveProfile,
                           style: ElevatedButton.styleFrom(
@@ -211,7 +212,7 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController ctrl, IconData icon, {bool readOnly = false}) {
+  Widget _buildTextField(String label, TextEditingController ctrl, IconData icon, {bool readOnly = false, String? hintText}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -225,6 +226,7 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
           readOnly: readOnly,
           style: TextStyle(color: readOnly ? AppColors.textHint : AppColors.textPrimary),
           decoration: InputDecoration(
+            hintText: hintText,
             prefixIcon: Icon(icon, color: AppColors.textHint, size: 20),
             filled: true,
             fillColor: readOnly ? Colors.grey.shade200 : AppColors.white,

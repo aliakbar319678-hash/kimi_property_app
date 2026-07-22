@@ -841,9 +841,11 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: 20),
-        child: _currentStep == 0 ? _buildPropertyStep(w) : _buildUnitStep(w),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: 20),
+          child: _currentStep == 0 ? _buildPropertyStep(w) : _buildUnitStep(w),
+        ),
       ),
     );
   }

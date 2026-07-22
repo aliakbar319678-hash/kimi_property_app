@@ -7,11 +7,38 @@ import 'package:tenant_and_landlord_application/core/api_constants.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-class HomeDashboardScreen extends ConsumerWidget {
+class HomeDashboardScreen extends ConsumerStatefulWidget {
   const HomeDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
+}
+
+class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
+  String _avatarUrl = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final resp = await ApiClient().dio.get('/users/profile');
+      final data = resp.data['data'] as Map<String, dynamic>? ?? {};
+      if (mounted) {
+        setState(() {
+          _avatarUrl = data['avatar_url']?.toString() ?? '';
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to load profile for dashboard: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(homeDashboardProvider);
     final notif = ref.read(homeDashboardProvider.notifier);
     final w = MediaQuery.of(context).size.width;
@@ -62,9 +89,9 @@ class HomeDashboardScreen extends ConsumerWidget {
                     },
                     child: CircleAvatar(
                       radius: w * 0.05,
-                      backgroundImage: const NetworkImage(
-                        'https://i.pravatar.cc/100?img=3',
-                      ),
+                      backgroundColor: AppColors.secondary.withOpacity(0.1),
+                      backgroundImage: _avatarUrl.isNotEmpty ? NetworkImage(_avatarUrl) : null,
+                      child: _avatarUrl.isEmpty ? Icon(Icons.person, size: w * 0.06, color: AppColors.secondary) : null,
                     ),
                   ),
                   SizedBox(width: w * 0.025),

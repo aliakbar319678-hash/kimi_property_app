@@ -111,8 +111,14 @@ export class PropertyService {
   }
 
   static async createUnit(propertyId: string, data: any) {
-    const rentAmount = data.rentAmount !== undefined ? data.rentAmount : data.price;
-    const depositAmount = data.depositAmount !== undefined ? data.depositAmount : data.deposit;
+    const rawRent = data.rentAmount !== undefined ? data.rentAmount : data.price;
+    const rawDeposit = data.depositAmount !== undefined ? data.depositAmount : data.deposit;
+
+    const rentAmount = rawRent ? parseFloat(rawRent) : null;
+    const depositAmount = rawDeposit ? parseFloat(rawDeposit) : null;
+    const bedrooms = data.bedrooms ? parseInt(data.bedrooms, 10) : 0;
+    const bathrooms = data.bathrooms ? parseInt(data.bathrooms, 10) : 0;
+    const squareFeet = data.squareFeet ? parseInt(data.squareFeet, 10) : 0;
     
     const res = await query(
       `INSERT INTO units (property_id, unit_number, bedrooms, bathrooms, square_feet, rent_amount, deposit_amount, status, available_date)
@@ -120,11 +126,11 @@ export class PropertyService {
       [
         propertyId, 
         data.unitNumber || 'Unit 1', 
-        data.bedrooms || 0, 
-        data.bathrooms || 0, 
-        data.squareFeet || 0, 
-        rentAmount || null, 
-        depositAmount || null, 
+        isNaN(bedrooms) ? 0 : bedrooms, 
+        isNaN(bathrooms) ? 0 : bathrooms, 
+        isNaN(squareFeet) ? 0 : squareFeet, 
+        isNaN(rentAmount as any) ? null : rentAmount, 
+        isNaN(depositAmount as any) ? null : depositAmount, 
         data.status || 'vacant', 
         data.availableDate || null
       ]
