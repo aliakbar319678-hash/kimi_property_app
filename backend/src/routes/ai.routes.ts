@@ -49,4 +49,11 @@ router.post('/chat', authenticate, async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.post('/landlord-chat', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const result = await AIService.landlordChat(req.user!.id, req.body.message || req.body.prompt || '');
+    res.json({ success: true, data: result });
+  } catch (e) { next(e); }
+});
+
 export { router as aiRouter };

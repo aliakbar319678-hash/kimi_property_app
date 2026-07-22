@@ -30,6 +30,11 @@ class PortfolioDashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.pushNamed(context, '/landlord_chatbot'),
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.smart_toy_rounded, color: Colors.white),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: pad, vertical: h * 0.02),
@@ -110,23 +115,42 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  GestureDetector(
-                    onTap: () => Navigator.pushNamed(context, '/notifications'),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: const BoxDecoration(
-                        color: AppColors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Badge(
-                        label: Text(unread > 0 ? '$unread' : ''),
-                        isLabelVisible: unread > 0,
-                        child: const Icon(
-                          Icons.notifications_none_rounded,
-                          color: AppColors.textPrimary,
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/landlord_chatbot'),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: const BoxDecoration(
+                            color: AppColors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.smart_toy_outlined,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/notifications'),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: const BoxDecoration(
+                            color: AppColors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Badge(
+                            label: Text(unread > 0 ? '$unread' : ''),
+                            isLabelVisible: unread > 0,
+                            child: const Icon(
+                              Icons.notifications_none_rounded,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -16,6 +16,7 @@ class HomeDashboardScreen extends ConsumerStatefulWidget {
 
 class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
   String _avatarUrl = '';
+  String _userName = '';
 
   @override
   void initState() {
@@ -30,6 +31,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
       if (mounted) {
         setState(() {
           _avatarUrl = data['avatar_url']?.toString() ?? '';
+          _userName = data['legal_first_name']?.toString() ?? data['display_name']?.toString() ?? 'User';
         });
       }
     } catch (e) {
@@ -95,16 +97,18 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                     ),
                   ),
                   SizedBox(width: w * 0.025),
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.apartment_rounded,
-                        size: w * 0.05,
-                        color: AppColors.primary,
-                      ),
-                      SizedBox(width: w * 0.015),
                       Text(
-                        'T&L',
+                        'Welcome Back,',
+                        style: TextStyle(
+                          fontSize: w * 0.032,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      Text(
+                        _userName.isEmpty ? 'Loading...' : _userName,
                         style: TextStyle(
                           fontSize: w * 0.048,
                           fontWeight: FontWeight.w700,

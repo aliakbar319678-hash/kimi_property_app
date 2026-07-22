@@ -51,4 +51,21 @@ export async function initPostGIS() {
   } catch (e) {
     console.warn('⚠️  uuid-ossp not available - skipping');
   }
+  try {
+    await query(`
+      CREATE TABLE IF NOT EXISTS landlord_payout_accounts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+        bank_name VARCHAR(255) NOT NULL,
+        account_holder VARCHAR(255) NOT NULL,
+        iban_account_no VARCHAR(255) NOT NULL,
+        payout_status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+    console.log('✅ landlord_payout_accounts table ready');
+  } catch (e) {
+    console.warn('⚠️ Could not initialize landlord_payout_accounts table:', e);
+  }
 }

@@ -174,4 +174,33 @@ router.post('/invoices', authenticate, requireRole('vendor'), async (req: AuthRe
   } catch (e) { next(e); }
 });
 
+router.get('/payout-account', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const account = await FinanceService.getPayoutAccount(req.user!.id);
+    res.json({ success: true, data: account });
+  } catch (e) { next(e); }
+});
+
+router.post('/payout-account', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const { bankName, accountHolder, ibanAccountNo } = req.body;
+    const account = await FinanceService.upsertPayoutAccount(req.user!.id, { bankName, accountHolder, ibanAccountNo });
+    res.json({ success: true, data: account });
+  } catch (e) { next(e); }
+});
+
+router.get('/invoices', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const data = await FinanceService.getLandlordInvoices(req.user!.id);
+    res.json({ success: true, data });
+  } catch (e) { next(e); }
+});
+
+router.post('/invoices/record-manual', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const payment = await FinanceService.recordManualPayment(req.user!.id, req.body);
+    res.status(201).json({ success: true, data: payment });
+  } catch (e) { next(e); }
+});
+
 export { router as financeRouter };

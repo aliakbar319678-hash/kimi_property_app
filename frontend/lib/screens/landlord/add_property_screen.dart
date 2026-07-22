@@ -371,9 +371,12 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
                         children: [
                           const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 18),
                           const SizedBox(width: 8),
-                          Text(
-                            _pickedImageBytes != null ? 'Change Image' : 'Pick Property Image',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                          Flexible(
+                            child: Text(
+                              _pickedImageBytes != null ? 'Change Image' : 'Pick Property Image',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -828,6 +831,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
@@ -843,6 +847,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
           padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: 20),
           child: _currentStep == 0 ? _buildPropertyStep(w) : _buildUnitStep(w),
         ),

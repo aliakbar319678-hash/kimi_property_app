@@ -22,8 +22,8 @@ export async function uploadToS3(key: string, body: Buffer, contentType: string,
 }
 
 export async function getSignedUrl(key: string, expiresInSeconds: number = 3600, bucket?: string) {
-  // Return a local mock URL
-  return `http://localhost:5000/uploads/${key}`;
+  const host = process.env.BASE_URL || 'http://192.168.1.14:5000';
+  return `${host}/uploads/${key}`;
 }
 
 export async function deleteFromS3(key: string, bucket?: string) {

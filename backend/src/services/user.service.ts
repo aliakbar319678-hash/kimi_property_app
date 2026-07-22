@@ -12,8 +12,9 @@ export class UserService {
     if (data.dateOfBirth !== undefined) normalized.date_of_birth = data.dateOfBirth;
     if (data.currentAddress !== undefined) normalized.current_address = data.currentAddress;
     if (data.emergencyContact !== undefined) normalized.emergency_contact = data.emergencyContact;
+    if (data.email !== undefined) normalized.email = data.email;
 
-    const userAllowed = ['legal_first_name', 'legal_last_name', 'display_name', 'phone'];
+    const userAllowed = ['legal_first_name', 'legal_last_name', 'display_name', 'phone', 'email'];
     const profileAllowed = ['date_of_birth', 'current_address', 'emergency_contact'];
 
     return withTransaction(async (client) => {

@@ -13,16 +13,16 @@ export class PropertyService {
         data.addressLine1 || '', data.addressLine2 || null, data.city || '', 
         data.stateProvince || '', data.postalCode || '', data.countryCode || 'US', 
         data.type || 'residential', JSON.stringify(data.amenities || []), 
-        data.description || null, JSON.stringify(data.metadata || {})
+        data.description || null
       ];
       if (data.location?.lng !== undefined && data.location?.lat !== undefined) {
-        locationSql = `ST_SetSRID(ST_MakePoint($15, $16), 4326)`;
+        locationSql = `ST_SetSRID(ST_MakePoint($14, $15), 4326)`;
         values.push(data.location.lng, data.location.lat);
       }
 
       const propertyRes = await client.query(
-        `INSERT INTO properties (landlord_id, manager_id, region_id, name, address_line1, address_line2, city, state_province, postal_code, country_code, type, amenities, description, metadata, status, location)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'pending_verification', ${locationSql})
+        `INSERT INTO properties (landlord_id, manager_id, region_id, name, address_line1, address_line2, city, state_province, postal_code, country_code, type, amenities, description, status, location)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending_verification', ${locationSql})
          RETURNING *`,
         values
       );
@@ -151,7 +151,7 @@ export class PropertyService {
     const allowedFields = [
       'name', 'address_line1', 'address_line2', 'city', 'state_province',
       'postal_code', 'country_code', 'type', 'status', 'verification_status',
-      'amenities', 'description', 'images', 'rejection_reason', 'rejection_deadline', 'metadata'
+      'amenities', 'description', 'images', 'rejection_reason', 'rejection_deadline'
     ];
 
     const updates: string[] = [];
@@ -164,7 +164,7 @@ export class PropertyService {
 
       if (value !== undefined) {
         updates.push(`${field} = $${idx++}`);
-        values.push((field === 'amenities' || field === 'images' || field === 'metadata') && typeof value === 'object' ? JSON.stringify(value) : value);
+        values.push((field === 'amenities' || field === 'images') && typeof value === 'object' ? JSON.stringify(value) : value);
       }
     }
 

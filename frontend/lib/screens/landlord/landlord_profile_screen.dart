@@ -79,6 +79,7 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
         'firstName': _firstNameCtrl.text.trim(),
         'lastName': _lastNameCtrl.text.trim(),
         'phoneNumber': _phoneCtrl.text.trim(),
+        'email': _emailCtrl.text.trim(),
       });
 
       if (_newAvatarBytes != null) {
@@ -112,6 +113,7 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -178,8 +180,43 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
                       const SizedBox(height: 16),
                       _buildTextField('Phone Number', _phoneCtrl, Icons.phone_outlined),
                       const SizedBox(height: 16),
-                      // Email is read-only usually, but we'll show it
-                      _buildTextField('Email', _emailCtrl, Icons.email_outlined, readOnly: true, hintText: 'Email cannot be changed'),
+                      // Email is now editable
+                      _buildTextField('Email', _emailCtrl, Icons.email_outlined),
+                      const SizedBox(height: 24),
+
+                      // Bank Payout Settings Navigation Card
+                      InkWell(
+                        onTap: () => Navigator.pushNamed(context, '/landlord_payout_settings'),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.border),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.account_balance_wallet_outlined, color: AppColors.primary, size: 24),
+                              SizedBox(width: 14),
+                              Expanded(
+                                child: Text(
+                                  'Bank Payout Settings',
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                                ),
+                              ),
+                              Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.textHint),
+                            ],
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 32),
 
                       // Save Button

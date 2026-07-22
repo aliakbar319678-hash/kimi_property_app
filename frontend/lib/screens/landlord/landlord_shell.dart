@@ -49,50 +49,23 @@ class _LandlordShellState extends State<LandlordShell> {
         index: _currentIndex,
         children: _pages,
       ),
-      bottomNavigationBar: Container(
-        height: w * 0.18,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.07),
-              blurRadius: 12,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(items.length, (i) {
-            final isSelected = i == _currentIndex;
-            return GestureDetector(
-              onTap: () => setState(() => _currentIndex = i),
-              child: Container(
-                color: Colors.transparent,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      isSelected ? items[i].$1 : items[i].$2,
-                      size: w * 0.058,
-                      color: isSelected ? AppColors.secondary : AppColors.textHint,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      items[i].$3,
-                      style: TextStyle(
-                        fontSize: w * 0.027,
-                        color: isSelected ? AppColors.secondary : AppColors.textHint,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (i) => setState(() => _currentIndex = i),
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: AppColors.white,
+        selectedItemColor: AppColors.secondary,
+        unselectedItemColor: AppColors.textHint,
+        selectedFontSize: 11.0,
+        unselectedFontSize: 10.0,
+        elevation: 12,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home_rounded), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.apartment_outlined), activeIcon: Icon(Icons.apartment_rounded), label: 'Properties'),
+          BottomNavigationBarItem(icon: Icon(Icons.people_outline_rounded), activeIcon: Icon(Icons.people_rounded), label: 'Tenants'),
+          BottomNavigationBarItem(icon: Icon(Icons.build_outlined), activeIcon: Icon(Icons.build_rounded), label: 'Maintenance'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline_rounded), activeIcon: Icon(Icons.person_rounded), label: 'Profile'),
+        ],
       ),
     );
   }

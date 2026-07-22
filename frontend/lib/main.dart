@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tenant_and_landlord_application/core/api_constants.dart';
 
 // ── Auth ────────────────────────────────────────────
 import 'package:tenant_and_landlord_application/screens/auth/welcome_screen.dart';
@@ -54,6 +55,8 @@ import 'package:tenant_and_landlord_application/screens/landlord/edit_property_s
 import 'package:tenant_and_landlord_application/screens/landlord/lease_detail_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/landlord_applications_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/landlord_profile_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/landlord_payout_settings_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/landlord_chatbot_screen.dart';
 
 // ── Vendor Portal Screens ───────────────────────────
 import 'package:tenant_and_landlord_application/screens/vendor/vendor_onboarding_screen.dart';
@@ -66,7 +69,12 @@ import 'package:tenant_and_landlord_application/screens/vendor/vendor_submit_bid
 
 
 void main() {
-  runApp(const ProviderScope(child: TLApp()));
+  WidgetsFlutterBinding.ensureInitialized();
+  print('=====================================================');
+  print('FLUTTER API BASE URL IN USE: ${ApiConstants.baseUrl}');
+  print('=====================================================');
+  runApp(
+    const ProviderScope(child: TLApp()));
 }
 
 class TLApp extends StatelessWidget {
@@ -122,6 +130,8 @@ class TLApp extends StatelessWidget {
         '/landlord_edit_property': (_) => const EditPropertyScreen(),
         '/landlord_lease_detail': (_) => const LandlordLeaseDetailScreen(),
         '/landlord_applications': (_) => const LandlordApplicationsScreen(),
+        '/landlord_payout_settings': (_) => const LandlordPayoutSettingsScreen(),
+        '/landlord_chatbot': (_) => const LandlordChatbotScreen(),
 
         // ── Vendor Portal Routes ──────────────────
         '/vendor_onboarding': (_) => const VendorOnboardingScreen(),

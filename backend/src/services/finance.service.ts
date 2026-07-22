@@ -154,4 +154,100 @@ export class FinanceService {
     );
     return res.rows[0];
   }
+
+  static async getPayoutAccount(userId: string) {
+    const res = await query('SELECT * FROM landlord_payout_accounts WHERE user_id = $1', [userId]);
+    return res.rows[0] || null;
+  }
+
+  static async upsertPayoutAccount(userId: string, data: { bankName: string; accountHolder: string; ibanAccountNo: string }) {
+    const res = await query(
+      `INSERT INTO landlord_payout_accounts (user_id, bank_name, account_holder, iban_account_no, payout_status, updated_at)
+       VALUES ($1, $2, $3, $4, 'active', NOW())
+       ON CONFLICT (user_id) 
+       DO UPDATE SET bank_name = EXCLUDED.bank_name, account_holder = EXCLUDED.account_holder, iban_account_no = EXCLUDED.iban_account_no, updated_at = NOW()
+       RETURNING *`,
+      [userId, data.bankName, data.accountHolder, data.ibanAccountNo]
+    );
+    return res.rows[0];
+  }
+
+  static async getLandlordInvoices(landlordId: string) {
+    const invoicesRes = await query(
+      `SELECT rp.id, rp.lease_id, rp.tenant_id, rp.property_id, rp.unit_id,
+              rp.amount_due, rp.amount_paid, rp.balance_due, rp.status,
+              rp.due_date, rp.paid_date, rp.payment_method,
+              p.name as property_name, u.unit_number,
+              COALESCE(usr.display_name, usr.legal_first_name || ' ' || usr.legal_last_name, 'Tenant') as tenant_name, 
+              usr.email as tenant_email
+       FROM rent_payments rp
+       JOIN properties p ON p.id = rp.property_id
+       LEFT JOIN units u ON u.id = rp.unit_id
+       LEFT JOIN users usr ON usr.id = rp.tenant_id
+       WHERE p.landlord_id = $1
+       ORDER BY rp.due_date DESC`,
+      [landlordId]
+    );
+
+    const totalsRes = await query(
+      `SELECT 
+        COALESCE(SUM(CASE WHEN rp.status = 'paid' THEN rp.amount_paid ELSE 0 END), 0) as total_collected,
+        COALESCE(SUM(CASE WHEN rp.status IN ('pending', 'partial', 'late') THEN rp.balance_due ELSE 0 END), 0) as total_outstanding
+       FROM rent_payments rp
+       JOIN properties p ON p.id = rp.property_id
+       WHERE p.landlord_id = $1`,
+      [landlordId]
+    );
+
+    const totals = totalsRes.rows[0] || { total_collected: 0, total_outstanding: 0 };
+
+    return {
+      totalCollected: Number(totals.total_collected),
+      totalOutstanding: Number(totals.total_outstanding),
+      invoices: invoicesRes.rows
+    };
+  }
+
+  static async recordManualPayment(landlordId: string, data: { leaseId?: string; propertyId?: string; unitId?: string; tenantId?: string; amount: number; paymentMethod: string; notes?: string }) {
+    return withTransaction(async (client) => {
+      let leaseId = data.leaseId;
+      let propertyId = data.propertyId;
+      let unitId = data.unitId;
+      let tenantId = data.tenantId;
+
+      if (leaseId) {
+        const leaseRes = await client.query('SELECT * FROM leases WHERE id = $1', [leaseId]);
+        if (leaseRes.rows.length > 0) {
+          const l = leaseRes.rows[0];
+          propertyId = propertyId || l.property_id;
+          unitId = unitId || l.unit_id;
+          tenantId = tenantId || l.tenant_id;
+        }
+      }
+
+      if (!propertyId) {
+        // Fallback: Pick landlord's first property
+        const propRes = await client.query('SELECT id FROM properties WHERE landlord_id = $1 LIMIT 1', [landlordId]);
+        if (propRes.rows.length > 0) propertyId = propRes.rows[0].id;
+        else throw new AppError('Landlord has no properties configured to record payment against', 400);
+      }
+
+      const amount = Number(data.amount) || 0;
+      const paymentMethod = data.paymentMethod || 'cash';
+
+      const paymentRes = await client.query(
+        `INSERT INTO rent_payments (lease_id, tenant_id, property_id, unit_id, amount_due, amount_paid, status, due_date, paid_date, payment_method)
+         VALUES ($1, $2, $3, $4, $5, $5, 'paid', CURRENT_DATE, CURRENT_DATE, $6) RETURNING *`,
+        [leaseId || null, tenantId || null, propertyId, unitId || null, amount, paymentMethod]
+      );
+
+      await client.query(
+        `INSERT INTO transactions (payer_id, payee_id, property_id, unit_id, lease_id, type, amount, currency, status, gateway, notes)
+         VALUES ($1, $2, $3, $4, $5, 'rent', $6, 'USD', 'completed', $7, $8)`,
+        [tenantId || null, landlordId, propertyId, unitId || null, leaseId || null, amount, paymentMethod, data.notes || 'Manual Rent Payment']
+      );
+
+      return paymentRes.rows[0];
+    });
+  }
 }
