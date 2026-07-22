@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/provider/home_dashboard_provider.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
-
+import 'package:tenant_and_landlord_application/core/api_constants.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 class HomeDashboardScreen extends ConsumerWidget {
   const HomeDashboardScreen({super.key});
 
@@ -174,6 +177,34 @@ class HomeDashboardScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'My Activity',
+                                style: TextStyle(
+                                  fontSize: w * 0.052,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => Navigator.pushNamed(context, '/tenant_applications'),
+                                child: Text(
+                                  'My Applications',
+                                  style: TextStyle(
+                                    fontSize: w * 0.034,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.secondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: h * 0.015),
+                          _ActiveLeaseWidget(w: w, h: h),
+                          SizedBox(height: h * 0.03),
+
                           // Featured Listings
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -723,6 +754,93 @@ class _SavedPropertyCard extends StatelessWidget {
           ),
         ],
       ),
+      ),
+    );
+  }
+}
+
+class _ActiveLeaseWidget extends StatefulWidget {
+  final double w;
+  final double h;
+  const _ActiveLeaseWidget({required this.w, required this.h});
+
+  @override
+  State<_ActiveLeaseWidget> createState() => _ActiveLeaseWidgetState();
+}
+
+class _ActiveLeaseWidgetState extends State<_ActiveLeaseWidget> {
+  Map<String, dynamic>? _lease;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLease();
+  }
+
+  Future<void> _fetchLease() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token');
+      if (token == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/tenant/active-lease'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] && data['data'] != null) {
+          setState(() {
+            _lease = data['data'];
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+    } catch (_) {}
+    setState(() => _isLoading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_lease == null) {
+      return Container(
+        padding: EdgeInsets.all(widget.w * 0.04),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Text('No active lease found. Explore featured listings to find your next home!'),
+      );
+    }
+    return Container(
+      padding: EdgeInsets.all(widget.w * 0.04),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('My Active Lease', style: TextStyle(color: Colors.white70, fontSize: widget.w * 0.035)),
+          SizedBox(height: widget.h * 0.01),
+          Text(
+            '${_lease!['property_name']} - Unit ${_lease!['unit_number']}',
+            style: TextStyle(color: Colors.white, fontSize: widget.w * 0.045, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: widget.h * 0.01),
+          Text(
+            'Rent: \$${_lease!['rent_amount']} / month',
+            style: TextStyle(color: Colors.white, fontSize: widget.w * 0.035),
+          ),
+        ],
       ),
     );
   }

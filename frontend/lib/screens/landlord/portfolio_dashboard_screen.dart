@@ -267,7 +267,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/landlord_lease_management'),
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_applications'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.white,
@@ -275,8 +275,8 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
                       ),
-                      icon: const Icon(Icons.add_rounded, size: 20),
-                      label: const Text('Add Lease', style: TextStyle(fontWeight: FontWeight.w600)),
+                      icon: const Icon(Icons.description_rounded, size: 20),
+                      label: const Text('Applications', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
                   SizedBox(width: w * 0.04),

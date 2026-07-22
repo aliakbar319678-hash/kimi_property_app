@@ -156,6 +156,34 @@ router.get('/search', async (req: AuthRequest, res, next) => {
 
 /**
  * @swagger
+ * /api/v1/properties/vacant:
+ *   get:
+ *     summary: Get vacant properties (Public)
+ *     tags: [Properties]
+ *     responses:
+ *       200:
+ *         description: List of vacant properties
+ */
+router.get('/vacant', async (req, res, next) => {
+  try {
+    const db = require('../db');
+    // Fetch properties that have status available or vacant units
+    const propertiesRes = await db.query(
+      `SELECT p.*, COALESCE(
+        (SELECT json_agg(u.*) FROM units u WHERE u.property_id = p.id AND u.status = 'vacant'),
+        '[]'::json
+      ) as units
+      FROM properties p
+      WHERE EXISTS (SELECT 1 FROM units u WHERE u.property_id = p.id AND u.status = 'vacant')
+         OR p.status = 'available'
+      ORDER BY p.created_at DESC`
+    );
+    res.json({ success: true, data: propertiesRes.rows });
+  } catch (e) { next(e); }
+});
+
+/**
+ * @swagger
  * /api/v1/properties/{id}:
  *   get:
  *     summary: Get a property by ID

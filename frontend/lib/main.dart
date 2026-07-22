@@ -28,6 +28,8 @@ import 'package:tenant_and_landlord_application/screens/pay_rent_screen.dart';
 import 'package:tenant_and_landlord_application/screens/lease_summary_screen.dart';
 import 'package:tenant_and_landlord_application/screens/request_tracking_screen.dart';
 import 'package:tenant_and_landlord_application/screens/maintenance_request_screen.dart';
+import 'package:tenant_and_landlord_application/screens/application_checkout_screen.dart';
+import 'package:tenant_and_landlord_application/screens/tenant_applications_screen.dart';
 
 // ── Theme ───────────────────────────────────────────
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
@@ -50,6 +52,7 @@ import 'package:tenant_and_landlord_application/screens/landlord/ai_smart_assist
 import 'package:tenant_and_landlord_application/screens/landlord/add_property_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/edit_property_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/lease_detail_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/landlord_applications_screen.dart';
 
 // ── Vendor Portal Screens ───────────────────────────
 import 'package:tenant_and_landlord_application/screens/vendor/vendor_onboarding_screen.dart';
@@ -116,6 +119,7 @@ class TLApp extends StatelessWidget {
         '/landlord_add_property': (_) => const AddPropertyScreen(),
         '/landlord_edit_property': (_) => const EditPropertyScreen(),
         '/landlord_lease_detail': (_) => const LandlordLeaseDetailScreen(),
+        '/landlord_applications': (_) => const LandlordApplicationsScreen(),
 
         // ── Vendor Portal Routes ──────────────────
         '/vendor_onboarding': (_) => const VendorOnboardingScreen(),
@@ -137,6 +141,8 @@ class TLApp extends StatelessWidget {
         '/lease_summary': (_) => const LeaseSummaryScreen(),
         '/request_tracking': (_) => const RequestTrackingScreen(),
         '/maintenance_request': (_) => const MaintenanceRequestScreen(),
+        '/application_checkout': (_) => const ApplicationCheckoutScreen(),
+        '/tenant_applications': (_) => const TenantApplicationsScreen(),
 
         // ── Legacy aliases ────────────────────────
         '/home_dashboard': (_) => const HomeDashboardScreen(),

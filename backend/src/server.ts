@@ -34,6 +34,8 @@ import { vendorAdvancedRouter } from './routes/vendor_advanced.routes';
 import { communicationRouter } from './routes/communication.routes';
 import { reportRouter } from './routes/report.routes';
 import { marketingRouter } from './routes/marketing.routes';
+import { applicationRouter } from './routes/application.routes';
+import { tenantRouter } from './routes/tenant.routes';
 import { initializeSocketHandlers } from './websocket/socket.handlers';
 import { startCronJobs } from './cron/dailyJobs';
 import swaggerUi from 'swagger-ui-express';
@@ -622,6 +624,8 @@ app.use(`/api/${config.apiVersion}/vendors`, vendorAdvancedRouter);
 app.use(`/api/${config.apiVersion}/communications`, communicationRouter);
 app.use(`/api/${config.apiVersion}/reports`, reportRouter);
 app.use(`/api/${config.apiVersion}/marketing`, marketingRouter);
+app.use(`/api/${config.apiVersion}/applications`, applicationRouter);
+app.use(`/api/${config.apiVersion}/tenant`, tenantRouter);
 
 // Error handling
 app.use(errorHandler);

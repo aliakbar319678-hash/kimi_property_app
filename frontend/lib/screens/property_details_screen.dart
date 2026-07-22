@@ -478,9 +478,9 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () => Navigator.pushNamed(context, '/pay_rent'),
+                onPressed: () => Navigator.pushNamed(context, '/application_checkout'),
                 child: Text(
-                  'Apply Now',
+                  'Apply to Unit',
                   style: TextStyle(
                     color: AppColors.white,
                     fontWeight: FontWeight.w700,
