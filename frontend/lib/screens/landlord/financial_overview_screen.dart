@@ -185,7 +185,7 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
 
   void _fetchPayout() {
     _fetchInvoices();
-    ref.read(landlordProvider.notifier).fetchDashboardData();
+    ref.read(landlordProvider.notifier).loadFinanceDashboard();
   }
 
   @override
