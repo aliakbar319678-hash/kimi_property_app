@@ -3,6 +3,7 @@ import 'package:tenant_and_landlord_application/screens/landlord/portfolio_dashb
 import 'package:tenant_and_landlord_application/screens/landlord/property_portfolio_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/tenant_directory_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/maintenance_dashboard_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/landlord_profile_screen.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
 class LandlordShell extends StatefulWidget {
@@ -22,6 +23,7 @@ class _LandlordShellState extends State<LandlordShell> {
     PropertyPortfolioScreen(),
     TenantDirectoryScreen(),
     MaintenanceDashboardScreen(),
+    LandlordProfileScreen(),
   ];
 
   @override
@@ -39,6 +41,7 @@ class _LandlordShellState extends State<LandlordShell> {
       (Icons.apartment_rounded, Icons.apartment_outlined, 'Properties'),
       (Icons.people_rounded, Icons.people_outline_rounded, 'Tenants'),
       (Icons.build_rounded, Icons.build_outlined, 'Maintenance'),
+      (Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
     ];
 
     return Scaffold(

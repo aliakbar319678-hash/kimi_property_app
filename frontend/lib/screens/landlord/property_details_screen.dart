@@ -121,10 +121,13 @@ class _LandlordPropertyDetailsScreenState
                               Navigator.pushNamed(context, '/landlord_edit_property', arguments: property);
                             } else if (v == 'admin_test') {
                               _showAdminTestModal(context, notifier, property);
+                            } else if (v == 'change_status') {
+                              _showChangeStatusModal(context, notifier, property);
                             }
                           },
                           itemBuilder: (_) => const [
                             PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit_rounded, color: AppColors.primary, size: 18), SizedBox(width: 8), Text('Edit Property')])),
+                            PopupMenuItem(value: 'change_status', child: Row(children: [Icon(Icons.sync_rounded, color: AppColors.primary, size: 18), SizedBox(width: 8), Text('Change Status')])),
                             PopupMenuItem(value: 'admin_test', child: Row(children: [Icon(Icons.admin_panel_settings_rounded, color: Colors.orange, size: 18), SizedBox(width: 8), Text('Admin Review (Test)', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))])),
                             PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_rounded, color: Colors.red, size: 18), SizedBox(width: 8), Text('Delete Property', style: TextStyle(color: Colors.red))])),
                           ],
@@ -1094,6 +1097,39 @@ class _LandlordPropertyDetailsScreenState
           ),
         ),
       ),
+    );
+  }
+  void _showChangeStatusModal(BuildContext context, LandlordNotifier notifier, Property property) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Change Property Status', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              ...['available', 'rented', 'maintenance', 'archived'].map((status) {
+                return ListTile(
+                  title: Text(status.toUpperCase(), style: TextStyle(fontWeight: property.status == status ? FontWeight.bold : FontWeight.normal)),
+                  trailing: property.status == status ? const Icon(Icons.check_circle, color: AppColors.primary) : null,
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await notifier.updateProperty(property.id, {'status': status});
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Status updated to $status'), backgroundColor: Colors.green));
+                    }
+                  },
+                );
+              }),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
     );
   }
 }

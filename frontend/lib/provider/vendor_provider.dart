@@ -49,8 +49,10 @@ class VendorNotifier extends StateNotifier<VendorState> {
       final resp = await ApiClient().dio.get('/vendors/stats');
       final data = resp.data['data'] as Map<String, dynamic>? ?? {};
       final totalBids = (data['totalBids'] ?? 0) as int;
-      final rating = ((data['averageRating'] ?? 0.0) as num).toDouble();
-      final earnings = ((data['totalEarnings'] ?? 0.0) as num).toDouble();
+      final ratingRaw = data['averageRating'] ?? 0.0;
+      final rating = ratingRaw is num ? ratingRaw.toDouble() : double.tryParse(ratingRaw.toString()) ?? 0.0;
+      final earningsRaw = data['totalEarnings'] ?? 0.0;
+      final earnings = earningsRaw is num ? earningsRaw.toDouble() : double.tryParse(earningsRaw.toString()) ?? 0.0;
       
       state = state.copyWith(
         rating: rating > 0 ? rating : 5.0,
@@ -100,7 +102,7 @@ class VendorNotifier extends StateNotifier<VendorState> {
           timeSlot: m['time_slot']?.toString() ?? 'Flexible',
           accessInstructions: m['access_instructions']?.toString() ?? 'None',
           address: m['address']?.toString() ?? m['property_name']?.toString() ?? 'On-Site',
-          bidAmount: ((m['budget_max'] ?? m['final_amount'] ?? 0.0) as num).toDouble(),
+          bidAmount: m['budget_max'] is num ? (m['budget_max'] as num).toDouble() : (m['final_amount'] is num ? (m['final_amount'] as num).toDouble() : double.tryParse((m['budget_max'] ?? m['final_amount'] ?? 0.0).toString()) ?? 0.0),
         );
         
         if (status == 'open') {
@@ -145,7 +147,7 @@ class VendorNotifier extends StateNotifier<VendorState> {
           category: _capitalize(m['category']?.toString() ?? 'General'),
           description: m['message']?.toString() ?? '',
           address: m['property_name']?.toString() ?? '',
-          price: ((m['amount'] ?? 0.0) as num).toDouble(),
+          price: m['amount'] is num ? (m['amount'] as num).toDouble() : double.tryParse((m['amount'] ?? 0.0).toString()) ?? 0.0,
           status: _capitalize(m['status']?.toString() ?? 'Pending'),
           dateSubmitted: dateSub.isNotEmpty ? dateSub : 'Recently',
         );
@@ -180,7 +182,7 @@ class VendorNotifier extends StateNotifier<VendorState> {
         return VendorPayment(
           id: m['id']?.toString() ?? '',
           invoiceNumber: m['reference_id']?.toString() ?? 'INV-${m['id']}',
-          amount: ((m['amount'] ?? 0.0) as num).toDouble(),
+          amount: m['amount'] is num ? (m['amount'] as num).toDouble() : double.tryParse((m['amount'] ?? 0.0).toString()) ?? 0.0,
           date: payDate.isNotEmpty ? payDate : 'Pending',
           status: _capitalize(m['status']?.toString() ?? 'Paid'),
           jobTitle: m['description']?.toString() ?? 'Payment Payout',
@@ -189,9 +191,9 @@ class VendorNotifier extends StateNotifier<VendorState> {
       
       state = state.copyWith(
         payments: payments,
-        earnings: ((summary['total'] ?? 0.0) as num).toDouble(),
-        completedPayments: ((summary['completed'] ?? 0.0) as num).toDouble(),
-        pendingPayments: ((summary['pending'] ?? 0.0) as num).toDouble(),
+        earnings: summary['total'] is num ? (summary['total'] as num).toDouble() : double.tryParse((summary['total'] ?? 0.0).toString()) ?? 0.0,
+        completedPayments: summary['completed'] is num ? (summary['completed'] as num).toDouble() : double.tryParse((summary['completed'] ?? 0.0).toString()) ?? 0.0,
+        pendingPayments: summary['pending'] is num ? (summary['pending'] as num).toDouble() : double.tryParse((summary['pending'] ?? 0.0).toString()) ?? 0.0,
       );
     } catch (e) {
       debugPrint('[VendorNotifier] loadPayments error: $e');

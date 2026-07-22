@@ -7,6 +7,12 @@ import 'landlord_state.dart';
 import '../core/api_client.dart';
 import '../core/api_constants.dart';
 
+double _safeDouble(dynamic val) {
+  if (val == null) return 0.0;
+  if (val is num) return val.toDouble();
+  return double.tryParse(val.toString()) ?? 0.0;
+}
+
 class LandlordNotifier extends StateNotifier<LandlordState> {
   LandlordNotifier() : super(const LandlordState()) {
     _loadInitialData();
@@ -37,6 +43,29 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       state = state.copyWith(userName: firstName, userAvatarUrl: avatarUrl);
     } catch (_) {
       // Keep empty defaults on failure
+    }
+  }
+
+  Future<void> updateProfile(Map<String, dynamic> data) async {
+    try {
+      await ApiClient().dio.put('/users/me/profile', data: data);
+      await loadUserProfile(); // refresh data
+    } catch (e) {
+      debugPrint('[LandlordProvider] updateProfile error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> uploadAvatar(List<int> bytes, String fileName) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: fileName),
+      });
+      await ApiClient().dio.post('/uploads/user/avatar', data: formData);
+      await loadUserProfile(); // refresh data
+    } catch (e) {
+      debugPrint('[LandlordProvider] uploadAvatar error: $e');
+      rethrow;
     }
   }
 
@@ -127,8 +156,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
           totalUnits: totalUnits,
           occupiedUnits: occupiedUnits,
           vacantUnits: vacantUnits,
-          monthlyRent:
-              ((m['monthly_rent'] ?? m['price'] ?? 0.0) as num).toDouble(),
+          monthlyRent: _safeDouble(m['monthly_rent'] ?? m['price']),
           type: m['type']?.toString() ?? 'apartment',
           amenities: amenities,
           description: m['description']?.toString() ?? '',
@@ -223,7 +251,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
           accessInstructions: m['access_instructions']?.toString() ?? m['accessInstructions']?.toString() ?? '',
           vendorName: m['vendor_name']?.toString() ?? m['vendorName']?.toString(),
           vendorPhone: m['vendor_phone']?.toString() ?? m['vendorPhone']?.toString(),
-          bidAmount: m['bid_amount'] != null ? (m['bid_amount'] as num).toDouble() : null,
+          bidAmount: m['bid_amount'] != null ? _safeDouble(m['bid_amount']) : null,
         );
       }).toList();
 
@@ -383,8 +411,8 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
           if (dt != null) leaseEnd = DateFormat('MMM dd, yyyy').format(dt);
         } catch (_) {}
 
-        final rentAmt = ((m['rent_amount'] ?? m['rentAmount'] ?? 0) as num).toDouble();
-        final outstanding = ((m['outstanding'] ?? m['balance'] ?? 0) as num).toDouble();
+        final rentAmt = _safeDouble(m['rent_amount'] ?? m['rentAmount']);
+        final outstanding = _safeDouble(m['outstanding'] ?? m['balance']);
 
         final firstName = tenantData['legal_first_name']?.toString() ?? '';
         final lastName = tenantData['legal_last_name']?.toString() ?? '';
@@ -545,7 +573,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
           id: m['id']?.toString() ?? '',
           displayName: m['display_name']?.toString() ?? '',
           email: m['email']?.toString() ?? '',
-          avgRating: ((m['avg_rating'] ?? 0) as num).toDouble(),
+          avgRating: _safeDouble(m['avg_rating']),
         );
       }).toList();
 
@@ -578,9 +606,9 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
         return Bid(
           id: m['id']?.toString() ?? '',
           vendorName: vendorName,
-          rating: ((m['rating'] ?? vendorData['rating'] ?? 4.0) as num).toDouble(),
-          totalJobs: (m['total_jobs'] ?? vendorData['total_jobs'] ?? 0) as int,
-          price: ((m['amount'] ?? 0) as num).toDouble(),
+          rating: _safeDouble(m['rating'] ?? vendorData['rating'] ?? 4.0),
+          totalJobs: int.tryParse(vendorData['total_jobs']?.toString() ?? '0') ?? 0,
+          price: _safeDouble(m['amount']),
           time: m['estimated_hours'] != null
               ? '${m["estimated_hours"]}h est.'
               : (m['proposed_date']?.toString() ?? 'Flexible'),
@@ -1076,7 +1104,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
         id: b['id']?.toString() ?? '',
         vendorName: b['vendor_name']?.toString() ?? 'Vendor',
         avatarUrl: b['vendor_avatar']?.toString() ?? 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=50&q=80',
-        price: ((b['amount'] ?? 0) as num).toDouble(),
+        price: _safeDouble(b['amount']),
         rating: 4.8, // backend doesn't provide rating yet
         totalJobs: 12,
         time: '${b['estimated_hours'] ?? 1} hours',

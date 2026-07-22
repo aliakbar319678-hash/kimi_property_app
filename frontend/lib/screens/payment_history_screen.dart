@@ -14,7 +14,8 @@ class PaymentHistoryScreen extends ConsumerWidget {
     final financeAsync = ref.watch(tenantFinanceProvider);
     final lease = leaseAsync.asData?.value ?? TenantLeaseData.empty();
     final finance = financeAsync.asData?.value ?? {};
-    final totalPaid = (finance['total_collected'] ?? finance['totalCollected'] ?? 0).toDouble();
+    final totalPaidRaw = finance['total_collected'] ?? finance['totalCollected'] ?? 0;
+    final totalPaid = totalPaidRaw is num ? totalPaidRaw.toDouble() : double.tryParse(totalPaidRaw.toString()) ?? 0.0;
     final totalPaidDisplay = totalPaid > 0
         ? '\$${totalPaid.toStringAsFixed(2)}'
         : '\$0.00';

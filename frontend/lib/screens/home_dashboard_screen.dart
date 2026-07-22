@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/provider/home_dashboard_provider.dart';
-import 'package:tenant_and_landlord_application/provider/tenant_property_provider.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
 import 'package:tenant_and_landlord_application/core/api_constants.dart';
 import 'package:http/http.dart' as http;
@@ -15,7 +14,6 @@ class HomeDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(homeDashboardProvider);
     final notif = ref.read(homeDashboardProvider.notifier);
-    final tenantPropState = ref.watch(tenantPropertyProvider);
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
     final pad = w * 0.05;
@@ -247,26 +245,38 @@ class HomeDashboardScreen extends ConsumerWidget {
 
                           SizedBox(height: h * 0.02),
 
-                          if (tenantPropState.isLoading)
-                            const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()))
-                          else if (tenantPropState.properties.isEmpty)
-                            const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('No available properties.', style: TextStyle(color: AppColors.textSecondary))))
-                          else
-                            ...tenantPropState.properties.take(2).map((p) => Padding(
-                              padding: EdgeInsets.only(bottom: h * 0.018),
-                              child: _FeaturedCard(
-                                imageUrl: p.imageUrl,
-                                isPremium: false,
-                                title: p.name,
-                                price: '\$${p.monthlyRent.toStringAsFixed(0)}/mo',
-                                address: p.address,
-                                beds: p.metadata['beds']?.toString() ?? '1',
-                                baths: p.metadata['baths']?.toString() ?? '1',
-                                sqft: p.metadata['sqft']?.toString() ?? '800',
-                                w: w,
-                                h: h,
-                              ),
-                            )),
+                          // Premium card
+                          _FeaturedCard(
+                            imageUrl:
+                                'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80',
+                            isPremium: true,
+                            title: 'Skyline Vista Residence',
+                            price: '\$4,500/mo',
+                            address: '1200 Broadway, New York, NY',
+                            beds: '3',
+                            baths: '2',
+                            sqft: '1,450',
+                            w: w,
+                            h: h,
+                          ),
+
+                          SizedBox(height: h * 0.018),
+
+                          // Regular card
+                          _FeaturedCard(
+                            imageUrl:
+                                'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80',
+                            isPremium: false,
+                            title: 'The Brickwork Lofts',
+                            price: '\$2,800/mo',
+                            address: 'Brooklyn, NY',
+                            beds: '1',
+                            baths: '1',
+                            sqft: '780',
+                            w: w,
+                            h: h,
+                            priceColor: AppColors.secondary,
+                          ),
 
                           SizedBox(height: h * 0.03),
 
@@ -290,26 +300,42 @@ class HomeDashboardScreen extends ConsumerWidget {
                           SizedBox(height: h * 0.015),
 
                           // Saved list
-                          if (tenantPropState.properties.length > 2)
-                            ...tenantPropState.properties.skip(2).map(
-                              (p) => Padding(
-                                padding: EdgeInsets.only(bottom: h * 0.012),
-                                child: _SavedPropertyCard(
-                                  imageUrl: p.imageUrl,
-                                  title: p.name,
-                                  price: '\$${p.monthlyRent.toStringAsFixed(0)}/mo',
-                                  beds: p.metadata['beds']?.toString() ?? '1',
-                                  baths: p.metadata['baths']?.toString() ?? '1',
-                                  w: w,
-                                  h: h,
-                                ),
-                              ),
-                            )
-                          else
-                            const Padding(
-                              padding: EdgeInsets.all(20),
-                              child: Center(child: Text('You have no saved properties.', style: TextStyle(color: AppColors.textSecondary))),
+                          ...[
+                            (
+                              'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=200&q=80',
+                              'Cozy Studio Central',
+                              '\$2,100/mo',
+                              '1',
+                              '1',
                             ),
+                            (
+                              'https://images.unsplash.com/photo-1416331108676-a22ccb276e35?w=200&q=80',
+                              'Garden View Manor',
+                              '\$3,400/mo',
+                              '2',
+                              '2',
+                            ),
+                            (
+                              'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=200&q=80',
+                              'The Glass House',
+                              '\$5,200/mo',
+                              '3',
+                              '3',
+                            ),
+                          ].map(
+                            (p) => Padding(
+                              padding: EdgeInsets.only(bottom: h * 0.012),
+                              child: _SavedPropertyCard(
+                                imageUrl: p.$1,
+                                title: p.$2,
+                                price: p.$3,
+                                beds: p.$4,
+                                baths: p.$5,
+                                w: w,
+                                h: h,
+                              ),
+                            ),
+                          ),
 
                           SizedBox(height: h * 0.02),
                         ],

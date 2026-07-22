@@ -41,9 +41,10 @@ class TenantLeaseData {
       );
 
   factory TenantLeaseData.fromJson(Map<String, dynamic> m) {
-    final rent = (m['rent_amount'] ?? m['rentAmount'] ?? 0).toDouble();
-    final deposit =
-        (m['security_deposit'] ?? m['securityDeposit'] ?? 0).toDouble();
+    final rentRaw = m['rent_amount'] ?? m['rentAmount'] ?? 0;
+    final rent = rentRaw is num ? rentRaw.toDouble() : double.tryParse(rentRaw.toString()) ?? 0.0;
+    final depRaw = m['security_deposit'] ?? m['securityDeposit'] ?? 0;
+    final deposit = depRaw is num ? depRaw.toDouble() : double.tryParse(depRaw.toString()) ?? 0.0;
     final prop = m['property'] as Map<String, dynamic>? ?? {};
     final unit = m['unit'] as Map<String, dynamic>? ?? {};
 

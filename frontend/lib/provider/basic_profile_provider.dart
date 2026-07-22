@@ -94,7 +94,7 @@ class BasicProfileNotifier extends StateNotifier<BasicProfileState> {
     if (state.dateOfBirth.trim().isEmpty) {
       errors['dateOfBirth'] = 'Date of Birth is required';
     } else if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(state.dateOfBirth.trim())) {
-      errors['dateOfBirth'] = 'Enter date as mm/dd/yyyy';
+      errors['dateOfBirth'] = 'Enter date as dd/mm/yyyy';
     }
     if (state.phoneNumber.trim().isEmpty) {
       errors['phoneNumber'] = 'Phone Number is required';
@@ -141,7 +141,13 @@ class BasicProfileNotifier extends StateNotifier<BasicProfileState> {
           'step': 1,
           'data': {
             'legalName': state.fullLegalName.trim(),
-            'dob': state.dateOfBirth.trim(),
+            'dob': () {
+              final parts = state.dateOfBirth.trim().split('/');
+              if (parts.length == 3) {
+                return '${parts[2]}-${parts[1]}-${parts[0]}'; // YYYY-MM-DD
+              }
+              return state.dateOfBirth.trim();
+            }(),
             'phone': state.phoneNumber.trim(),
             'address': {
               'streetAddress': state.residentialAddress.trim(),

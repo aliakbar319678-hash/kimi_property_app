@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_mock_map.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
-import 'package:tenant_and_landlord_application/provider/tenant_property_provider.dart';
-import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 
 // Premium Unsplash room images for searching properties
 const List<String> _searchPropertyImages = [
@@ -17,7 +15,6 @@ class SearchScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tenantPropState = ref.watch(tenantPropertyProvider);
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
 
@@ -158,7 +155,7 @@ class SearchScreen extends ConsumerWidget {
                             ),
                             SizedBox(height: 4),
                             Text(
-                              '${tenantPropState.properties.length} results found',
+                              '128 results found',
                               style: TextStyle(
                                 fontSize: w * 0.035,
                                 color: AppColors.textSecondary,
@@ -203,13 +200,11 @@ class SearchScreen extends ConsumerWidget {
 
                   // -- List --
                   Expanded(
-                    child: tenantPropState.isLoading ? const Center(child: CircularProgressIndicator()) :
-                    tenantPropState.properties.isEmpty ? const Center(child: Text('No properties found.', style: TextStyle(color: AppColors.textSecondary))) :
-                    ListView.builder(
+                    child: ListView.builder(
                       padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-                      itemCount: tenantPropState.properties.length,
+                      itemCount: 3,
                       itemBuilder: (context, index) {
-                        return _propertyCard(context, w, h, index, tenantPropState.properties[index]);
+                        return _propertyCard(context, w, h, index);
                       },
                     ),
                   ),
@@ -328,7 +323,7 @@ class SearchScreen extends ConsumerWidget {
     );
   }
 
-  Widget _propertyCard(BuildContext context, double w, double h, int index, Property p) {
+  Widget _propertyCard(BuildContext context, double w, double h, int index) {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/property_details'),
       child: Container(
@@ -356,7 +351,7 @@ class SearchScreen extends ConsumerWidget {
                   topRight: Radius.circular(16),
                 ),
                 child: Image.network(
-                  p.imageUrl,
+                  _searchPropertyImages[index % _searchPropertyImages.length],
                   height: h * 0.22,
                   width: double.infinity,
                   fit: BoxFit.cover,
@@ -399,7 +394,7 @@ class SearchScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    p.type.toUpperCase(),
+                    'Apartment',
                     style: TextStyle(
                       color: AppColors.secondary,
                       fontWeight: FontWeight.w600,
@@ -421,7 +416,7 @@ class SearchScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      p.name,
+                      'Skyline View Lofts',
                       style: TextStyle(
                         fontSize: w * 0.045,
                         fontWeight: FontWeight.w700,
@@ -432,7 +427,7 @@ class SearchScreen extends ConsumerWidget {
                       text: TextSpan(
                         children: [
                           TextSpan(
-                            text: '\$${p.monthlyRent.toStringAsFixed(0)}',
+                            text: '\$2,450',
                             style: TextStyle(
                               color: AppColors.secondary,
                               fontWeight: FontWeight.w800,
@@ -461,7 +456,7 @@ class SearchScreen extends ConsumerWidget {
                     ),
                     SizedBox(width: 4),
                     Text(
-                      p.address,
+                      'Downtown, Seattle',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: w * 0.035,
