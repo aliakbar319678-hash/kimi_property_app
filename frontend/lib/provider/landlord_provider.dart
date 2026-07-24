@@ -48,7 +48,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
 
   Future<void> updateProfile(Map<String, dynamic> data) async {
     try {
-      await ApiClient().dio.put('/users/me/profile', data: data);
+      await ApiClient().dio.put(ApiConstants.updateProfile, data: data);
       await loadUserProfile(); // refresh data
     } catch (e) {
       debugPrint('[LandlordProvider] updateProfile error: $e');
@@ -61,7 +61,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(bytes, filename: fileName),
       });
-      await ApiClient().dio.post('/uploads/avatar', data: formData);
+      await ApiClient().dio.post(ApiConstants.uploadsAvatar, data: formData);
       await loadUserProfile(); // refresh data
     } catch (e) {
       debugPrint('[LandlordProvider] uploadAvatar error: $e');
@@ -564,7 +564,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
   // ── 9.5 Load Vendors ─────────────────────────────────────────────────────────
   Future<void> loadVendors() async {
     try {
-      final resp = await ApiClient().dio.get('/vendors/directory');
+      final resp = await ApiClient().dio.get(ApiConstants.vendorDirectory);
       final List<dynamic> rawList = (resp.data['data'] ?? []) as List<dynamic>;
 
       final vendors = rawList.map((item) {
@@ -663,7 +663,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(bytes, filename: fileName),
       });
-      await ApiClient().dio.post('/uploads/property/$propertyId/image', data: formData);
+      await ApiClient().dio.post(ApiConstants.uploadsPropertyImage(propertyId), data: formData);
       await loadProperties();
     } catch (e) {
       debugPrint('[LandlordProvider] uploadPropertyImage error: $e');
@@ -886,7 +886,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(bytes, filename: fileName),
       });
-      await ApiClient().dio.post('/uploads/work-order/$workOrderId/photo', data: formData);
+      await ApiClient().dio.post(ApiConstants.uploadsWorkOrderPhoto(workOrderId), data: formData);
       await loadWorkOrders();
     } catch (e) {
       debugPrint('[LandlordProvider] uploadWorkOrderPhoto error: $e');
@@ -1129,6 +1129,41 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       debugPrint('[LandlordProvider] acceptBid error: $e');
       rethrow;
     }
+  }
+
+  // ── Screening Application Review ─────────────────────────────────────────────
+
+  /// GET /screening/applications/:id
+  /// Returns the raw JSON map for a specific screening application record.
+  Future<Map<String, dynamic>> fetchScreeningApplication(String id) async {
+    final resp = await ApiClient().dio.get(ApiConstants.screeningApplication(id));
+    final data = resp.data['data'];
+    if (data == null) throw Exception('No screening application data returned');
+    return data as Map<String, dynamic>;
+  }
+
+  /// GET /screening/applications/:id/credit-report
+  Future<Map<String, dynamic>> fetchScreeningCreditReport(String id) async {
+    final resp = await ApiClient().dio.get(ApiConstants.screeningCreditReport(id));
+    final data = resp.data['data'];
+    if (data == null) throw Exception('No credit report data returned');
+    return data as Map<String, dynamic>;
+  }
+
+  /// GET /screening/applications/:id/background-check
+  Future<Map<String, dynamic>> fetchScreeningBackgroundCheck(String id) async {
+    final resp = await ApiClient().dio.get(ApiConstants.screeningBackgroundCheck(id));
+    final data = resp.data['data'];
+    if (data == null) throw Exception('No background check data returned');
+    return data as Map<String, dynamic>;
+  }
+
+  /// POST /screening/applications/:id/decision  { decision: 'APPROVED' | 'REJECTED' | 'PENDING' }
+  Future<void> postScreeningDecision(String id, String decision) async {
+    await ApiClient().dio.post(
+      ApiConstants.screeningDecision(id),
+      data: {'decision': decision},
+    );
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────

@@ -57,6 +57,7 @@ import 'package:tenant_and_landlord_application/screens/landlord/landlord_applic
 import 'package:tenant_and_landlord_application/screens/landlord/landlord_profile_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/landlord_payout_settings_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/landlord_chatbot_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/screening_detail_screen.dart';
 
 // ── Vendor Portal Screens ───────────────────────────
 import 'package:tenant_and_landlord_application/screens/vendor/vendor_onboarding_screen.dart';
@@ -130,6 +131,7 @@ class TLApp extends StatelessWidget {
         '/landlord_edit_property': (_) => const EditPropertyScreen(),
         '/landlord_lease_detail': (_) => const LandlordLeaseDetailScreen(),
         '/landlord_applications': (_) => const LandlordApplicationsScreen(),
+        '/landlord_screening_detail': (_) => const ScreeningDetailScreen(),
         '/landlord_payout_settings': (_) => const LandlordPayoutSettingsScreen(),
         '/landlord_chatbot': (_) => const LandlordChatbotScreen(),
 
@@ -155,6 +157,7 @@ class TLApp extends StatelessWidget {
         '/maintenance_request': (_) => const MaintenanceRequestScreen(),
         '/application_checkout': (_) => const ApplicationCheckoutScreen(),
         '/tenant_applications': (_) => const TenantApplicationsScreen(),
+        '/my-applications': (_) => const TenantApplicationsScreen(),
 
         // ── Legacy aliases ────────────────────────
         '/home_dashboard': (_) => const HomeDashboardScreen(),

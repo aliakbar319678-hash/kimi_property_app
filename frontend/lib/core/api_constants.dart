@@ -23,6 +23,15 @@ class ApiConstants {
   static const String propertySearch = '/properties/search';
   static const String savedProperties = '/properties/saved/me';
 
+  // ── Applications ────────────────────────────────────────────────────────────
+  static const String applications = '/applications';
+
+  // ── Screening ────────────────────────────────────────────────────────────────
+  static String screeningApplication(String id) => '/screening/applications/$id';
+  static String screeningCreditReport(String id) => '/screening/applications/$id/credit-report';
+  static String screeningBackgroundCheck(String id) => '/screening/applications/$id/background-check';
+  static String screeningDecision(String id) => '/screening/applications/$id/decision';
+
   // Dynamic property routes (use with string interpolation)
   // GET/PUT/DELETE /properties/{id}
   // GET/POST       /properties/{id}/units
@@ -40,12 +49,16 @@ class ApiConstants {
 
   // ── AI ──────────────────────────────────────────────────────────────────────
   static const String aiChat = '/ai/chat';
+  static const String aiLandlordChat = '/ai/landlord-chat';
 
   // ── Finance ─────────────────────────────────────────────────────────────────
   static const String financeDashboard = '/finance/dashboard';
   static const String initiatePayment = '/finance/payments/initiate';
   static const String vendorEarnings = '/finance/vendor/earnings';
   static const String generateInvoice = '/finance/invoices';
+  static const String invoices = '/finance/invoices';
+  static const String recordManualPayment = '/finance/invoices/record-manual';
+  static const String payoutAccount = '/finance/payout-account';
 
   // ── Maintenance ─────────────────────────────────────────────────────────────
   static const String workOrders = '/maintenance/work-orders';
@@ -58,6 +71,19 @@ class ApiConstants {
   // POST /maintenance/work-orders/{id}/bids
   // POST /maintenance/bids/{id}/accept
   // PUT  /maintenance/work-orders/{id}/status
+
+  // ── Tenant ───────────────────────────────────────────────────────────────────
+  static const String tenantActiveLease = '/tenant/active-lease';
+
+  // ── Vendors ──────────────────────────────────────────────────────────────────
+  static const String vendorDirectory = '/vendors/directory';
+
+  // ── Uploads ──────────────────────────────────────────────────────────────────
+  static const String uploadsAvatar = '/uploads/avatar';
+  static String uploadsPropertyImage(String propertyId) =>
+      '/uploads/property/$propertyId/image';
+  static String uploadsWorkOrderPhoto(String workOrderId) =>
+      '/uploads/work-order/$workOrderId/photo';
 
   // ── Notifications ────────────────────────────────────────────────────────────
   static const String notifications = '/notifications';

@@ -1,9 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
 import 'package:tenant_and_landlord_application/core/api_constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class LandlordApplicationsScreen extends StatefulWidget {
   const LandlordApplicationsScreen({super.key});
@@ -24,24 +22,10 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
 
   Future<void> _fetchApplications() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('access_token');
-      
-      if (token == null) {
-        setState(() => _isLoading = false);
-        return;
-      }
-
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/applications/landlord'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success']) {
+      final response = await ApiClient().dio.get('${ApiConstants.applications}/landlord');
+      final data = response.data;
+      if (data['success'] == true) {
+        if (mounted) {
           setState(() {
             _applications = data['data'] ?? [];
             _isLoading = false;
@@ -49,45 +33,45 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
         }
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _updateDecision(String appId, String decision) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('access_token');
-      
-      if (token == null) return;
-
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => const Center(child: CircularProgressIndicator()),
       );
 
-      final response = await http.patch(
-        Uri.parse('${ApiConstants.baseUrl}/applications/$appId/decision'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'approval_status': decision,
-        }),
+      final response = await ApiClient().dio.patch(
+        '${ApiConstants.applications}/$appId/decision',
+        data: {'approval_status': decision},
       );
 
-      Navigator.pop(context); // close loader
+      if (mounted) Navigator.pop(context);
 
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Application marked as $decision')));
-        _fetchApplications(); // refresh
+      if (response.data['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Application marked as $decision')));
+        }
+        _fetchApplications();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update decision')));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to update decision')));
+        }
       }
     } catch (e) {
-      Navigator.pop(context); // close loader
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 
@@ -107,35 +91,47 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
               children: [
                 Text(
                   'Application Decision',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.symmetric(vertical: 15)),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: const EdgeInsets.symmetric(vertical: 15)),
                   onPressed: () {
                     Navigator.pop(ctx);
                     _updateDecision(app['id'], 'approved');
                   },
-                  child: const Text('Approve & Create Lease', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  child: const Text('Approve & Create Lease',
+                      style: TextStyle(color: Colors.white, fontSize: 16)),
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, padding: const EdgeInsets.symmetric(vertical: 15)),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      padding: const EdgeInsets.symmetric(vertical: 15)),
                   onPressed: () {
                     Navigator.pop(ctx);
                     _updateDecision(app['id'], 'conditional');
                   },
-                  child: const Text('Conditional Approval', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  child: const Text('Conditional Approval',
+                      style: TextStyle(color: Colors.white, fontSize: 16)),
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red, padding: const EdgeInsets.symmetric(vertical: 15)),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(vertical: 15)),
                   onPressed: () {
                     Navigator.pop(ctx);
                     _updateDecision(app['id'], 'rejected');
                   },
-                  child: const Text('Reject Application', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  child: const Text('Reject Application',
+                      style: TextStyle(color: Colors.white, fontSize: 16)),
                 ),
                 const SizedBox(height: 10),
                 TextButton(
@@ -150,12 +146,156 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
     );
   }
 
+  /// Opens a bottom sheet that navigates directly to the ScreeningDetailScreen
+  /// if the application record includes a [screening_application_id] field,
+  /// or prompts the landlord to paste a UUID as a stop-gap.
+  ///
+  /// ⚠️  Backend flag: [GET /applications/landlord] does not JOIN
+  /// screening_applications, so no screening_application_id is returned.
+  /// The backend team should add this join to remove the manual ID input.
+  void _openScreeningReport(BuildContext context, Map<String, dynamic> app) {
+    final directId = app['screening_application_id']?.toString() ?? '';
+    if (directId.isNotEmpty) {
+      Navigator.pushNamed(
+        context,
+        '/landlord_screening_detail',
+        arguments: directId,
+      );
+      return;
+    }
+
+    final controller = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.person_search_rounded,
+                        color: AppColors.primary, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'View Screening Report',
+                      style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Tenant: ${app['tenant_name'] ?? 'Unknown'}',
+                style: const TextStyle(
+                    fontSize: 13, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD97706).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: const Color(0xFFD97706).withValues(alpha: 0.3)),
+                ),
+                child: const Text(
+                  'Note: The applications list does not yet include the '
+                  'screening application ID. Enter the UUID from the '
+                  'screening_applications table, or ask the tenant for '
+                  'their screening application ID.\n\n'
+                  'Backend fix needed: JOIN applications with '
+                  'screening_applications on tenant_id + property_id.',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF92400E),
+                      height: 1.5),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'Screening Application ID (UUID)',
+                  hintText: 'e.g. 3fa85f64-5717-4562-b3fc-2c963f66afa6',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(Icons.fingerprint_rounded),
+                ),
+                style: const TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  label: const Text('Open Screening Report'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    final id = controller.text.trim();
+                    if (id.isEmpty) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        const SnackBar(
+                          content:
+                              Text('Please enter a screening application ID.'),
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.pop(ctx);
+                    Navigator.pushNamed(
+                      context,
+                      '/landlord_screening_detail',
+                      arguments: id,
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'approved': return Colors.green;
-      case 'rejected': return Colors.red;
-      case 'conditional': return Colors.orange;
-      default: return Colors.blue;
+      case 'approved':
+        return Colors.green;
+      case 'rejected':
+        return Colors.red;
+      case 'conditional':
+        return Colors.orange;
+      default:
+        return Colors.blue;
     }
   }
 
@@ -187,26 +327,31 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
               ? Center(
                   child: Text(
                     'No incoming applications.',
-                    style: TextStyle(fontSize: w * 0.04, color: AppColors.textSecondary),
+                    style: TextStyle(
+                        fontSize: w * 0.04, color: AppColors.textSecondary),
                   ),
                 )
               : ListView.builder(
                   padding: EdgeInsets.all(w * 0.05),
                   itemCount: _applications.length,
                   itemBuilder: (context, index) {
-                    final app = _applications[index];
-                    final statusColor = _getStatusColor(app['approval_status']);
+                    final app =
+                        _applications[index] as Map<String, dynamic>;
+                    final statusColor = _getStatusColor(
+                        (app['approval_status'] ?? 'pending').toString());
                     return Card(
                       elevation: 2,
                       margin: EdgeInsets.only(bottom: w * 0.04),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       child: Padding(
                         padding: EdgeInsets.all(w * 0.04),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   app['tenant_name'] ?? 'Unknown Tenant',
@@ -217,30 +362,67 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: statusColor.withValues(alpha: 0.1),
+                                    color:
+                                        statusColor.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    (app['approval_status'] ?? 'pending').toUpperCase(),
-                                    style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 12),
+                                    (app['approval_status'] ?? 'pending')
+                                        .toString()
+                                        .toUpperCase(),
+                                    style: TextStyle(
+                                        color: statusColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12),
                                   ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
-                            Text('Property: ${app['property_name']} (Unit ${app['unit_number']})', style: TextStyle(color: AppColors.textSecondary)),
-                            Text('Email: ${app['tenant_email']}', style: TextStyle(color: AppColors.textSecondary)),
-                            const SizedBox(height: 12),
-                            if (app['approval_status'] == 'pending')
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton(
-                                  onPressed: () => _showActionModal(context, app),
-                                  child: const Text('Review Decision'),
+                            Text(
+                              'Property: ${app['property_name']} (Unit ${app['unit_number']})',
+                              style: const TextStyle(
+                                  color: AppColors.textSecondary),
+                            ),
+                            Text(
+                              'Email: ${app['tenant_email']}',
+                              style: const TextStyle(
+                                  color: AppColors.textSecondary),
+                            ),
+                            const SizedBox(height: 14),
+                            Row(
+                              children: [
+                                if (app['approval_status'] == 'pending') ...[
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () =>
+                                          _showActionModal(context, app),
+                                      child:
+                                          const Text('Review Decision'),
+                                    ),
+                                  ),
+                                  SizedBox(width: w * 0.03),
+                                ],
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    icon: const Icon(
+                                        Icons.person_search_rounded,
+                                        size: 16),
+                                    label: const Text('Screening Report'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppColors.primary,
+                                      side: const BorderSide(
+                                          color: AppColors.primary),
+                                    ),
+                                    onPressed: () =>
+                                        _openScreeningReport(context, app),
+                                  ),
                                 ),
-                              ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
