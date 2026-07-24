@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tenant_and_landlord_application/widgets/common/tl_user_avatar.dart';
 import 'package:tenant_and_landlord_application/provider/payment_maintenance_provider.dart';
 import 'package:tenant_and_landlord_application/provider/tenant_lease_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
@@ -11,7 +12,6 @@ class LeaseSummaryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(leaseSummaryProvider);
-    final notif = ref.read(leaseSummaryProvider.notifier);
     final leaseAsync = ref.watch(tenantLeaseProvider);
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
@@ -63,7 +63,14 @@ class LeaseSummaryScreen extends ConsumerWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: notif.downloadLease,
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Document download endpoint pending backend update'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
                         icon: state.isDownloading
                             ? SizedBox(
                                 width: 16,
@@ -506,12 +513,7 @@ class _AppBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          CircleAvatar(
-            radius: w * 0.048,
-            backgroundImage: const NetworkImage(
-              'https://i.pravatar.cc/100?img=8',
-            ),
-          ),
+          TLUserAvatar(radius: w * 0.048),
         ],
       ),
     );

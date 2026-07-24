@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_appbar.dart';
 import 'package:tenant_and_landlord_application/provider/employment_provider.dart';
+import 'package:tenant_and_landlord_application/widgets/common/tl_user_avatar.dart';
 
 import '../../widgets/common/tl_primary_button.dart';
 import '../../widgets/common/onboarding_progress_bar.dart';
@@ -30,12 +31,7 @@ class EmploymentScreen extends ConsumerWidget {
               color: AppColors.textPrimary,
             ),
             SizedBox(width: w * 0.03),
-            CircleAvatar(
-              radius: w * 0.045,
-              backgroundImage: const NetworkImage(
-                'https://i.pravatar.cc/100?img=3',
-              ),
-            ),
+            TLUserAvatar(radius: w * 0.045),
           ],
         ),
       ),

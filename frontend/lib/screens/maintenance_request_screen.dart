@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/payment_maintenance_provider.dart';
-import 'package:tenant_and_landlord_application/provider/tenant_lease_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
 class MaintenanceRequestScreen extends ConsumerStatefulWidget {
@@ -439,9 +438,7 @@ class _MaintenanceRequestScreenState
     notifier.setDescription(_descriptionController.text);
     if (_isEmergency) notifier.toggleEmergency();
 
-    // Get tenant's lease to extract property/unit IDs
-    final lease = ref.read(tenantLeaseProvider).asData?.value;
-
+    // Backend auto-resolves property/unit from the tenant's active lease — no client-side lookup needed.
     try {
       await notifier.submit(
         propertyId: '', // Property ID not needed when tenant submits (backend uses their lease)

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
+import 'package:tenant_and_landlord_application/core/api_constants.dart';
 import 'package:dio/dio.dart';
 
 class LandlordPayoutSettingsScreen extends ConsumerStatefulWidget {
@@ -28,7 +29,7 @@ class _LandlordPayoutSettingsScreenState extends ConsumerState<LandlordPayoutSet
 
   Future<void> _fetchPayoutAccount() async {
     try {
-      final resp = await ApiClient().dio.get('/finance/payout-account');
+      final resp = await ApiClient().dio.get(ApiConstants.payoutAccount);
       if (resp.data != null && resp.data['data'] != null) {
         final data = resp.data['data'];
         _bankNameCtrl.text = data['bank_name']?.toString() ?? '';
@@ -55,7 +56,7 @@ class _LandlordPayoutSettingsScreenState extends ConsumerState<LandlordPayoutSet
 
     setState(() => _isSaving = true);
     try {
-      await ApiClient().dio.post('/finance/payout-account', data: {
+      await ApiClient().dio.post(ApiConstants.payoutAccount, data: {
         'bankName': _bankNameCtrl.text.trim(),
         'accountHolder': _accountHolderCtrl.text.trim(),
         'ibanAccountNo': _ibanCtrl.text.trim(),

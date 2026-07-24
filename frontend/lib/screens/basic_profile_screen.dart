@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tenant_and_landlord_application/widgets/common/tl_user_avatar.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_appbar.dart';
 import 'package:tenant_and_landlord_application/provider/basic_profile_provider.dart';
@@ -55,12 +56,7 @@ class BasicProfileScreen extends ConsumerWidget {
       appBar: TLAppBar(
         trailing: Row(
           children: [
-            CircleAvatar(
-              radius: w * 0.045,
-              backgroundImage: const NetworkImage(
-                'https://i.pravatar.cc/100?img=3',
-              ),
-            ),
+            TLUserAvatar(radius: w * 0.045),
             SizedBox(width: w * 0.03),
             Icon(
               Icons.menu_rounded,

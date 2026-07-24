@@ -58,6 +58,13 @@ import 'package:tenant_and_landlord_application/screens/landlord/landlord_profil
 import 'package:tenant_and_landlord_application/screens/landlord/landlord_payout_settings_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/landlord_chatbot_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/screening_detail_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/move_in_checklists_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/move_out_inspections_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/discussions_list_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/discussion_thread_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/lms_courses_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/lms_lesson_viewer_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/lms_quiz_certificate_screen.dart';
 
 // ── Vendor Portal Screens ───────────────────────────
 import 'package:tenant_and_landlord_application/screens/vendor/vendor_onboarding_screen.dart';
@@ -134,6 +141,13 @@ class TLApp extends StatelessWidget {
         '/landlord_screening_detail': (_) => const ScreeningDetailScreen(),
         '/landlord_payout_settings': (_) => const LandlordPayoutSettingsScreen(),
         '/landlord_chatbot': (_) => const LandlordChatbotScreen(),
+        '/landlord_move_in_checklists': (_) => const MoveInChecklistsScreen(),
+        '/landlord_move_out_inspections': (_) => const MoveOutInspectionsScreen(),
+        '/discussions': (_) => const DiscussionsListScreen(),
+        '/discussion_thread': (_) => const DiscussionThreadScreen(),
+        '/lms_courses': (_) => const LmsCoursesScreen(),
+        '/lms_lesson': (_) => const LmsLessonViewerScreen(),
+        '/lms_quiz': (_) => const LmsQuizCertificateScreen(),
 
         // ── Vendor Portal Routes ──────────────────
         '/vendor_onboarding': (_) => const VendorOnboardingScreen(),

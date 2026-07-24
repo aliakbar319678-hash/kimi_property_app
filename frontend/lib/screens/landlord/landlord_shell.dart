@@ -32,18 +32,9 @@ class _LandlordShellState extends State<LandlordShell> {
     _currentIndex = widget.initialIndex;
   }
 
+
   @override
   Widget build(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
-
-    final items = [
-      (Icons.home_rounded, Icons.home_outlined, 'Home'),
-      (Icons.apartment_rounded, Icons.apartment_outlined, 'Properties'),
-      (Icons.people_rounded, Icons.people_outline_rounded, 'Tenants'),
-      (Icons.build_rounded, Icons.build_outlined, 'Maintenance'),
-      (Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
-    ];
-
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,

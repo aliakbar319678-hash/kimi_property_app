@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
 import 'package:tenant_and_landlord_application/core/api_constants.dart';
-// Note: we would use a real provider or secure storage for token.
-// Assuming the user is logged in if they reach here, we'll mock the token or use shared prefs.
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
 
 class ApplicationCheckoutScreen extends StatefulWidget {
   const ApplicationCheckoutScreen({super.key});
@@ -23,35 +20,27 @@ class _ApplicationCheckoutScreenState extends State<ApplicationCheckoutScreen> {
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('access_token');
-      
-      if (token == null) {
-        // Fallback for demo if token is missing
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please log in first')));
-        setState(() => _isLoading = false);
-        return;
-      }
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final propertyId = args?['propertyId'];
+      final unitId = args?['unitId'];
 
-      // We use a mock property and unit ID for the demo
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/applications'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
+      debugPrint('--- Application Submit API Payload ---');
+      debugPrint('property_id: $propertyId');
+      debugPrint('unit_id: $unitId');
+      debugPrint('--------------------------------------');
+
+      await ApiClient().dio.post(
+        ApiConstants.applications,
+        data: {
+          'property_id': propertyId,
+          'unit_id': unitId,
         },
-        body: jsonEncode({
-          'propertyId': '00000000-0000-0000-0000-000000000000', // Mock UUIDs for demo
-          'unitId': '00000000-0000-0000-0000-000000000000',
-        }),
       );
-
-      // Even if mock IDs fail on real DB constraints, we simulate success for the demo flow 
-      // or we handle the actual response if we pass real IDs via navigation arguments.
       
       if (mounted) {
         showDialog(
           context: context,
+          barrierDismissible: false,
           builder: (ctx) => AlertDialog(
             title: const Text('Application Submitted!'),
             content: const Text('Your screening fee of \$50 has been processed. The landlord will review your application soon.'),
@@ -59,8 +48,11 @@ class _ApplicationCheckoutScreenState extends State<ApplicationCheckoutScreen> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  Navigator.pop(context); // Go back to property details
-                  Navigator.pushReplacementNamed(context, '/tenant_applications');
+                  Navigator.pushNamedAndRemoveUntil(
+                    context, 
+                    '/my-applications', 
+                    (route) => route.isFirst,
+                  );
                 },
                 child: const Text('View My Applications'),
               ),
@@ -68,9 +60,21 @@ class _ApplicationCheckoutScreenState extends State<ApplicationCheckoutScreen> {
           ),
         );
       }
+    } on DioException catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to submit application. Please select a valid property and try again.'),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('An unexpected error occurred. Please try again later.'),
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -85,6 +89,10 @@ class _ApplicationCheckoutScreenState extends State<ApplicationCheckoutScreen> {
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     final pad = w * 0.05;
+
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final propertyName = args?['propertyName'] ?? 'Selected Property';
+    final unitName = args?['unitName'] ?? 'Selected Unit';
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -141,7 +149,7 @@ class _ApplicationCheckoutScreenState extends State<ApplicationCheckoutScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Modern Loft at Skyline Heights',
+                              propertyName,
                               style: TextStyle(
                                 fontSize: w * 0.04,
                                 fontWeight: FontWeight.w700,
@@ -150,7 +158,7 @@ class _ApplicationCheckoutScreenState extends State<ApplicationCheckoutScreen> {
                             ),
                             SizedBox(height: 4),
                             Text(
-                              'Unit 402',
+                              unitName,
                               style: TextStyle(
                                 fontSize: w * 0.035,
                                 color: AppColors.textSecondary,

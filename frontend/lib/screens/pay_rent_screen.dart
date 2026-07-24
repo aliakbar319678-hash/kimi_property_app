@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tenant_and_landlord_application/widgets/common/tl_user_avatar.dart';
 import 'package:tenant_and_landlord_application/provider/payment_maintenance_provider.dart';
 import 'package:tenant_and_landlord_application/provider/payment_maintenance_state.dart';
 import 'package:tenant_and_landlord_application/provider/tenant_lease_provider.dart';
@@ -60,12 +61,7 @@ class PayRentScreen extends ConsumerWidget {
                     ),
                   ),
                   const Spacer(),
-                  CircleAvatar(
-                    radius: w * 0.048,
-                    backgroundImage: const NetworkImage(
-                      'https://i.pravatar.cc/100?img=8',
-                    ),
-                  ),
+                  TLUserAvatar(radius: w * 0.048),
                 ],
               ),
             ),
@@ -73,7 +69,9 @@ class PayRentScreen extends ConsumerWidget {
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(pad),
-                child: Column(
+                child: lease.leaseId.isEmpty 
+                    ? _buildEmptyState(context, w, h)
+                    : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -345,13 +343,6 @@ class PayRentScreen extends ConsumerWidget {
                                          backgroundColor: Colors.green,
                                        ),
                                      );
-                                   } else if (!success && context.mounted) {
-                                     ScaffoldMessenger.of(context).showSnackBar(
-                                       const SnackBar(
-                                         content: Text('No active lease found. Cannot process payment.'),
-                                         backgroundColor: AppColors.error,
-                                       ),
-                                     );
                                    }
                                  } catch (e) {
                                    if (context.mounted) {
@@ -454,6 +445,79 @@ class PayRentScreen extends ConsumerWidget {
         ),
       ),
       bottomNavigationBar: const TLBottomNav(selectedIndex: 2),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, double w, double h) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: h * 0.1),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(w * 0.08),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.receipt_long_outlined,
+              size: w * 0.2,
+              color: AppColors.primary.withValues(alpha: 0.7),
+            ),
+          ),
+          SizedBox(height: h * 0.04),
+          Text(
+            'No Active Rent Agreement',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: w * 0.06,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: h * 0.02),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+            child: Text(
+              'You do not have an active lease to make payments for.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: w * 0.038,
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+          ),
+          SizedBox(height: h * 0.05),
+          SizedBox(
+            width: w * 0.7,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/search');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: EdgeInsets.symmetric(vertical: h * 0.02),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                'Explore Properties',
+                style: TextStyle(
+                  fontSize: w * 0.04,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

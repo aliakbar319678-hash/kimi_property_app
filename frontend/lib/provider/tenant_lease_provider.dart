@@ -53,7 +53,7 @@ class TenantLeaseData {
       propertyName:
           prop['name']?.toString() ?? m['property_name']?.toString() ?? 'Property',
       unitName:
-          unit['unit_number']?.toString() ?? m['unit_name']?.toString() ?? 'Unit',
+          unit['unit_number']?.toString() ?? m['unit_name']?.toString() ?? m['unit_number']?.toString() ?? 'Unit',
       rentAmount: rent,
       securityDeposit: deposit,
       startDate:
@@ -65,43 +65,34 @@ class TenantLeaseData {
   }
 }
 
-/// Fetches the tenant's active lease from /leases/dashboard
+/// Fetches the tenant's active lease from /tenant/active-lease
 final tenantLeaseProvider = FutureProvider<TenantLeaseData>((ref) async {
   try {
-    final resp =
-        await ApiClient().dio.get(ApiConstants.leasesDashboard);
+    final resp = await ApiClient().dio.get(ApiConstants.tenantActiveLease);
     final data = resp.data['data'];
 
-    // Backend returns either a list or an object
-    Map<String, dynamic>? leaseMap;
-    if (data is List && data.isNotEmpty) {
-      // Find first active lease
-      final active = data.firstWhere(
-        (l) => (l['status'] ?? '') == 'active',
-        orElse: () => data.first,
-      );
-      leaseMap = active as Map<String, dynamic>;
-    } else if (data is Map<String, dynamic>) {
-      // Might be wrapped: { leases: [...], stats: {} }
-      final leases = data['leases'] ?? data['active_leases'];
-      if (leases is List && leases.isNotEmpty) {
-        leaseMap = leases.first as Map<String, dynamic>;
-      } else {
-        // data itself is a lease
-        leaseMap = data;
-      }
-    }
-
-    if (leaseMap != null && leaseMap['id'] != null) {
-      return TenantLeaseData.fromJson(leaseMap);
+    if (data != null && data['id'] != null) {
+      return TenantLeaseData.fromJson(data);
     }
     return TenantLeaseData.empty();
   } on DioException catch (e) {
-    // 403 means user is not a tenant — return empty gracefully
     if (e.response?.statusCode == 403 || e.response?.statusCode == 404) {
       return TenantLeaseData.empty();
     }
     rethrow;
+  }
+});
+
+/// Fetches lease dashboard stats using /leases/dashboard
+final leaseDashboardProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  try {
+    final resp = await ApiClient().dio.get(ApiConstants.leasesDashboard);
+    final data = resp.data['data'];
+    if (data is Map<String, dynamic>) return data;
+    if (data is List && data.isNotEmpty) return data.first as Map<String, dynamic>;
+    return {};
+  } on DioException {
+    return {};
   }
 });
 

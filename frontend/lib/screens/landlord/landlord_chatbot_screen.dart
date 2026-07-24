@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
+import 'package:tenant_and_landlord_application/core/api_constants.dart';
 
 class LandlordChatbotScreen extends ConsumerStatefulWidget {
   const LandlordChatbotScreen({super.key});
@@ -52,7 +53,7 @@ class _LandlordChatbotScreenState extends ConsumerState<LandlordChatbotScreen> {
     _scrollToBottom();
 
     try {
-      final resp = await ApiClient().dio.post('/ai/landlord-chat', data: {'message': userMsg});
+      final resp = await ApiClient().dio.post(ApiConstants.aiLandlordChat, data: {'message': userMsg});
       final reply = resp.data['reply']?.toString() ?? 'I could not process that request. Please try again.';
 
       if (mounted) {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_appbar.dart';
 import 'package:tenant_and_landlord_application/provider/preferences_provider.dart';
+import 'package:tenant_and_landlord_application/widgets/common/tl_user_avatar.dart';
 import '../../widgets/common/tl_primary_button.dart';
 import '../../widgets/common/onboarding_progress_bar.dart';
 
@@ -22,12 +23,7 @@ class PreferencesScreen extends ConsumerWidget {
       appBar: TLAppBar(
         showBack: true,
         subtitle: 'Onboarding',
-        trailing: CircleAvatar(
-          radius: w * 0.045,
-          backgroundImage: const NetworkImage(
-            'https://i.pravatar.cc/100?img=3',
-          ),
-        ),
+        trailing: TLUserAvatar(radius: w * 0.045),
       ),
       body: Column(
         children: [

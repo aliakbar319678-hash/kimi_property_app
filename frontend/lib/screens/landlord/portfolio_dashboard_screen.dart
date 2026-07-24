@@ -320,6 +320,90 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+              SizedBox(height: h * 0.015),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_move_in_checklists'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: const Icon(Icons.fact_check_outlined, size: 20),
+                      label: const Text('Move-In', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  SizedBox(width: w * 0.04),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_move_out_inspections'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: const Icon(Icons.logout_rounded, size: 20),
+                      label: const Text('Move-Out', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: h * 0.015),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_reports_analytics'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: const Icon(Icons.analytics_rounded, size: 20),
+                      label: const Text('Reports', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  SizedBox(width: w * 0.04),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pushNamed(context, '/discussions'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: const Icon(Icons.forum_rounded, size: 20),
+                      label: const Text('Discussions', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: h * 0.015),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pushNamed(context, '/lms_courses'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: const Icon(Icons.school_rounded, size: 20),
+                      label: const Text('Academy / LMS', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  SizedBox(width: w * 0.04),
+                  const Spacer(),
+                ],
+              ),
 
               SizedBox(height: h * 0.03),
 

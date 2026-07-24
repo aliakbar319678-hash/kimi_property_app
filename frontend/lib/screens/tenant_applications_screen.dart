@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
 import 'package:tenant_and_landlord_application/core/api_constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class TenantApplicationsScreen extends StatefulWidget {
   const TenantApplicationsScreen({super.key});
@@ -24,24 +22,10 @@ class _TenantApplicationsScreenState extends State<TenantApplicationsScreen> {
 
   Future<void> _fetchApplications() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('access_token');
-      
-      if (token == null) {
-        setState(() => _isLoading = false);
-        return;
-      }
-
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/applications/tenant'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success']) {
+      final response = await ApiClient().dio.get('${ApiConstants.applications}/tenant');
+      final data = response.data;
+      if (data['success'] == true) {
+        if (mounted) {
           setState(() {
             _applications = data['data'] ?? [];
             _isLoading = false;
@@ -49,7 +33,9 @@ class _TenantApplicationsScreenState extends State<TenantApplicationsScreen> {
         }
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

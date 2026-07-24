@@ -3,10 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/provider/home_dashboard_provider.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
-import 'package:tenant_and_landlord_application/core/api_constants.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tenant_and_landlord_application/provider/tenant_lease_provider.dart';
 class HomeDashboardScreen extends ConsumerStatefulWidget {
   const HomeDashboardScreen({super.key});
 
@@ -235,6 +232,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                           SizedBox(height: h * 0.015),
                           _ActiveLeaseWidget(w: w, h: h),
                           SizedBox(height: h * 0.03),
+                          _RecentActivityList(w: w, h: h),
 
                           // Featured Listings
                           Row(
@@ -790,89 +788,213 @@ class _SavedPropertyCard extends StatelessWidget {
   }
 }
 
-class _ActiveLeaseWidget extends StatefulWidget {
+class _ActiveLeaseWidget extends ConsumerWidget {
   final double w;
   final double h;
   const _ActiveLeaseWidget({required this.w, required this.h});
 
   @override
-  State<_ActiveLeaseWidget> createState() => _ActiveLeaseWidgetState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final leaseAsync = ref.watch(tenantLeaseProvider);
+
+    return leaseAsync.when(
+      data: (lease) {
+        if (lease.leaseId.isEmpty) {
+          return Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(w * 0.05),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.textHint.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.home_work_outlined,
+                  size: w * 0.12,
+                  color: AppColors.primary.withValues(alpha: 0.8),
+                ),
+                SizedBox(height: h * 0.015),
+                Text(
+                  'No Active Rent Agreement',
+                  style: TextStyle(
+                    fontSize: w * 0.045,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: h * 0.01),
+                Text(
+                  'You currently don\'t have any active lease or rental agreements. Explore our properties to find your next home!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: w * 0.035,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+                SizedBox(height: h * 0.025),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/search');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: EdgeInsets.symmetric(vertical: h * 0.015),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Explore Properties',
+                      style: TextStyle(
+                        fontSize: w * 0.038,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return Container(
+          padding: EdgeInsets.all(w * 0.04),
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('My Active Lease', style: TextStyle(color: Colors.white70, fontSize: w * 0.035)),
+              SizedBox(height: h * 0.01),
+              Text(
+                '${lease.propertyName} - Unit ${lease.unitName}',
+                style: TextStyle(color: Colors.white, fontSize: w * 0.045, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: h * 0.01),
+              Text(
+                'Rent: \$${lease.rentAmount.toStringAsFixed(0)} / month',
+                style: TextStyle(color: Colors.white, fontSize: w * 0.035),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => const Center(child: Text('Error loading lease')),
+    );
+  }
 }
 
-class _ActiveLeaseWidgetState extends State<_ActiveLeaseWidget> {
-  Map<String, dynamic>? _lease;
-  bool _isLoading = true;
+class _RecentActivityList extends ConsumerWidget {
+  final double w;
+  final double h;
+  const _RecentActivityList({required this.w, required this.h});
 
   @override
-  void initState() {
-    super.initState();
-    _fetchLease();
-  }
-
-  Future<void> _fetchLease() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('access_token');
-      if (token == null) {
-        setState(() => _isLoading = false);
-        return;
-      }
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/tenant/active-lease'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success'] && data['data'] != null) {
-          setState(() {
-            _lease = data['data'];
-            _isLoading = false;
-          });
-          return;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final financeAsync = ref.watch(tenantFinanceProvider);
+    return financeAsync.when(
+      data: (finance) {
+        final activity = finance['recentActivity'];
+        if (activity == null || (activity as List).isEmpty) {
+          return const SizedBox.shrink();
         }
-      }
-    } catch (_) {}
-    setState(() => _isLoading = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_lease == null) {
-      return Container(
-        padding: EdgeInsets.all(widget.w * 0.04),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: const Text('No active lease found. Explore featured listings to find your next home!'),
-      );
-    }
-    return Container(
-      padding: EdgeInsets.all(widget.w * 0.04),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('My Active Lease', style: TextStyle(color: Colors.white70, fontSize: widget.w * 0.035)),
-          SizedBox(height: widget.h * 0.01),
-          Text(
-            '${_lease!['property_name']} - Unit ${_lease!['unit_number']}',
-            style: TextStyle(color: Colors.white, fontSize: widget.w * 0.045, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: widget.h * 0.01),
-          Text(
-            'Rent: \$${_lease!['rent_amount']} / month',
-            style: TextStyle(color: Colors.white, fontSize: widget.w * 0.035),
-          ),
-        ],
-      ),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Transactions',
+                  style: TextStyle(
+                    fontSize: w * 0.052,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/payment_history'),
+                  child: Text(
+                    'View all',
+                    style: TextStyle(
+                      fontSize: w * 0.034,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: h * 0.015),
+            ...(activity as List).take(3).map((p) {
+              final amt = p['amount_paid'] ?? p['amount_due'] ?? 0;
+              final isLate = p['status'] == 'late';
+              return Container(
+                margin: EdgeInsets.only(bottom: h * 0.012),
+                padding: EdgeInsets.all(w * 0.04),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(color: AppColors.primary.withValues(alpha: 0.05), blurRadius: 8),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: w * 0.1,
+                      height: w * 0.1,
+                      decoration: BoxDecoration(
+                        color: isLate ? const Color(0xFFE74C3C).withValues(alpha: 0.1) : AppColors.secondary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isLate ? Icons.warning_amber_rounded : Icons.check_circle_outline_rounded,
+                        color: isLate ? const Color(0xFFE74C3C) : AppColors.secondary,
+                        size: w * 0.05,
+                      ),
+                    ),
+                    SizedBox(width: w * 0.03),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Rent Payment', style: TextStyle(fontSize: w * 0.038, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                          Text(p['created_at'] != null ? 'Paid on ${p['created_at'].toString().split('T')[0]}' : '', style: TextStyle(fontSize: w * 0.029, color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '\$${double.parse(amt.toString()).toStringAsFixed(2)}',
+                      style: TextStyle(fontSize: w * 0.04, fontWeight: FontWeight.w700, color: isLate ? const Color(0xFFE74C3C) : AppColors.textPrimary),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+            SizedBox(height: h * 0.03),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (err, stack) => const SizedBox.shrink(),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tenant_and_landlord_application/widgets/common/tl_user_avatar.dart';
 import 'package:tenant_and_landlord_application/provider/payment_maintenance_provider.dart';
 import 'package:tenant_and_landlord_application/provider/tenant_lease_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
@@ -60,12 +61,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                     ),
                   ),
                   const Spacer(),
-                  CircleAvatar(
-                    radius: w * 0.048,
-                    backgroundImage: const NetworkImage(
-                      'https://i.pravatar.cc/100?img=8',
-                    ),
-                  ),
+                  TLUserAvatar(radius: w * 0.048),
                 ],
               ),
             ),
@@ -215,41 +211,30 @@ class PaymentHistoryScreen extends ConsumerWidget {
                     SizedBox(height: h * 0.025),
 
                     // Payment rows
-                    _PaymentRow(
-                      month: 'June Rent',
-                      date: 'Paid on June 01, 2024',
-                      amount: '\$1,200.00',
-                      status: 'Paid',
-                      isLate: false,
-                      iconColor: AppColors.secondary,
-                      iconBg: AppColors.secondary.withValues(alpha: 0.1),
-                      w: w,
-                      h: h,
-                    ),
-                    SizedBox(height: h * 0.015),
-                    _PaymentRow(
-                      month: 'May Rent',
-                      date: 'Paid on May 02, 2024',
-                      amount: '\$1,200.00',
-                      status: 'Paid',
-                      isLate: false,
-                      iconColor: AppColors.secondary,
-                      iconBg: AppColors.secondary.withValues(alpha: 0.1),
-                      w: w,
-                      h: h,
-                    ),
-                    SizedBox(height: h * 0.015),
-                    _PaymentRow(
-                      month: 'April Rent',
-                      date: 'Paid on April 10, 2024',
-                      amount: '\$1,250.00',
-                      status: 'Late Fee Applied',
-                      isLate: true,
-                      iconColor: const Color(0xFFE74C3C),
-                      iconBg: const Color(0xFFE74C3C).withValues(alpha: 0.1),
-                      w: w,
-                      h: h,
-                    ),
+                    if (finance['recentActivity'] != null && finance['recentActivity'] is List && (finance['recentActivity'] as List).isNotEmpty)
+                      ...(finance['recentActivity'] as List).map((p) {
+                        final amt = p['amount_paid'] ?? p['amount_due'] ?? 0;
+                        final isLate = p['status'] == 'late';
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: h * 0.015),
+                          child: _PaymentRow(
+                            month: 'Rent Payment',
+                            date: p['created_at'] != null ? 'Paid on ${p['created_at'].toString().split('T')[0]}' : 'Unknown date',
+                            amount: '\$${double.parse(amt.toString()).toStringAsFixed(2)}',
+                            status: (p['status'] ?? 'paid').toString().toUpperCase(),
+                            isLate: isLate,
+                            iconColor: isLate ? const Color(0xFFE74C3C) : AppColors.secondary,
+                            iconBg: isLate ? const Color(0xFFE74C3C).withValues(alpha: 0.1) : AppColors.secondary.withValues(alpha: 0.1),
+                            w: w,
+                            h: h,
+                          ),
+                        );
+                      }).toList()
+                    else
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text('No recent transactions.'),
+                      ),
 
                     SizedBox(height: h * 0.025),
 

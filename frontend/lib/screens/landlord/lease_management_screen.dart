@@ -357,7 +357,6 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
 
     // Build dropdown lists from state
     final properties = state.properties;
-    final units = state.units;
     final tenants = state.tenants;
     String? selectedPropertyId;
     String? selectedUnitId;

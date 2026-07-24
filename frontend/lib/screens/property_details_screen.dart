@@ -24,6 +24,18 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
     final w = size.width;
     final pad = w * 0.05; // standard horizontal padding
 
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final property = args?['property'] as Map<String, dynamic>?;
+    final propertyId = property?['id']?.toString();
+    final propertyName = property?['title'] ?? property?['name'] ?? 'Modern Loft at Skyline Heights';
+    final units = property?['units'] as List<dynamic>?;
+    final unitId = (units != null && units.isNotEmpty) 
+        ? units.first['id']?.toString() 
+        : null;
+    final unitName = (units != null && units.isNotEmpty) 
+        ? (units.first['unit_number'] ?? units.first['name'] ?? 'Unit 402').toString() 
+        : 'Unit 402';
+
 
 
     return Scaffold(
@@ -478,7 +490,16 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () => Navigator.pushNamed(context, '/application_checkout'),
+                onPressed: () => Navigator.pushNamed(
+                  context, 
+                  '/application_checkout',
+                  arguments: {
+                    'propertyId': propertyId,
+                    'unitId': unitId,
+                    'propertyName': propertyName,
+                    'unitName': unitName,
+                  },
+                ),
                 child: Text(
                   'Apply to Unit',
                   style: TextStyle(

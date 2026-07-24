@@ -4,6 +4,7 @@ import 'package:tenant_and_landlord_application/provider/landlord_provider.dart'
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
+import 'package:tenant_and_landlord_application/core/api_constants.dart';
 
 class FinancialOverviewScreen extends ConsumerStatefulWidget {
   const FinancialOverviewScreen({super.key});
@@ -29,7 +30,7 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
 
   Future<void> _fetchInvoices() async {
     try {
-      final resp = await ApiClient().dio.get('/finance/invoices');
+      final resp = await ApiClient().dio.get(ApiConstants.invoices);
       final data = resp.data['data'] as Map<String, dynamic>? ?? {};
       if (mounted) {
         setState(() {
@@ -224,7 +225,7 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
                                 }
                                 setModalState(() => isSubmitting = true);
                                 try {
-                                  await ApiClient().dio.post('/finance/invoices/record-manual', data: {
+                                  await ApiClient().dio.post(ApiConstants.recordManualPayment, data: {
                                     if (selectedLeaseId != null) 'leaseId': selectedLeaseId,
                                     'amount': amt,
                                     'paymentMethod': paymentMethod,

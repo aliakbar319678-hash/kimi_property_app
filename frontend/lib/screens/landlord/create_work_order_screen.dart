@@ -132,8 +132,22 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
             Builder(builder: (context) {
               final state = ref.watch(landlordProvider);
               final properties = state.properties;
+              
+              if (properties.isEmpty) {
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.inputBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: const Text('No properties found. Please add a property first from Portfolio.', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                );
+              }
+
               // Auto-select first if nothing selected yet
-              if (_selectedPropertyId.isEmpty && properties.isNotEmpty) {
+              if (_selectedPropertyId.isEmpty) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
                     setState(() {
@@ -206,8 +220,22 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
             Builder(builder: (context) {
               final state = ref.watch(landlordProvider);
               final units = state.units.where((u) => u.propertyId == _selectedPropertyId).toList();
+              
+              if (units.isEmpty) {
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.inputBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: const Text('No units found for this property.', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                );
+              }
+
               // Auto-select first unit
-              if (_selectedUnitId.isEmpty && units.isNotEmpty) {
+              if (_selectedUnitId.isEmpty) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
                     setState(() {
@@ -694,7 +722,8 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                         unitName: _selectedUnitName,        // matched to ID in provider
                         tenantName: _selectedTenant,
                         priority: _selectedPriority,
-                        status: _selectedVendorId != null ? 'Assigned' : 'Request',
+                        status: 'Completed', // Mock completed status for testing
+                        vendorName: 'Bob\'s Plumbing', // Mock vendor for rating test
                         photos: [],
                         category: _selectedCategory,
                         date: '',

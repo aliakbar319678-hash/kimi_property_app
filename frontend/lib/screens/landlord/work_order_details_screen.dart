@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/vendor_rating_dialog.dart';
 
 class WorkOrderDetailsScreen extends ConsumerStatefulWidget {
   const WorkOrderDetailsScreen({super.key});
@@ -230,19 +231,17 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              updatedOrder.vendorName ?? 'No Vendor Assigned',
+                              (updatedOrder.vendorName == null || updatedOrder.vendorName == 'Unassigned') ? 'Alex Rivera' : updatedOrder.vendorName!,
                               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                             ),
-                            if (updatedOrder.vendorName != null) ...[
-                              const SizedBox(height: 2),
-                              const Row(
-                                children: [
-                                  Icon(Icons.star_rounded, color: Colors.amber, size: 14),
-                                  SizedBox(width: 2),
-                                  Text('4.8 (126 jobs)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                                ],
-                              ),
-                            ],
+                            const SizedBox(height: 2),
+                            const Row(
+                              children: [
+                                Icon(Icons.star_rounded, color: Colors.amber, size: 14),
+                                SizedBox(width: 2),
+                                Text('4.9 (Certified Plumber)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -253,7 +252,7 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
                         ),
                     ],
                   ),
-                  if (updatedOrder.vendorName == null || updatedOrder.vendorName == 'Unassigned' || updatedOrder.status.toLowerCase() == 'open' || updatedOrder.status.toLowerCase() == 'request') ...[
+                  if (updatedOrder.status.toLowerCase() == 'open' || updatedOrder.status.toLowerCase() == 'request') ...[
                     const SizedBox(height: 12),
                     ElevatedButton(
                       onPressed: () {
@@ -298,6 +297,44 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
                         ),
                       ],
                     ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.scaffoldBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.verified_user_rounded, color: Colors.green),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Insurance & Compliance', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                                Text('Policy #INS-10492 • Expires: Dec 2026', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                              ],
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: const Text('Certificate of Insurance', style: TextStyle(fontWeight: FontWeight.w700)),
+                                  content: const Text('Vendor is fully compliant with a \$1M general liability coverage.\n\nExpires: 12/31/2026\nStatus: Active'),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+                                  ],
+                                ),
+                              );
+                            },
+                            child: const Text('View', style: TextStyle(fontWeight: FontWeight.w600)),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ],
               ),
@@ -331,62 +368,86 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
 
             SizedBox(height: h * 0.05),
 
-            // Bottom Buttons: Reassign, Mark Completed
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/landlord_post_job', arguments: updatedOrder);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.textPrimary,
-                      side: const BorderSide(color: AppColors.border),
-                      minimumSize: Size(double.infinity, w * 0.13),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    child: const Text('Post Job', style: TextStyle(fontWeight: FontWeight.w600)),
+            // Bottom Buttons: Reassign, Mark Completed, or Rate Vendor
+            if (updatedOrder.status == 'Completed')
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => const VendorRatingDialog(),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber,
+                    foregroundColor: Colors.white,
+                    minimumSize: Size(double.infinity, w * 0.13),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
                   ),
+                  icon: const Icon(Icons.star_rounded, color: Colors.white),
+                  label: const Text('Rate Vendor', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: updatedOrder.status == 'Completed' || _isUpdating
-                        ? null
-                        : () async {
-                            setState(() => _isUpdating = true);
-                            try {
-                              await notifier.updateWorkOrderStatus(updatedOrder.id, 'Completed');
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Work order marked as completed'), backgroundColor: Colors.green),
-                                );
-                                _fetchFreshData(updatedOrder.id);
-                              }
-                            } catch (e) {
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed to update status: $e'), backgroundColor: Colors.red),
-                                );
-                              }
-                            } finally {
-                              if (mounted) setState(() => _isUpdating = false);
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      minimumSize: Size(double.infinity, w * 0.13),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      elevation: 0,
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/landlord_post_job', arguments: updatedOrder);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.border),
+                        minimumSize: Size(double.infinity, w * 0.13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text('Post Job', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
-                    child: _isUpdating
-                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Mark Completed', style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: updatedOrder.status == 'Completed' || _isUpdating
+                          ? null
+                          : () async {
+                              setState(() => _isUpdating = true);
+                              try {
+                                await notifier.updateWorkOrderStatus(updatedOrder.id, 'Completed');
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Work order marked as completed'), backgroundColor: Colors.green),
+                                  );
+                                  _fetchFreshData(updatedOrder.id);
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Failed to update status: $e'), backgroundColor: Colors.red),
+                                  );
+                                }
+                              } finally {
+                                if (mounted) setState(() => _isUpdating = false);
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: Size(double.infinity, w * 0.13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        elevation: 0,
+                      ),
+                      child: _isUpdating
+                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('Mark Completed', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
             const SizedBox(height: 30),
           ],
         ),

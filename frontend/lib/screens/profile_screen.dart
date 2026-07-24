@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/screens_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
+import 'package:tenant_and_landlord_application/widgets/common/tl_user_avatar.dart';
 
 
 class ProfileScreen extends ConsumerWidget {
@@ -55,12 +56,7 @@ class ProfileScreen extends ConsumerWidget {
                     ],
                   ),
                   const Spacer(),
-                  CircleAvatar(
-                    radius: w * 0.048,
-                    backgroundImage: const NetworkImage(
-                      'https://i.pravatar.cc/100?img=3',
-                    ),
-                  ),
+                  TLUserAvatar(radius: w * 0.048),
                 ],
               ),
             ),
@@ -84,14 +80,32 @@ class ProfileScreen extends ConsumerWidget {
                           ),
                         ),
                         ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () async {
+                            try {
+                              await ApiClient().dio.put(
+                                '/users/me/profile',
+                                data: {
+                                  'smartAlerts': state.smartAlerts,
+                                  'emailReceipts': state.emailReceipts,
+                                  'language': state.language,
+                                },
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile settings saved!')));
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save profile: $e')));
+                              }
+                            }
+                          },
                           icon: Icon(
-                            Icons.edit_outlined,
+                            Icons.save_outlined,
                             size: w * 0.04,
                             color: AppColors.white,
                           ),
                           label: Text(
-                            'Edit Profile',
+                            'Save Profile',
                             style: TextStyle(
                               fontSize: w * 0.034,
                               color: AppColors.white,
