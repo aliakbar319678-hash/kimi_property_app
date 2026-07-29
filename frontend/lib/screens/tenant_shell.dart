@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:tenant_and_landlord_application/screens/chat_list_screen.dart';
 import 'package:tenant_and_landlord_application/screens/home_dashboard_screen.dart';
-import 'package:tenant_and_landlord_application/screens/payment_history_screen.dart';
 import 'package:tenant_and_landlord_application/screens/profile_screen.dart';
-import 'package:tenant_and_landlord_application/screens/search_screen.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_bottom_navigation_bar.dart';
+
+import 'package:tenant_and_landlord_application/screens/tenant/tenant_dashboard_screen.dart';
+import 'package:tenant_and_landlord_application/screens/tenant/tenant_pay_rent_screen.dart';
+import 'package:tenant_and_landlord_application/screens/tenant/tenant_create_ticket_screen.dart';
+
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:tenant_and_landlord_application/screens/tenant/tenant_saved_properties_screen.dart';
 
 /// Main shell that wraps the 5 primary tenant tabs:
 /// Home | Search | Payments | Chat | Profile
@@ -20,29 +24,78 @@ class TenantShell extends StatefulWidget {
 
 class _TenantShellState extends State<TenantShell> {
   late int _currentIndex;
-
-  // Keep all pages alive while navigating between tabs
-  final List<Widget> _pages = const [
-    HomeDashboardScreen(),
-    SearchScreen(),
-    PaymentHistoryScreen(),
-    ChatListScreen(),
-    ProfileScreen(),
-  ];
+  bool _isGuest = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    _checkGuestStatus();
+  }
+
+  Future<void> _checkGuestStatus() async {
+    final token = await const FlutterSecureStorage().read(key: 'auth_token');
+    if (mounted) {
+      setState(() {
+        _isGuest = token == null || token.isEmpty;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final tenantItems = const [
+      (Icons.home_rounded, Icons.home_outlined, 'Home'),
+      (Icons.search_rounded, Icons.search_outlined, 'Search'),
+      (Icons.payment_rounded, Icons.payment_outlined, 'Pay Rent'),
+      (Icons.build_rounded, Icons.build_outlined, 'Tickets'),
+      (Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+    ];
+
+    final guestItems = const [
+      (Icons.search_rounded, Icons.search_outlined, 'Explore'),
+      (Icons.favorite_rounded, Icons.favorite_border_rounded, 'Saved'),
+      (Icons.person_rounded, Icons.person_outline_rounded, 'Login'),
+    ];
+
+    final tenantPages = const [
+      TenantDashboardScreen(),
+      HomeDashboardScreen(), 
+      TenantPayRentScreen(),
+      TenantCreateTicketScreen(),
+      ProfileScreen(),
+    ];
+
+    final guestPages = const [
+      HomeDashboardScreen(),
+      TenantSavedPropertiesScreen(),
+      ProfileScreen(),
+    ];
+
+    final currentItems = _isGuest ? guestItems : tenantItems;
+    final currentPages = _isGuest ? guestPages : tenantPages;
+
+    final safeIndex = _currentIndex < currentItems.length ? _currentIndex : 0;
+
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: IndexedStack(index: safeIndex, children: currentPages),
       bottomNavigationBar: TLBottomNav(
-        selectedIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        selectedIndex: safeIndex,
+        items: currentItems,
+        onTap: (index) {
+          if (_isGuest && index == 2) {
+            // Prompt login directly if clicking Login/Profile tab
+            Navigator.pushNamed(context, '/login', arguments: {'role': 'Tenant'});
+            return;
+          }
+          setState(() => _currentIndex = index);
+        },
       ),
     );
   }

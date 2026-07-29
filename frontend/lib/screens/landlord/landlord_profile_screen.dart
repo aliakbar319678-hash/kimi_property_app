@@ -241,6 +241,29 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
                                 ),
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      // Logout Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            await ApiClient().clearToken();
+                            if (context.mounted) {
+                              Navigator.pushNamedAndRemoveUntil(context, '/role_selection', (route) => false);
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.error,
+                            side: const BorderSide(color: AppColors.error),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text(
+                            'Log Out',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

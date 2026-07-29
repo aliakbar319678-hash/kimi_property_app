@@ -315,7 +315,7 @@ class VendorWorkOrderDetailsScreen extends ConsumerWidget {
                         ),
                         IconButton(
                           icon: const Icon(Icons.phone_rounded, color: AppColors.secondary),
-                          onPressed: () {},
+                          onPressed: () { Navigator.pushNamed(context, '/chat/detail'); },
                         ),
                       ],
                     ),

@@ -328,25 +328,38 @@ class ProfileScreen extends ConsumerWidget {
                       child: Column(
                         children: [
                           GestureDetector(
-                            onTap: () => Navigator.pushNamed(context, '/lease_summary'),
+                            onTap: () => Navigator.pushNamed(context, '/tenant_lease'),
                             behavior: HitTestBehavior.opaque,
                             child: _DocumentRow(
                               icon: Icons.description_outlined,
-                              title: 'Lease',
-                              subtitle: 'Active · Expires July 2025',
-                              trailing: Icons.download_outlined,
+                              title: 'My Lease Agreement',
+                              subtitle: 'Active',
+                              trailing: Icons.chevron_right_rounded,
                               w: w,
                               h: h,
                             ),
                           ),
                           Divider(height: 1, color: AppColors.border),
                           GestureDetector(
-                            onTap: () => Navigator.pushNamed(context, '/payment_history'),
+                            onTap: () => Navigator.pushNamed(context, '/tenant_pay_rent'),
                             behavior: HitTestBehavior.opaque,
                             child: _DocumentRow(
                               icon: Icons.receipt_outlined,
-                              title: 'Receipts',
-                              subtitle: '12 Files · Last updated Mar 01',
+                              title: 'Payment History',
+                              subtitle: 'View recent payments',
+                              trailing: Icons.chevron_right_rounded,
+                              w: w,
+                              h: h,
+                            ),
+                          ),
+                          Divider(height: 1, color: AppColors.border),
+                          GestureDetector(
+                            onTap: () => Navigator.pushNamed(context, '/tenant_saved_properties'),
+                            behavior: HitTestBehavior.opaque,
+                            child: _DocumentRow(
+                              icon: Icons.favorite_border_rounded,
+                              title: 'Saved Properties',
+                              subtitle: 'Keep track of homes you like',
                               trailing: Icons.chevron_right_rounded,
                               w: w,
                               h: h,
@@ -411,7 +424,7 @@ class ProfileScreen extends ConsumerWidget {
                             ),
                           ),
                           OutlinedButton(
-                            onPressed: () {},
+                            onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Memo Editor...'))); },
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.secondary,
                               side: const BorderSide(
@@ -434,6 +447,31 @@ class ProfileScreen extends ConsumerWidget {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+
+                    SizedBox(height: h * 0.03),
+
+                    // ── Logout Button ──────────────
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          await ApiClient().clearToken();
+                          if (context.mounted) {
+                            Navigator.pushNamedAndRemoveUntil(context, '/role_selection', (route) => false);
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.error,
+                          side: const BorderSide(color: AppColors.error),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text(
+                          'Log Out',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                        ),
                       ),
                     ),
 

@@ -502,7 +502,7 @@ as String?,
 /// @nodoc
 mixin _$OtpState {
 
- List<String> get otpDigits; bool get isLoading; bool get isVerified; String? get errorMessage;
+ List<String> get otpDigits; String get email; bool get isLoading; bool get isVerified; int get resendCountdown; String? get errorMessage;
 /// Create a copy of OtpState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -513,16 +513,16 @@ $OtpStateCopyWith<OtpState> get copyWith => _$OtpStateCopyWithImpl<OtpState>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OtpState&&const DeepCollectionEquality().equals(other.otpDigits, otpDigits)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OtpState&&const DeepCollectionEquality().equals(other.otpDigits, otpDigits)&&(identical(other.email, email) || other.email == email)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.resendCountdown, resendCountdown) || other.resendCountdown == resendCountdown)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(otpDigits),isLoading,isVerified,errorMessage);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(otpDigits),email,isLoading,isVerified,resendCountdown,errorMessage);
 
 @override
 String toString() {
-  return 'OtpState(otpDigits: $otpDigits, isLoading: $isLoading, isVerified: $isVerified, errorMessage: $errorMessage)';
+  return 'OtpState(otpDigits: $otpDigits, email: $email, isLoading: $isLoading, isVerified: $isVerified, resendCountdown: $resendCountdown, errorMessage: $errorMessage)';
 }
 
 
@@ -533,7 +533,7 @@ abstract mixin class $OtpStateCopyWith<$Res>  {
   factory $OtpStateCopyWith(OtpState value, $Res Function(OtpState) _then) = _$OtpStateCopyWithImpl;
 @useResult
 $Res call({
- List<String> otpDigits, bool isLoading, bool isVerified, String? errorMessage
+ List<String> otpDigits, String email, bool isLoading, bool isVerified, int resendCountdown, String? errorMessage
 });
 
 
@@ -550,12 +550,14 @@ class _$OtpStateCopyWithImpl<$Res>
 
 /// Create a copy of OtpState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? otpDigits = null,Object? isLoading = null,Object? isVerified = null,Object? errorMessage = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? otpDigits = null,Object? email = null,Object? isLoading = null,Object? isVerified = null,Object? resendCountdown = null,Object? errorMessage = freezed,}) {
   return _then(_self.copyWith(
 otpDigits: null == otpDigits ? _self.otpDigits : otpDigits // ignore: cast_nullable_to_non_nullable
-as List<String>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as List<String>,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore: cast_nullable_to_non_nullable
-as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
+as bool,resendCountdown: null == resendCountdown ? _self.resendCountdown : resendCountdown // ignore: cast_nullable_to_non_nullable
+as int,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -641,10 +643,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<String> otpDigits,  bool isLoading,  bool isVerified,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<String> otpDigits,  String email,  bool isLoading,  bool isVerified,  int resendCountdown,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OtpState() when $default != null:
-return $default(_that.otpDigits,_that.isLoading,_that.isVerified,_that.errorMessage);case _:
+return $default(_that.otpDigits,_that.email,_that.isLoading,_that.isVerified,_that.resendCountdown,_that.errorMessage);case _:
   return orElse();
 
 }
@@ -662,10 +664,10 @@ return $default(_that.otpDigits,_that.isLoading,_that.isVerified,_that.errorMess
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<String> otpDigits,  bool isLoading,  bool isVerified,  String? errorMessage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<String> otpDigits,  String email,  bool isLoading,  bool isVerified,  int resendCountdown,  String? errorMessage)  $default,) {final _that = this;
 switch (_that) {
 case _OtpState():
-return $default(_that.otpDigits,_that.isLoading,_that.isVerified,_that.errorMessage);case _:
+return $default(_that.otpDigits,_that.email,_that.isLoading,_that.isVerified,_that.resendCountdown,_that.errorMessage);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -682,10 +684,10 @@ return $default(_that.otpDigits,_that.isLoading,_that.isVerified,_that.errorMess
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<String> otpDigits,  bool isLoading,  bool isVerified,  String? errorMessage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<String> otpDigits,  String email,  bool isLoading,  bool isVerified,  int resendCountdown,  String? errorMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _OtpState() when $default != null:
-return $default(_that.otpDigits,_that.isLoading,_that.isVerified,_that.errorMessage);case _:
+return $default(_that.otpDigits,_that.email,_that.isLoading,_that.isVerified,_that.resendCountdown,_that.errorMessage);case _:
   return null;
 
 }
@@ -697,7 +699,7 @@ return $default(_that.otpDigits,_that.isLoading,_that.isVerified,_that.errorMess
 
 
 class _OtpState implements OtpState {
-  const _OtpState({final  List<String> otpDigits = const ['', '', '', ''], this.isLoading = false, this.isVerified = false, this.errorMessage}): _otpDigits = otpDigits;
+  const _OtpState({final  List<String> otpDigits = const ['', '', '', ''], this.email = '', this.isLoading = false, this.isVerified = false, this.resendCountdown = 0, this.errorMessage}): _otpDigits = otpDigits;
   
 
  final  List<String> _otpDigits;
@@ -707,8 +709,10 @@ class _OtpState implements OtpState {
   return EqualUnmodifiableListView(_otpDigits);
 }
 
+@override@JsonKey() final  String email;
 @override@JsonKey() final  bool isLoading;
 @override@JsonKey() final  bool isVerified;
+@override@JsonKey() final  int resendCountdown;
 @override final  String? errorMessage;
 
 /// Create a copy of OtpState
@@ -721,16 +725,16 @@ _$OtpStateCopyWith<_OtpState> get copyWith => __$OtpStateCopyWithImpl<_OtpState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OtpState&&const DeepCollectionEquality().equals(other._otpDigits, _otpDigits)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OtpState&&const DeepCollectionEquality().equals(other._otpDigits, _otpDigits)&&(identical(other.email, email) || other.email == email)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.resendCountdown, resendCountdown) || other.resendCountdown == resendCountdown)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_otpDigits),isLoading,isVerified,errorMessage);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_otpDigits),email,isLoading,isVerified,resendCountdown,errorMessage);
 
 @override
 String toString() {
-  return 'OtpState(otpDigits: $otpDigits, isLoading: $isLoading, isVerified: $isVerified, errorMessage: $errorMessage)';
+  return 'OtpState(otpDigits: $otpDigits, email: $email, isLoading: $isLoading, isVerified: $isVerified, resendCountdown: $resendCountdown, errorMessage: $errorMessage)';
 }
 
 
@@ -741,7 +745,7 @@ abstract mixin class _$OtpStateCopyWith<$Res> implements $OtpStateCopyWith<$Res>
   factory _$OtpStateCopyWith(_OtpState value, $Res Function(_OtpState) _then) = __$OtpStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<String> otpDigits, bool isLoading, bool isVerified, String? errorMessage
+ List<String> otpDigits, String email, bool isLoading, bool isVerified, int resendCountdown, String? errorMessage
 });
 
 
@@ -758,12 +762,14 @@ class __$OtpStateCopyWithImpl<$Res>
 
 /// Create a copy of OtpState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? otpDigits = null,Object? isLoading = null,Object? isVerified = null,Object? errorMessage = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? otpDigits = null,Object? email = null,Object? isLoading = null,Object? isVerified = null,Object? resendCountdown = null,Object? errorMessage = freezed,}) {
   return _then(_OtpState(
 otpDigits: null == otpDigits ? _self._otpDigits : otpDigits // ignore: cast_nullable_to_non_nullable
-as List<String>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as List<String>,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore: cast_nullable_to_non_nullable
-as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
+as bool,resendCountdown: null == resendCountdown ? _self.resendCountdown : resendCountdown // ignore: cast_nullable_to_non_nullable
+as int,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

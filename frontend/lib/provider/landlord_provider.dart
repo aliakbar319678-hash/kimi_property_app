@@ -1041,7 +1041,10 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       await loadProperties();
     } catch (e) {
       debugPrint('[LandlordProvider] adminRequestRevision error: $e');
-      rethrow;
+      if (e is DioException && e.response?.data != null) {
+        throw e.response!.data['message'] ?? 'Server error';
+      }
+      throw 'Failed to request revision';
     }
   }
 
@@ -1053,7 +1056,10 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       await loadProperties();
     } catch (e) {
       debugPrint('[LandlordProvider] adminPermanentReject error: $e');
-      rethrow;
+      if (e is DioException && e.response?.data != null) {
+        throw e.response!.data['message'] ?? 'Server error';
+      }
+      throw 'Failed to permanently reject property';
     }
   }
 
@@ -1063,7 +1069,10 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
       await loadProperties();
     } catch (e) {
       debugPrint('[LandlordProvider] adminApproveProperty error: $e');
-      rethrow;
+      if (e is DioException && e.response?.data != null) {
+        throw e.response!.data['message'] ?? 'Server error';
+      }
+      throw 'Failed to approve property';
     }
   }
 

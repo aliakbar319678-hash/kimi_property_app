@@ -2,21 +2,30 @@ import Joi from 'joi';
 
 export const schemas = {
   login: Joi.object({
-    email: Joi.string().email().required(),
+    email: Joi.string().required(), // removed .email() to allow identifier
     password: Joi.string().min(8).required(),
+    username: Joi.string().optional(),
+    full_name: Joi.string().optional(),
+    phone: Joi.string().optional(),
     deviceId: Joi.string().optional(),
     deviceType: Joi.string().valid('ios', 'android', 'web').optional(),
   }),
 
   register: Joi.object({
     email: Joi.string().email().required(),
-    password: Joi.string().min(8).required(),
+    password: Joi.string().min(6).required(),
     phone: Joi.string().optional(),
-    role: Joi.string().valid('tenant', 'landlord', 'vendor').required(),
+    username: Joi.string().optional(),
+    role: Joi.string().valid('tenant', 'landlord', 'vendor', 'admin', 'property_manager').required(),
     regionCode: Joi.string().optional(),
+    display_name: Joi.string().optional(),
+    first_name: Joi.string().optional(),
+    last_name: Joi.string().optional(),
+    avatar_url: Joi.string().optional(),
   }),
 
   onboardingStep: Joi.object({
+    step: Joi.number().integer().min(1).max(5).required(),
     data: Joi.object().required(),
   }),
 
@@ -63,8 +72,6 @@ export const schemas = {
     accessInstructions: Joi.string().optional(),
     notifyTenant: Joi.boolean().default(true),
     notifyVendor: Joi.boolean().default(true),
-    assignedVendorId: Joi.string().uuid().optional(),
-    scheduledDate: Joi.date().iso().optional(),
   }),
 
   bidCreate: Joi.object({
@@ -79,11 +86,10 @@ export const schemas = {
   leaseCreate: Joi.object({
     tenantId: Joi.string().uuid().required(),
     unitId: Joi.string().uuid().required(),
-    propertyId: Joi.string().uuid().required(),
     startDate: Joi.date().iso().required(),
     endDate: Joi.date().iso().greater(Joi.ref('startDate')).required(),
     rentAmount: Joi.number().positive().required(),
-    securityDeposit: Joi.number().min(0).optional(),
+    depositAmount: Joi.number().min(0).optional(),
     paymentSchedule: Joi.string().valid('monthly', 'weekly', 'bi_weekly').default('monthly'),
     autoRenew: Joi.boolean().default(false),
   }),
@@ -96,16 +102,19 @@ export const schemas = {
 
   courseCreate: Joi.object({
     title: Joi.string().min(3).required(),
-    slug: Joi.string().alphanum().required(),
-    category: Joi.string().valid('compliance', 'finance', 'maintenance', 'legal', 'strategy').required(),
-    difficulty: Joi.string().valid('beginner', 'intermediate', 'advanced').required(),
-    durationMinutes: Joi.number().integer().min(1).required(),
-    instructorName: Joi.string().optional(),
+    slug: Joi.string().alphanum().optional(),
+    category: Joi.string().optional(),
+    difficulty: Joi.string().optional(),
+    duration_minutes: Joi.number().integer().min(0).optional(),
+    instructor_name: Joi.string().optional(),
     description: Joi.string().optional(),
-    passingScore: Joi.number().integer().min(0).max(100).default(70),
+    passing_score: Joi.number().integer().min(0).max(100).default(70),
+    is_published: Joi.boolean().optional(),
+    thumbnail_url: Joi.string().optional(),
   }),
 
   quizSubmit: Joi.object({
+    moduleId: Joi.string().required(),
     answers: Joi.array().items(
       Joi.object({
         questionId: Joi.string().required(),
@@ -113,39 +122,7 @@ export const schemas = {
       })
     ).required(),
   }),
-
-  adCreate: Joi.object({
-    title: Joi.string().min(3).max(255).required(),
-    description: Joi.string().allow('').optional(),
-    adType: Joi.string().required(),
-    bannerUrl: Joi.string().uri().required(),
-    targetRoles: Joi.array().items(Joi.string().valid('super_admin', 'admin', 'landlord', 'property_manager', 'tenant', 'vendor', 'lms_instructor')).required(),
-    latitude: Joi.number().min(-90).max(90).optional(),
-    longitude: Joi.number().min(-180).max(180).optional(),
-    radiusMeters: Joi.number().min(0).optional(),
-    redirectUrl: Joi.string().uri().allow('').optional(),
-    isActive: Joi.boolean().default(true),
-  }),
-
-  adUpdate: Joi.object({
-    title: Joi.string().min(3).max(255).optional(),
-    description: Joi.string().allow('').optional(),
-    adType: Joi.string().optional(),
-    bannerUrl: Joi.string().uri().optional(),
-    targetRoles: Joi.array().items(Joi.string().valid('super_admin', 'admin', 'landlord', 'property_manager', 'tenant', 'vendor', 'lms_instructor')).optional(),
-    latitude: Joi.number().min(-90).max(90).optional(),
-    longitude: Joi.number().min(-180).max(180).optional(),
-    radiusMeters: Joi.number().min(0).optional(),
-    redirectUrl: Joi.string().uri().allow('').optional(),
-    isActive: Joi.boolean().optional(),
-  }),
-
-  propertyReject: Joi.object({
-    reason: Joi.string().min(3).max(1000).required(),
-    deadline: Joi.date().iso().required(),
-  }),
 };
-
 
 export const validate = (schema: Joi.ObjectSchema) => {
   return (req: any, res: any, next: any) => {

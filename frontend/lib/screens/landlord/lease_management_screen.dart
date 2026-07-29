@@ -13,6 +13,17 @@ class LeaseManagementScreen extends ConsumerStatefulWidget {
 }
 
 class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
+  // Status filter: null means "All"
+  String? _selectedStatus;
+
+  static const List<_StatusFilter> _statusFilters = [
+    _StatusFilter(label: 'All', value: null, icon: Icons.list_rounded),
+    _StatusFilter(label: 'Active', value: 'active', icon: Icons.check_circle_outline_rounded),
+    _StatusFilter(label: 'Expiring', value: 'expiring', icon: Icons.hourglass_bottom_rounded),
+    _StatusFilter(label: 'Terminated', value: 'terminated', icon: Icons.cancel_outlined),
+    _StatusFilter(label: 'Draft', value: 'draft', icon: Icons.edit_note_rounded),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(landlordProvider);
@@ -27,7 +38,10 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
         .toList()
       ..sort((a, b) => a.daysLeft.compareTo(b.daysLeft));
 
-    final allLeases = state.leases;
+    // Apply status filter
+    final allLeases = _selectedStatus == null
+        ? state.leases
+        : state.leases.where((l) => l.status.toLowerCase() == _selectedStatus).toList();
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -118,7 +132,62 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                   SizedBox(height: h * 0.035),
 
                   // ─── All Leases ────────────────────────────────────────
-                  Text('All Leases', style: TextStyle(fontSize: w * 0.042, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('All Leases', style: TextStyle(fontSize: w * 0.042, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                      Text(
+                        '${allLeases.length} ${_selectedStatus ?? 'total'}',
+                        style: TextStyle(fontSize: w * 0.03, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: h * 0.012),
+
+                  // ── Status Filter Chips ────────────────────────────────
+                  SizedBox(
+                    height: 36,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: _statusFilters.map((f) {
+                        final isSelected = _selectedStatus == f.value;
+                        return GestureDetector(
+                          onTap: () => setState(() => _selectedStatus = f.value),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            margin: const EdgeInsets.only(right: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppColors.primary : AppColors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected ? AppColors.primary : AppColors.border,
+                                width: isSelected ? 1.5 : 1,
+                              ),
+                              boxShadow: isSelected
+                                  ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 6, offset: const Offset(0, 2))]
+                                  : [],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(f.icon, size: 13, color: isSelected ? Colors.white : AppColors.textSecondary),
+                                const SizedBox(width: 5),
+                                Text(
+                                  f.label,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
                   SizedBox(height: h * 0.015),
 
                   if (allLeases.isEmpty)
@@ -274,12 +343,49 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: Text(
-                  lease.status.toUpperCase(),
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: statusColor),
+              // Status Badge + Change Status popup
+              PopupMenuButton<String>(
+                tooltip: 'Change Status',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onSelected: (newStatus) async {
+                  if (newStatus == lease.status) return;
+                  try {
+                    await ref.read(landlordProvider.notifier).updateLeaseStatus(lease.id, newStatus);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Lease status updated to ${newStatus.toUpperCase()}'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+                      );
+                    }
+                  }
+                },
+                itemBuilder: (_) => [
+                  const PopupMenuItem(value: 'active',     child: Text('✅  Active')),
+                  const PopupMenuItem(value: 'expiring',   child: Text('⏳  Expiring')),
+                  const PopupMenuItem(value: 'draft',      child: Text('📝  Draft')),
+                  const PopupMenuItem(value: 'terminated', child: Text('🚫  Terminated')),
+                  const PopupMenuItem(value: 'renewed',    child: Text('🔄  Renewed')),
+                ],
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(lease.status.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: statusColor)),
+                      const SizedBox(width: 4),
+                      Icon(Icons.arrow_drop_down_rounded, size: 14, color: statusColor),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 6),
@@ -655,8 +761,13 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
 
   // ─── Renew Lease Sheet ──────────────────────────────────────────────────────
   void _showRenewSheet(BuildContext context, Lease lease) {
+    DateTime? newStartDate;
     DateTime? newEndDate;
+    final rentCtrl = TextEditingController(text: lease.rentAmount.toStringAsFixed(0));
+    final termsCtrl = TextEditingController();
     bool isLoading = false;
+
+    String fmt(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
     showModalBottomSheet(
       context: context,
@@ -669,85 +780,170 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
             color: AppColors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)))),
-              const SizedBox(height: 20),
-              Text('Renew Lease — ${lease.unitName}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-              const SizedBox(height: 4),
-              Text('Tenant: ${lease.tenantName}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-              const SizedBox(height: 20),
-              const Text('New End Date *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: ctx,
-                    initialDate: DateTime.now().add(const Duration(days: 365)),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime(2040),
-                  );
-                  if (picked != null) setSheetState(() => newEndDate = picked);
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: newEndDate != null ? AppColors.primary : AppColors.border, width: newEndDate != null ? 1.5 : 1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today_rounded, size: 18, color: newEndDate != null ? AppColors.primary : AppColors.textHint),
-                      const SizedBox(width: 10),
-                      Text(
-                        newEndDate != null
-                            ? '${newEndDate!.year}-${newEndDate!.month.toString().padLeft(2, '0')}-${newEndDate!.day.toString().padLeft(2, '0')}'
-                            : 'Tap to select new end date',
-                        style: TextStyle(fontSize: 15, color: newEndDate != null ? AppColors.textPrimary : AppColors.textHint, fontWeight: newEndDate != null ? FontWeight.w600 : FontWeight.normal),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)))),
+                const SizedBox(height: 20),
+
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(Icons.autorenew_rounded, color: AppColors.primary, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Renew Lease', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        Text('${lease.unitName} • ${lease.tenantName}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // ── Dates Row ────────────────────────────────────────
+                Row(
+                  children: [
+                    // New Start Date
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('New Start Date', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 6),
+                          GestureDetector(
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: ctx,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                                lastDate: DateTime(2040),
+                              );
+                              if (picked != null) setSheetState(() => newStartDate = picked);
+                            },
+                            child: _dateTile(newStartDate, 'Pick start'),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 12),
+                    // New End Date
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('New End Date *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 6),
+                          GestureDetector(
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: ctx,
+                                initialDate: DateTime.now().add(const Duration(days: 365)),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime(2040),
+                              );
+                              if (picked != null) setSheetState(() => newEndDate = picked);
+                            },
+                            child: _dateTile(newEndDate, 'Pick end'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // ── Updated Rent ─────────────────────────────────────
+                const Text('Updated Rent Amount (\$)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: rentCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: _sheetFieldDeco(hint: 'e.g. 1800'),
+                ),
+                const SizedBox(height: 16),
+
+                // ── Terms ────────────────────────────────────────────
+                const Text('Renewal Terms / Notes', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: termsCtrl,
+                  maxLines: 3,
+                  decoration: _sheetFieldDeco(hint: 'e.g. Same terms apply. Rent increased by 3%.'),
+                ),
+                const SizedBox(height: 24),
+
+                // ── Submit ───────────────────────────────────────────
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: isLoading || newEndDate == null
+                        ? null
+                        : () async {
+                            setSheetState(() => isLoading = true);
+                            try {
+                              final nd = fmt(newEndDate!);
+                              await ref.read(landlordProvider.notifier).renewLease(lease.id, nd);
+                              if (ctx.mounted) {
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Lease renewed successfully! ✅'), backgroundColor: Color(0xFF27AE60)),
+                                );
+                              }
+                            } catch (e) {
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: AppColors.error),
+                                );
+                              }
+                            } finally {
+                              if (ctx.mounted) setSheetState(() => isLoading = false);
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: isLoading
+                        ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                        : const Text('Confirm Renewal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: isLoading || newEndDate == null
-                      ? null
-                      : () async {
-                          setSheetState(() => isLoading = true);
-                          try {
-                            final nd = '${newEndDate!.year}-${newEndDate!.month.toString().padLeft(2, '0')}-${newEndDate!.day.toString().padLeft(2, '0')}';
-                            await ref.read(landlordProvider.notifier).renewLease(lease.id, nd);
-                            if (ctx.mounted) {
-                              Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lease renewed successfully! ✅'), backgroundColor: Color(0xFF27AE60)));
-                            }
-                          } catch (e) {
-                            if (ctx.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: AppColors.error));
-                            }
-                          } finally {
-                            if (ctx.mounted) setSheetState(() => isLoading = false);
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: isLoading
-                      ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                      : const Text('Confirm Renewal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Helper: date picker tile
+  Widget _dateTile(DateTime? date, String hint) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        border: Border.all(color: date != null ? AppColors.primary : AppColors.border, width: date != null ? 1.5 : 1),
+        borderRadius: BorderRadius.circular(12),
+        color: AppColors.scaffoldBg,
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.calendar_today_rounded, size: 15, color: date != null ? AppColors.primary : AppColors.textHint),
+          const SizedBox(width: 7),
+          Text(
+            date != null ? '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}' : hint,
+            style: TextStyle(fontSize: 12, color: date != null ? AppColors.textPrimary : AppColors.textHint, fontWeight: date != null ? FontWeight.w600 : FontWeight.normal),
+          ),
+        ],
       ),
     );
   }
@@ -796,4 +992,12 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
       ),
     );
   }
+}
+
+/// Simple data holder for status filter chips
+class _StatusFilter {
+  final String label;
+  final String? value;
+  final IconData icon;
+  const _StatusFilter({required this.label, required this.value, required this.icon});
 }

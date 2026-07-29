@@ -5,6 +5,7 @@ import 'package:tenant_and_landlord_application/core/api_constants.dart';
 // ── Auth ────────────────────────────────────────────
 import 'package:tenant_and_landlord_application/screens/auth/welcome_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/register_screen.dart';
+import 'package:tenant_and_landlord_application/screens/auth/login_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/otp_screen.dart';
 
 // ── Onboarding ──────────────────────────────────────
@@ -31,6 +32,15 @@ import 'package:tenant_and_landlord_application/screens/request_tracking_screen.
 import 'package:tenant_and_landlord_application/screens/maintenance_request_screen.dart';
 import 'package:tenant_and_landlord_application/screens/application_checkout_screen.dart';
 import 'package:tenant_and_landlord_application/screens/tenant_applications_screen.dart';
+import 'package:tenant_and_landlord_application/screens/tenant_kyc_upload_screen.dart';
+import 'package:tenant_and_landlord_application/screens/tenant_screening_apply_screen.dart';
+
+// ── Tenant Portal ───────────────────────────────────
+import 'package:tenant_and_landlord_application/screens/tenant/tenant_dashboard_screen.dart';
+import 'package:tenant_and_landlord_application/screens/tenant/tenant_pay_rent_screen.dart';
+import 'package:tenant_and_landlord_application/screens/tenant/tenant_create_ticket_screen.dart';
+import 'package:tenant_and_landlord_application/screens/tenant/tenant_lease_screen.dart';
+import 'package:tenant_and_landlord_application/screens/tenant/tenant_saved_properties_screen.dart';
 
 // ── Theme ───────────────────────────────────────────
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
@@ -60,11 +70,14 @@ import 'package:tenant_and_landlord_application/screens/landlord/landlord_chatbo
 import 'package:tenant_and_landlord_application/screens/landlord/screening_detail_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/move_in_checklists_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/move_out_inspections_screen.dart';
-import 'package:tenant_and_landlord_application/screens/landlord/discussions_list_screen.dart';
-import 'package:tenant_and_landlord_application/screens/landlord/discussion_thread_screen.dart';
-import 'package:tenant_and_landlord_application/screens/landlord/lms_courses_screen.dart';
-import 'package:tenant_and_landlord_application/screens/landlord/lms_lesson_viewer_screen.dart';
-import 'package:tenant_and_landlord_application/screens/landlord/lms_quiz_certificate_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/invoices_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/late_notices_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/vendor_directory_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/calendar_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/property_showings_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/marketing_listings_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/communication_center_screen.dart';
+
 
 // ── Vendor Portal Screens ───────────────────────────
 import 'package:tenant_and_landlord_application/screens/vendor/vendor_onboarding_screen.dart';
@@ -100,7 +113,7 @@ class TLApp extends StatelessWidget {
         '/': (_) => const RoleSelectionScreen(),
         '/welcome': (_) => const WelcomeScreen(),
         '/register': (_) => const RegisterScreen(),
-        '/login': (_) => const RegisterScreen(),
+        '/login': (_) => const LoginScreen(),
         '/otp': (_) => const OtpScreen(),
         '/role_selection': (_) => const RoleSelectionScreen(),
 
@@ -115,6 +128,13 @@ class TLApp extends StatelessWidget {
         '/payments': (_) => const TenantShell(initialIndex: 2),
         '/chat': (_) => const TenantShell(initialIndex: 3),
         '/profile': (_) => const TenantShell(initialIndex: 4),
+
+        // ── Tenant Portal Routes ──────────────────
+        '/tenant_dashboard': (_) => const TenantDashboardScreen(),
+        '/tenant_pay_rent': (_) => const TenantPayRentScreen(),
+        '/tenant_create_ticket': (_) => const TenantCreateTicketScreen(),
+        '/tenant_lease': (_) => const TenantLeaseScreen(),
+        '/tenant_saved_properties': (_) => const TenantSavedPropertiesScreen(),
 
         // ── Landlord Portal Routes ────────────────
         '/landlord_home': (_) => const LandlordShell(initialIndex: 0),
@@ -143,12 +163,14 @@ class TLApp extends StatelessWidget {
         '/landlord_chatbot': (_) => const LandlordChatbotScreen(),
         '/landlord_move_in_checklists': (_) => const MoveInChecklistsScreen(),
         '/landlord_move_out_inspections': (_) => const MoveOutInspectionsScreen(),
-        '/discussions': (_) => const DiscussionsListScreen(),
-        '/discussion_thread': (_) => const DiscussionThreadScreen(),
-        '/lms_courses': (_) => const LmsCoursesScreen(),
-        '/lms_lesson': (_) => const LmsLessonViewerScreen(),
-        '/lms_quiz': (_) => const LmsQuizCertificateScreen(),
-
+        '/landlord_invoices': (_) => const LandlordInvoicesScreen(),
+        '/landlord_late_notices': (_) => const LandlordLateNoticesScreen(),
+        '/landlord_vendor_directory': (_) => const LandlordVendorDirectoryScreen(),
+        '/landlord_calendar': (_) => const LandlordCalendarScreen(),
+        '/landlord_showings': (_) => const LandlordPropertyShowingsScreen(),
+        '/landlord_marketing_listings': (_) => const LandlordMarketingListingsScreen(),
+        '/landlord_communication': (_) => const LandlordCommunicationCenterScreen(),
+        '/landlord_communication': (_) => const LandlordCommunicationCenterScreen(),
         // ── Vendor Portal Routes ──────────────────
         '/vendor_onboarding': (_) => const VendorOnboardingScreen(),
         '/vendor_home': (_) => const VendorShell(initialIndex: 0),
@@ -172,6 +194,8 @@ class TLApp extends StatelessWidget {
         '/application_checkout': (_) => const ApplicationCheckoutScreen(),
         '/tenant_applications': (_) => const TenantApplicationsScreen(),
         '/my-applications': (_) => const TenantApplicationsScreen(),
+        '/tenant_kyc_upload': (_) => const TenantKycUploadScreen(),
+        '/tenant_screening_apply': (_) => const TenantScreeningApplyScreen(),
 
         // ── Legacy aliases ────────────────────────
         '/home_dashboard': (_) => const HomeDashboardScreen(),

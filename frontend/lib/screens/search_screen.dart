@@ -52,75 +52,70 @@ class SearchScreen extends ConsumerWidget {
           SizedBox(width: w * 0.02),
         ],
       ),
-      body: Stack(
-        children: [
-          // -- Map Background --
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: h * 0.45,
-            child: const TLMockMap(initialZoom: 1.0, showZoomControls: false),
-          ),
-
-          // -- Map Overlay Buttons (Target, Zoom) --
-          Positioned(
-            top: h * 0.02,
-            right: w * 0.04,
-            child: Column(
-              children: [
-                _mapActionButton(Icons.my_location, w),
-                SizedBox(height: h * 0.015),
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          Icons.add,
-                          color: AppColors.primary,
-                          size: w * 0.05,
+      body: SingleChildScrollView(
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // -- Map Background & Pins --
+            SizedBox(
+              height: h * 0.45,
+              child: Stack(
+                children: [
+                  const TLMockMap(initialZoom: 1.0, showZoomControls: false),
+                  Positioned(
+                    top: h * 0.02,
+                    right: w * 0.04,
+                    child: Column(
+                      children: [
+                        _mapActionButton(Icons.my_location, w),
+                        SizedBox(height: h * 0.015),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  Icons.add,
+                                  color: AppColors.primary,
+                                  size: w * 0.05,
+                                ),
+                                onPressed: () { Navigator.pushNamed(context, '/filter'); },
+                              ),
+                              Container(
+                                height: 1,
+                                width: w * 0.06,
+                                color: AppColors.border,
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.remove,
+                                  color: AppColors.primary,
+                                  size: w * 0.05,
+                                ),
+                                onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Map View...'))); },
+                              ),
+                            ],
+                          ),
                         ),
-                        onPressed: () {},
-                      ),
-                      Container(
-                        height: 1,
-                        width: w * 0.06,
-                        color: AppColors.border,
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.remove,
-                          color: AppColors.primary,
-                          size: w * 0.05,
-                        ),
-                        onPressed: () {},
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  Positioned(top: h * 0.2, left: w * 0.3, child: _mapPin(w, true)),
+                  Positioned(top: h * 0.15, left: w * 0.5, child: _mapPin(w, false)),
+                  Positioned(top: h * 0.25, left: w * 0.7, child: _mapPin(w, true)),
+                ],
+              ),
             ),
-          ),
 
-          // -- Map Pins (Mock) --
-          Positioned(top: h * 0.2, left: w * 0.3, child: _mapPin(w, true)),
-          Positioned(top: h * 0.15, left: w * 0.5, child: _mapPin(w, false)),
-          Positioned(top: h * 0.25, left: w * 0.7, child: _mapPin(w, true)),
-
-          // -- Bottom Content Area --
-          Positioned(
-            top: h * 0.38,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              decoration: BoxDecoration(
+            // -- Bottom Content Area --
+            Container(
+              margin: EdgeInsets.only(top: h * 0.38),
+              decoration: const BoxDecoration(
                 color: AppColors.scaffoldBg,
-                borderRadius: const BorderRadius.only(
+                borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(24),
                   topRight: Radius.circular(24),
                 ),
@@ -149,7 +144,7 @@ class SearchScreen extends ConsumerWidget {
                                 height: 1.2,
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
                               '128 results found',
                               style: TextStyle(
@@ -195,84 +190,84 @@ class SearchScreen extends ConsumerWidget {
                   SizedBox(height: h * 0.02),
 
                   // -- List --
-                  Expanded(
-                    child: ListView.builder(
-                      padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-                      itemCount: 3,
-                      itemBuilder: (context, index) {
-                        return _propertyCard(context, w, h, index);
-                      },
-                    ),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+                    itemCount: 3,
+                    itemBuilder: (context, index) {
+                      return _buildPropertyCard(context, w, h, index);
+                    },
                   ),
                 ],
               ),
             ),
-          ),
 
-          // -- Floating Search Bar --
-          Positioned(
-            top: h * 0.35, // Overlaps map and bottom sheet
-            left: w * 0.05,
-            right: w * 0.05,
-            child: Container(
-              height: h * 0.07,
-              padding: EdgeInsets.symmetric(horizontal: w * 0.04),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.search_rounded,
-                    color: AppColors.secondary,
-                    size: w * 0.06,
-                  ),
-                  SizedBox(width: w * 0.03),
-                  Expanded(
-                    child: Text(
-                      'Seattle, WA',
-                      style: TextStyle(
-                        fontSize: w * 0.04,
-                        color: AppColors.textHint,
+            // -- Floating Search Bar --
+            Positioned(
+              top: h * 0.35, // Overlaps map and bottom sheet
+              left: w * 0.05,
+              right: w * 0.05,
+              child: Container(
+                height: h * 0.07,
+                padding: EdgeInsets.symmetric(horizontal: w * 0.04),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.search_rounded,
+                      color: AppColors.secondary,
+                      size: w * 0.06,
+                    ),
+                    SizedBox(width: w * 0.03),
+                    Expanded(
+                      child: Text(
+                        'Seattle, WA',
+                        style: TextStyle(
+                          fontSize: w * 0.04,
+                          color: AppColors.textHint,
+                        ),
                       ),
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/filter');
-                    },
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.tune_rounded,
-                          color: AppColors.secondary,
-                          size: w * 0.05,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'Filters',
-                          style: TextStyle(
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/filter');
+                      },
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.tune_rounded,
                             color: AppColors.secondary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: w * 0.035,
+                            size: w * 0.05,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Text(
+                            'Filters',
+                            style: TextStyle(
+                              color: AppColors.secondary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: w * 0.035,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
 
     );
@@ -319,11 +314,43 @@ class SearchScreen extends ConsumerWidget {
     );
   }
 
-  Widget _propertyCard(BuildContext context, double w, double h, int index) {
+  Widget _buildPropertyCard(BuildContext context, double w, double h, int index) {
+    return _PropertyCard(w: w, h: h, index: index);
+  }
+}
+
+class _PropertyCard extends StatefulWidget {
+  final double w;
+  final double h;
+  final int index;
+
+  const _PropertyCard({required this.w, required this.h, required this.index});
+
+  @override
+  State<_PropertyCard> createState() => _PropertyCardState();
+}
+
+class _PropertyCardState extends State<_PropertyCard> {
+  bool _isFavorite = false;
+
+  void _toggleFavorite() {
+    setState(() {
+      _isFavorite = !_isFavorite;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_isFavorite ? 'Saved to Favorites' : 'Removed from Favorites'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/property_details'),
       child: Container(
-      margin: EdgeInsets.only(bottom: h * 0.025),
+      margin: EdgeInsets.only(bottom: widget.h * 0.025),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
@@ -347,12 +374,12 @@ class SearchScreen extends ConsumerWidget {
                   topRight: Radius.circular(16),
                 ),
                 child: Image.network(
-                  _searchPropertyImages[index % _searchPropertyImages.length],
-                  height: h * 0.22,
+                  _searchPropertyImages[widget.index % _searchPropertyImages.length],
+                  height: widget.h * 0.22,
                   width: double.infinity,
                   fit: BoxFit.cover,
                   errorBuilder: (_, _, _) => Container(
-                    height: h * 0.22,
+                    height: widget.h * 0.22,
                     color: AppColors.inputBg,
                     child: const Icon(
                       Icons.image_outlined,
@@ -364,16 +391,19 @@ class SearchScreen extends ConsumerWidget {
               Positioned(
                 top: 12,
                 right: 12,
-                child: Container(
-                  padding: EdgeInsets.all(w * 0.02),
-                  decoration: const BoxDecoration(
-                    color: AppColors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.favorite_border_rounded,
-                    color: AppColors.error,
-                    size: w * 0.05,
+                child: GestureDetector(
+                  onTap: _toggleFavorite,
+                  child: Container(
+                    padding: EdgeInsets.all(widget.w * 0.02),
+                    decoration: const BoxDecoration(
+                      color: AppColors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      color: _isFavorite ? AppColors.error : AppColors.textSecondary,
+                      size: widget.w * 0.05,
+                    ),
                   ),
                 ),
               ),
@@ -382,7 +412,7 @@ class SearchScreen extends ConsumerWidget {
                 left: 12,
                 child: Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: w * 0.03,
+                    horizontal: widget.w * 0.03,
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
@@ -394,7 +424,7 @@ class SearchScreen extends ConsumerWidget {
                     style: TextStyle(
                       color: AppColors.secondary,
                       fontWeight: FontWeight.w600,
-                      fontSize: w * 0.03,
+                      fontSize: widget.w * 0.03,
                     ),
                   ),
                 ),
@@ -404,7 +434,7 @@ class SearchScreen extends ConsumerWidget {
 
           // Details
           Padding(
-            padding: EdgeInsets.all(w * 0.04),
+            padding: EdgeInsets.all(widget.w * 0.04),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -414,7 +444,7 @@ class SearchScreen extends ConsumerWidget {
                     Text(
                       'Skyline View Lofts',
                       style: TextStyle(
-                        fontSize: w * 0.045,
+                        fontSize: widget.w * 0.045,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
@@ -427,14 +457,14 @@ class SearchScreen extends ConsumerWidget {
                             style: TextStyle(
                               color: AppColors.secondary,
                               fontWeight: FontWeight.w800,
-                              fontSize: w * 0.045,
+                              fontSize: widget.w * 0.045,
                             ),
                           ),
                           TextSpan(
                             text: '/mo',
                             style: TextStyle(
                               color: AppColors.textSecondary,
-                              fontSize: w * 0.03,
+                              fontSize: widget.w * 0.03,
                             ),
                           ),
                         ],
@@ -442,20 +472,20 @@ class SearchScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: h * 0.01),
+                SizedBox(height: widget.h * 0.01),
                 Row(
                   children: [
                     Icon(
                       Icons.location_on_outlined,
                       color: AppColors.textHint,
-                      size: w * 0.04,
+                      size: widget.w * 0.04,
                     ),
                     SizedBox(width: 4),
                     Text(
                       'Downtown, Seattle',
                       style: TextStyle(
                         color: AppColors.textSecondary,
-                        fontSize: w * 0.035,
+                        fontSize: widget.w * 0.035,
                       ),
                     ),
                   ],

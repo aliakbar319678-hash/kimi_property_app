@@ -2,47 +2,59 @@ import { Router } from 'express';
 import multer from 'multer';
 import { UploadService } from '../services/upload.service';
 import { authenticate, AuthRequest } from '../middleware/auth';
+import { adminOrJwtAuth } from '../middleware/adminKey';
 import { AppError } from '../middleware/errorHandler';
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-/**
- * @swagger
- * tags:
- *   name: Uploads
- *   description: File upload endpoints
- */
+// Setup local storage for generic uploads
+import fs from 'fs';
+import path from 'path';
 
-/**
- * @swagger
- * /api/v1/uploads/property/{id}/image:
- *   post:
- *     summary: Upload property image
- *     tags: [Uploads]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               file:
- *                 type: string
- *                 format: binary
- *     responses:
- *       200:
- *         description: Image uploaded
- */
-router.post('/property/:id/image', authenticate, upload.single('file'), async (req: AuthRequest, res, next) => {
+const uploadDir = path.join(__dirname, '../../public/uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const localStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    let ext = path.extname(file.originalname);
+    if (!ext && file.mimetype) {
+      ext = '.' + file.mimetype.split('/')[1];
+      if (ext === '.svg+xml') ext = '.svg';
+      if (ext === '.jpeg') ext = '.jpg';
+    }
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, '');
+    cb(null, uniqueSuffix + '-' + safeName + (safeName.endsWith(ext) ? '' : ext));
+  }
+});
+const imageFilter = (req: any, file: any, cb: any) => {
+  // Accept any mimetype for generic uploads (documents, images, audio, video)
+  cb(null, true);
+};
+
+const localUpload = multer({ 
+  storage: localStorage, 
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB limit - supports image and video uploads
+  fileFilter: imageFilter
+});
+
+// Existing memory storage for S3 uploads
+const memoryUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+
+// --- Generic Local Upload Route (accepts admin key OR JWT) ---
+router.post('/generic', adminOrJwtAuth, localUpload.single('file'), (req: AuthRequest, res) => {
+  if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded or invalid file type' });
+  // Generate public URL - use the full absolute URL so Laravel can display it
+  const host = req.get('host') || 'localhost:5000';
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+  const url = `${protocol}://${host}/uploads/${req.file.filename}`;
+  res.json({ success: true, data: { url, filename: req.file.filename } });
+});
+
+router.post('/property/:id/image', authenticate, memoryUpload.single('file'), async (req: AuthRequest, res, next) => {
   try {
     if (!req.file) throw new AppError('No file uploaded', 400);
     const result = await UploadService.uploadPropertyImage(req.params.id, req.file.buffer, req.file.originalname, req.file.mimetype, req.user!.id);
@@ -50,35 +62,7 @@ router.post('/property/:id/image', authenticate, upload.single('file'), async (r
   } catch (e) { next(e); }
 });
 
-/**
- * @swagger
- * /api/v1/uploads/work-order/{id}/photo:
- *   post:
- *     summary: Upload work order photo
- *     tags: [Uploads]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               file:
- *                 type: string
- *                 format: binary
- *     responses:
- *       200:
- *         description: Photo uploaded
- */
-router.post('/work-order/:id/photo', authenticate, upload.single('file'), async (req: AuthRequest, res, next) => {
+router.post('/work-order/:id/photo', authenticate, memoryUpload.single('file'), async (req: AuthRequest, res, next) => {
   try {
     if (!req.file) throw new AppError('No file uploaded', 400);
     const result = await UploadService.uploadWorkOrderPhoto(req.params.id, req.file.buffer, req.file.originalname, req.file.mimetype, req.user!.id);
@@ -86,155 +70,10 @@ router.post('/work-order/:id/photo', authenticate, upload.single('file'), async 
   } catch (e) { next(e); }
 });
 
-/**
- * @swagger
- * /api/v1/uploads/kyc/{docType}:
- *   post:
- *     summary: Upload KYC document
- *     tags: [Uploads]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: docType
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               file:
- *                 type: string
- *                 format: binary
- *     responses:
- *       200:
- *         description: Document uploaded
- */
-router.post('/kyc/:docType', authenticate, upload.single('file'), async (req: AuthRequest, res, next) => {
+router.post('/kyc/:docType', authenticate, memoryUpload.single('file'), async (req: AuthRequest, res, next) => {
   try {
     if (!req.file) throw new AppError('No file uploaded', 400);
     const result = await UploadService.uploadKycDocument(req.user!.id, req.params.docType, req.file.buffer, req.file.originalname, req.file.mimetype);
-    res.json({ success: true, data: result });
-  } catch (e) { next(e); }
-});
-
-/**
- * @swagger
- * /api/v1/uploads/avatar:
- *   post:
- *     summary: Upload profile picture (avatar)
- *     description: |
- *       Uploads a new profile picture for the authenticated user.
- *       The `avatar_url` field on the user record is updated immediately.
- *
- *       **Supported formats:** JPEG · PNG · WebP · GIF · AVIF · SVG · BMP · TIFF
- *
- *       **Max file size:** 10 MB
- *     tags: [Uploads]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             required:
- *               - file
- *             properties:
- *               file:
- *                 type: string
- *                 format: binary
- *                 description: |
- *                   Image file to upload.
- *                   Accepted: image/jpeg, image/png, image/webp, image/gif,
- *                   image/avif, image/svg+xml, image/bmp, image/tiff
- *     responses:
- *       200:
- *         description: Avatar uploaded successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     key:
- *                       type: string
- *                       example: avatars/user-uuid/550e8400-e29b-41d4-a716-446655440000.png
- *                     url:
- *                       type: string
- *                       format: uri
- *                       example: https://s3.amazonaws.com/propadmin-uploads/avatars/user-uuid/photo.png?X-Amz-Signature=...
- *                     expiresIn:
- *                       type: integer
- *                       description: Signed URL validity in seconds (1 year)
- *                       example: 31536000
- *       400:
- *         description: No file provided or unsupported file type
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             example:
- *               success: false
- *               message: 'Unsupported file type "application/pdf". Allowed types: JPEG, PNG, WebP, GIF, AVIF, SVG, BMP, TIFF'
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
- */
-router.post('/avatar', authenticate, upload.single('file'), async (req: AuthRequest, res, next) => {
-  try {
-    if (!req.file) throw new AppError('No file uploaded', 400);
-    const result = await UploadService.uploadAvatar(
-      req.user!.id,
-      req.file.buffer,
-      req.file.originalname,
-      req.file.mimetype
-    );
-    res.json({ success: true, data: result });
-  } catch (e) { next(e); }
-});
-
-/**
- * @swagger
- * /api/v1/uploads/inspection/{id}/photo:
- *   post:
- *     summary: Upload inspection photo
- *     tags: [Uploads]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               file:
- *                 type: string
- *                 format: binary
- *     responses:
- *       200:
- *         description: Inspection photo uploaded
- */
-router.post('/inspection/:id/photo', authenticate, upload.single('file'), async (req: AuthRequest, res, next) => {
-  try {
-    if (!req.file) throw new AppError('No file uploaded', 400);
-    const result = await UploadService.uploadInspectionPhoto(req.params.id, req.file.buffer, req.file.originalname, req.file.mimetype, req.user!.id);
     res.json({ success: true, data: result });
   } catch (e) { next(e); }
 });

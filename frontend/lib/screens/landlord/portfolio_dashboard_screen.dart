@@ -287,12 +287,28 @@ class PortfolioDashboardScreen extends ConsumerWidget {
 
               SizedBox(height: h * 0.02),
 
-              // Quick Buttons
+              // ── Quick Actions Grid ───────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Quick Actions',
+                    style: TextStyle(
+                      fontSize: w * 0.045,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: h * 0.012),
+
+              // Row 1: Invoices & Late Notices
               Row(
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/landlord_applications'),
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_invoices'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.white,
@@ -300,27 +316,132 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
                       ),
-                      icon: const Icon(Icons.description_rounded, size: 20),
-                      label: const Text('Applications', style: TextStyle(fontWeight: FontWeight.w600)),
+                      icon: const Icon(Icons.receipt_long_rounded, size: 20),
+                      label: const Text('Invoices', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
-                  SizedBox(width: w * 0.04),
+                  SizedBox(width: w * 0.03),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_late_notices'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        foregroundColor: AppColors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.warning_amber_rounded, size: 20),
+                      label: const Text('Late Notices', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: h * 0.012),
+
+              // Row 2: Calendar & Showings
+              Row(
+                children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/landlord_financial_overview'),
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_calendar'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.textPrimary,
                         side: const BorderSide(color: AppColors.border, width: 1.5),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      icon: const Icon(Icons.show_chart_rounded, size: 20),
-                      label: const Text('Finances', style: TextStyle(fontWeight: FontWeight.w600)),
+                      icon: const Icon(Icons.calendar_month_rounded, size: 20, color: AppColors.primary),
+                      label: const Text('Calendar', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  SizedBox(width: w * 0.03),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_showings'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: const Icon(Icons.visibility_rounded, size: 20, color: AppColors.primary),
+                      label: const Text('Showings', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: h * 0.015),
+              SizedBox(height: h * 0.012),
+
+              // Row 3: Marketing Listings & Vendor Directory
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_marketing_listings'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: const Icon(Icons.storefront_rounded, size: 20, color: AppColors.primary),
+                      label: const Text('Marketing', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  SizedBox(width: w * 0.03),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_vendor_directory'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: const Icon(Icons.engineering_rounded, size: 20, color: AppColors.primary),
+                      label: const Text('Vendors', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: h * 0.012),
+
+              // Row 4: Communication Center & Applications
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_communication'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: const Icon(Icons.campaign_rounded, size: 20, color: AppColors.primary),
+                      label: const Text('Broadcast', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  SizedBox(width: w * 0.03),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_applications'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: const Icon(Icons.description_rounded, size: 20),
+                      label: const Text('Applications', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: h * 0.012),
+
+              // Row 5: Move-In & Move-Out
               Row(
                 children: [
                   Expanded(
@@ -336,7 +457,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                       label: const Text('Move-In', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
-                  SizedBox(width: w * 0.04),
+                  SizedBox(width: w * 0.03),
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => Navigator.pushNamed(context, '/landlord_move_out_inspections'),
@@ -352,7 +473,9 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              SizedBox(height: h * 0.015),
+              SizedBox(height: h * 0.012),
+
+              // Row 6: Reports
               Row(
                 children: [
                   Expanded(
@@ -368,39 +491,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                       label: const Text('Reports', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
-                  SizedBox(width: w * 0.04),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/discussions'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textPrimary,
-                        side: const BorderSide(color: AppColors.border, width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      icon: const Icon(Icons.forum_rounded, size: 20),
-                      label: const Text('Discussions', style: TextStyle(fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: h * 0.015),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/lms_courses'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textPrimary,
-                        side: const BorderSide(color: AppColors.border, width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      icon: const Icon(Icons.school_rounded, size: 20),
-                      label: const Text('Academy / LMS', style: TextStyle(fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                  SizedBox(width: w * 0.04),
+                  SizedBox(width: w * 0.03),
                   const Spacer(),
                 ],
               ),

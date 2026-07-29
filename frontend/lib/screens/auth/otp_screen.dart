@@ -23,6 +23,20 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   );
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final regEmail = ref.read(registerProvider).email;
+        if (regEmail.isNotEmpty) {
+          ref.read(otpProvider.notifier).setEmail(regEmail);
+        }
+        ref.read(otpProvider.notifier).startResendTimer();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     for (final n in _focusNodes) {
       n.dispose();
@@ -222,47 +236,52 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
                       SizedBox(height: h * 0.022),
 
-                      // ── Resend ────────────────────────
-                      RichText(
-                        text: TextSpan(
-                          style: TextStyle(
-                            fontSize: w * 0.035,
-                            color: AppColors.textSecondary,
-                          ),
+                      // ── Resend Timer & Button ──────────────
+                      if (state.resendCountdown > 0) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const TextSpan(text: "Didn't receive the code? "),
-                            WidgetSpan(
-                              child: GestureDetector(
-                                onTap: () async {
-                                  for (final c in _controllers) {
-                                    c.clear();
-                                  }
-                                  _focusNodes[0].requestFocus();
-                                  await notif.resend();
-                                  if (context.mounted && ref.read(otpProvider).errorMessage == null) {
-                                    ScaffoldMessenger.of(context).clearSnackBars();
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Verification code resent successfully!'),
-                                        backgroundColor: Colors.blue,
-                                      ),
-                                    );
-                                  }
-                                },
-                                child: Text(
-                                  'Resend\nCode',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: w * 0.035,
-                                    color: AppColors.secondary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+                            Icon(Icons.timer_outlined, size: w * 0.045, color: AppColors.textSecondary),
+                            SizedBox(width: w * 0.015),
+                            Text(
+                              'Resend code in 00:${state.resendCountdown.toString().padLeft(2, '0')}',
+                              style: TextStyle(
+                                fontSize: w * 0.035,
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
-                      ),
+                      ] else ...[
+                        GestureDetector(
+                          onTap: () async {
+                            for (final c in _controllers) {
+                              c.clear();
+                            }
+                            _focusNodes[0].requestFocus();
+                            await notif.resend();
+                            if (context.mounted && ref.read(otpProvider).errorMessage == null) {
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Verification code resent successfully!'),
+                                  backgroundColor: Colors.blue,
+                                ),
+                              );
+                            }
+                          },
+                          child: Text(
+                            'Resend Code',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: w * 0.038,
+                              color: AppColors.secondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

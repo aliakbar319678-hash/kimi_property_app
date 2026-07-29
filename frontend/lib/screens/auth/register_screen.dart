@@ -147,8 +147,39 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         SizedBox(height: h * 0.018),
                       ],
 
-                      // Full Name (Only show in register)
+                      // Role Selector (Only show in register)
                       if (!state.isLogin) ...[
+                        _FieldLabel('I am a...', w),
+                        SizedBox(height: h * 0.008),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: w * 0.03),
+                          decoration: BoxDecoration(
+                            color: AppColors.inputBg,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: ['tenant', 'landlord', 'vendor'].contains(state.selectedRole.toLowerCase())
+                                  ? state.selectedRole.toLowerCase()
+                                  : 'tenant',
+                              isExpanded: true,
+                              icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                              items: const [
+                                DropdownMenuItem(value: 'tenant', child: Text('Tenant (Looking for / Renting Home)')),
+                                DropdownMenuItem(value: 'landlord', child: Text('Landlord / Property Manager')),
+                                DropdownMenuItem(value: 'vendor', child: Text('Vendor / Service Provider')),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) {
+                                  notif.updateSelectedRole(val);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: h * 0.018),
+
                         _FieldLabel('Full Name', w),
                         SizedBox(height: h * 0.008),
                         TLInputField(
@@ -344,6 +375,42 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         },
                       ),
 
+                      SizedBox(height: h * 0.02),
+
+                      // Continue with Google Button
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final success = await notif.loginWithGoogle();
+                          if (context.mounted && success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Signed in with Google!')),
+                            );
+                            Navigator.pushNamedAndRemoveUntil(
+                              context, '/home', (r) => false);
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: Size(double.infinity, h * 0.062),
+                          side: const BorderSide(color: AppColors.border),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(
+                          Icons.g_mobiledata_rounded,
+                          color: Color(0xFFEA4335),
+                          size: 28,
+                        ),
+                        label: Text(
+                          'Continue with Google',
+                          style: TextStyle(
+                            fontSize: w * 0.038,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+
                       SizedBox(height: h * 0.025),
 
                       // Sign In / Sign Up link toggle
@@ -371,6 +438,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                   ),
                                 ),
                               ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.pushReplacementNamed(context, '/home');
+                          },
+                          child: const Text(
+                            'Explore Properties as Guest',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ),

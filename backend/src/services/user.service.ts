@@ -3,67 +3,34 @@ import { AppError } from '../middleware/errorHandler';
 
 export class UserService {
   static async updateProfile(userId: string, data: any) {
-    // Normalize camelCase -> snake_case so frontend can send either format
-    const normalized: any = { ...data };
-    if (data.firstName !== undefined) normalized.legal_first_name = data.firstName;
-    if (data.lastName !== undefined) normalized.legal_last_name = data.lastName;
-    if (data.displayName !== undefined) normalized.display_name = data.displayName;
-    if (data.phoneNumber !== undefined) normalized.phone = data.phoneNumber;
-    if (data.dateOfBirth !== undefined) normalized.date_of_birth = data.dateOfBirth;
-    if (data.currentAddress !== undefined) normalized.current_address = data.currentAddress;
-    if (data.emergencyContact !== undefined) normalized.emergency_contact = data.emergencyContact;
-    if (data.email !== undefined) normalized.email = data.email;
-
-    const userAllowed = ['legal_first_name', 'legal_last_name', 'display_name', 'phone', 'email'];
-    const profileAllowed = ['date_of_birth', 'current_address', 'emergency_contact'];
-
-    return withTransaction(async (client) => {
-      const userUpdates: string[] = [];
-      const userValues: any[] = [];
-      let uIdx = 1;
-      for (const key of userAllowed) {
-        if (normalized[key] !== undefined) {
-          userUpdates.push(`${key} = $${uIdx++}`);
-          userValues.push(normalized[key]);
-        }
+    if (data.phone !== undefined) {
+      await query(`UPDATE users SET phone = $1, updated_at = NOW() WHERE id = $2`, [data.phone, userId]);
+    }
+    const allowed = ['legal_first_name', 'legal_last_name', 'display_name', 'date_of_birth', 'current_address', 'emergency_contact'];
+    const updates: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+    for (const key of allowed) {
+      if (data[key] !== undefined) {
+        updates.push(`${key} = $${idx}`);
+        values.push(typeof data[key] === 'object' ? JSON.stringify(data[key]) : data[key]);
+        idx++;
       }
-      if (userUpdates.length > 0) {
-        userValues.push(userId);
-        await client.query(`UPDATE users SET ${userUpdates.join(', ')}, updated_at = NOW() WHERE id = $${uIdx}`, userValues);
-      }
-
-      const profileUpdates: string[] = [];
-      const profileValues: any[] = [];
-      let pIdx = 1;
-      for (const key of profileAllowed) {
-        if (normalized[key] !== undefined) {
-          profileUpdates.push(`${key} = $${pIdx++}`);
-          profileValues.push(typeof normalized[key] === 'object' ? JSON.stringify(normalized[key]) : normalized[key]);
-        }
-      }
-      if (profileUpdates.length > 0) {
-        profileValues.push(userId);
-        await client.query(`UPDATE user_profiles SET ${profileUpdates.join(', ')}, updated_at = NOW() WHERE user_id = $${pIdx}`, profileValues);
-      }
-
-      if (userUpdates.length === 0 && profileUpdates.length === 0) {
-        throw new AppError('No valid fields to update', 400);
-      }
-
-      return { updated: true };
-    });
+    }
+    if (updates.length > 0) {
+      values.push(userId);
+      await query(`UPDATE user_profiles SET ${updates.join(', ')}, updated_at = NOW() WHERE user_id = $${idx}`, values);
+    }
+    return { updated: true };
   }
 
   static async updateOnboarding(userId: string, step: number, data: any) {
     return withTransaction(async (client) => {
-      const profileRes = await client.query('SELECT onboarding_step, onboarding_completed FROM user_profiles WHERE user_id = $1', [userId]);
+      const profileRes = await client.query('SELECT onboarding_step FROM user_profiles WHERE user_id = $1', [userId]);
       if (profileRes.rows.length === 0) throw new AppError('Profile not found', 404);
       const currentStep = profileRes.rows[0].onboarding_step;
-      const onboardingCompleted = profileRes.rows[0].onboarding_completed;
-      // Allow: any previous step (re-submission), current step, or next step.
-      // Block only if user tries to skip ahead (e.g. jump from step 1 to step 3).
-      if (!onboardingCompleted && step > currentStep + 1) {
-        throw new AppError(`Cannot skip steps. Current: ${currentStep}`, 400);
+      if (step !== currentStep && step !== currentStep + 1) {
+        throw new AppError(`Invalid step progression. Current: ${currentStep}`, 400);
       }
 
       const updateFields: string[] = [];
@@ -71,27 +38,9 @@ export class UserService {
       let idx = 1;
 
       if (step === 1) {
-        if (data.legalName) {
-          const names = data.legalName.trim().split(/\s+/);
-          const firstName = names[0] || '';
-          const lastName = names.slice(1).join(' ') || '';
-          await client.query('UPDATE users SET legal_first_name = $1, legal_last_name = $2 WHERE id = $3', [firstName, lastName, userId]);
-        }
-        if (data.phone) {
-          await client.query('UPDATE users SET phone = $1 WHERE id = $2', [data.phone, userId]);
-        }
-        if (data.dob) {
-          updateFields.push(`date_of_birth = $${idx++}`);
-          values.push(data.dob);
-        }
-        if (data.address) {
-          updateFields.push(`current_address = $${idx++}`);
-          values.push(JSON.stringify(data.address));
-        }
-        if (data.emergencyContact) {
-          updateFields.push(`emergency_contact = $${idx++}`);
-          values.push(JSON.stringify(data.emergencyContact));
-        }
+        if (data.legalName) { updateFields.push(`legal_first_name = $${idx++}`); values.push(data.legalName); }
+        if (data.dob) { updateFields.push(`date_of_birth = $${idx++}`); values.push(data.dob); }
+        if (data.phone) { updateFields.push(`phone = $${idx++}`); values.push(data.phone); }
       }
       if (step === 2) {
         if (data.employment) { updateFields.push(`employment_data = $${idx++}`); values.push(JSON.stringify(data.employment)); }
@@ -125,7 +74,6 @@ export class UserService {
       return { step: step === 5 ? 5 : step + 1, completed: step === 5 };
     });
   }
-
 
   static async uploadDocument(userId: string, docType: string, fileUrl: string) {
     await query(

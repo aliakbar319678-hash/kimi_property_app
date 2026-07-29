@@ -6,38 +6,29 @@ import { config } from '../config';
 import { AppError } from '../middleware/errorHandler';
 
 export class AuthService {
-  static generateOtpCode(): string {
-    return Math.floor(1000 + Math.random() * 9000).toString();
-  }
-
-  static async register(data: { email: string; password: string; phone?: string; role: string; regionCode?: string }) {
+  static async register(data: { email: string; password: string; phone?: string; role: string; regionCode?: string; display_name?: string; first_name?: string; last_name?: string; avatar_url?: string; username?: string }) {
     return withTransaction(async (client) => {
       const existing = await client.query('SELECT id FROM users WHERE email = $1', [data.email]);
       if (existing.rows.length > 0) throw new AppError('Email already registered', 409);
+
+      if (data.username) {
+        if (data.role !== 'tenant') throw new AppError('Only tenants can have a username', 400);
+        const existingUsername = await client.query('SELECT id FROM users WHERE username = $1', [data.username]);
+        if (existingUsername.rows.length > 0) throw new AppError('Username already taken', 409);
+      }
 
       const regionRes = await client.query('SELECT id FROM regions WHERE code = $1', [data.regionCode || 'US-NYC']);
       const regionId = regionRes.rows[0]?.id;
 
       const hash = await bcrypt.hash(data.password, config.bcryptRounds);
       const userId = uuidv4();
-      const otpCode = this.generateOtpCode();
-
-      const displayName = (data as any).display_name || data.email.split('@')[0];
-      let firstName = '';
-      let lastName = '';
-      if ((data as any).display_name) {
-        const parts = (data as any).display_name.trim().split(' ');
-        firstName = parts[0];
-        lastName = parts.slice(1).join(' ');
-      }
+      const displayName = data.display_name || data.email.split('@')[0];
 
       const userRes = await client.query(
-        `INSERT INTO users (id, email, phone, password_hash, region_id, display_name, legal_first_name, legal_last_name, kyc_status, otp_code, otp_expires_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'approved', $9, NOW() + INTERVAL '10 minutes') RETURNING id, email, kyc_status`,
-        [userId, data.email, data.phone || null, hash, regionId, displayName, firstName || null, lastName || null, otpCode]
+        `INSERT INTO users (id, email, phone, password_hash, region_id, display_name, username)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, email, kyc_status`,
+        [userId, data.email, data.phone || null, hash, regionId, displayName, data.username || null]
       );
-
-      console.log(`\n[OTP] Generated verification code for ${data.email}: ${otpCode}\n`);
 
       await client.query(
         'INSERT INTO user_roles (user_id, role, is_primary) VALUES ($1, $2, true)',
@@ -45,47 +36,21 @@ export class AuthService {
       );
 
       await client.query(
-        'INSERT INTO user_profiles (user_id, onboarding_step) VALUES ($1, 1)',
-        [userId]
+        'INSERT INTO user_profiles (user_id, legal_first_name, legal_last_name, avatar_url) VALUES ($1, $2, $3, $4)',
+        [userId, data.first_name || null, data.last_name || null, data.avatar_url || null]
       );
 
       return userRes.rows[0];
     });
   }
 
-  static async verifyOtp(userId: string, code: string) {
-    const res = await query('SELECT otp_code, otp_expires_at FROM users WHERE id = $1', [userId]);
-    if (res.rows.length === 0) throw new AppError('User not found', 404);
-    
-    const { otp_code, otp_expires_at } = res.rows[0];
-    if (!otp_code) throw new AppError('No verification code requested', 400);
-    if (new Date() > new Date(otp_expires_at)) throw new AppError('Verification code expired', 400);
-    if (otp_code !== code) throw new AppError('Invalid verification code', 400);
-
-    await query(`UPDATE users SET otp_code = NULL, otp_expires_at = NULL, email_verified = true WHERE id = $1`, [userId]);
-    return { verified: true };
-  }
-
-  static async resendOtp(userId: string) {
-    const otpCode = this.generateOtpCode();
-    const res = await query(
-      `UPDATE users SET otp_code = $1, otp_expires_at = NOW() + INTERVAL '10 minutes' WHERE id = $2 RETURNING email`,
-      [otpCode, userId]
-    );
-    if (res.rows.length > 0) {
-      console.log(`\n[OTP] Resent verification code for ${res.rows[0].email}: ${otpCode}\n`);
-    }
-    return { sent: true };
-  }
-
-  static async login(email: string, password: string) {
+  static async login(identifier: string, password: string, username?: string, full_name?: string, phone?: string) {
     const userRes = await query(
-      `SELECT u.id, u.email, u.password_hash, u.kyc_status, u.is_active,
-              COALESCE(up.onboarding_step, 1) as onboarding_step
-       FROM users u
-       LEFT JOIN user_profiles up ON up.user_id = u.id
-       WHERE u.email = $1`,
-      [email]
+      `SELECT u.id, u.email, u.password_hash, u.kyc_status, u.onboarding_step, u.is_active, u.username, u.display_name, u.phone, up.legal_first_name, up.legal_last_name 
+       FROM users u 
+       LEFT JOIN user_profiles up ON u.id = up.user_id 
+       WHERE u.email = $1 OR u.username = $1`,
+      [identifier]
     );
     if (userRes.rows.length === 0) throw new AppError('Invalid credentials', 401);
     const user = userRes.rows[0];
@@ -97,11 +62,21 @@ export class AuthService {
     const rolesRes = await query('SELECT role FROM user_roles WHERE user_id = $1', [user.id]);
     const roles = rolesRes.rows.map((r: any) => r.role);
 
+    if (roles.includes('tenant')) {
+      if (!username || user.username !== username) throw new AppError('Invalid credentials', 401);
+      if (!phone || user.phone !== phone) throw new AppError('Invalid credentials', 401);
+      
+      const dbFullName = user.display_name || `${user.legal_first_name || ''} ${user.legal_last_name || ''}`.trim();
+      if (!full_name || dbFullName !== full_name) throw new AppError('Invalid credentials', 401);
+      
+      if (identifier !== user.email) throw new AppError('Invalid credentials', 401); // Tenant must use email as identifier if they also need to pass username
+    }
+
     const accessToken = jwt.sign({ userId: user.id, roles }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
     const refreshToken = jwt.sign({ userId: user.id, type: 'refresh' }, config.jwtSecret, { expiresIn: config.refreshTokenExpiresIn });
 
     return {
-      accessToken,
+      token: accessToken,
       refreshToken,
       expiresIn: config.jwtExpiresIn,
       user: {
@@ -123,34 +98,80 @@ export class AuthService {
       if (userRes.rows.length === 0) throw new AppError('User not found', 401);
       const rolesRes = await query('SELECT role FROM user_roles WHERE user_id = $1', [decoded.userId]);
       const accessToken = jwt.sign({ userId: decoded.userId, roles: rolesRes.rows.map((r: any) => r.role) }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
-      return { accessToken, expiresIn: config.jwtExpiresIn };
+      return { token: accessToken, expiresIn: config.jwtExpiresIn };
     } catch (e) {
       throw new AppError('Invalid refresh token', 401);
     }
   }
 
-  static async switchRole(userId: string, newRole: string) {
-    const rolesRes = await query('SELECT role FROM user_roles WHERE user_id = $1', [userId]);
-    const roles = rolesRes.rows.map((r: any) => r.role);
-    if (!roles.includes(newRole)) {
-      throw new AppError('User does not have the requested role', 403);
-    }
-    
-    const accessToken = jwt.sign({ userId, roles, activeRole: newRole }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
-    return { accessToken, activeRole: newRole, roles };
-  }
-
   static async me(userId: string) {
-    const userRes = await query('SELECT id, email, display_name, kyc_status, region_id FROM users WHERE id = $1', [userId]);
+    const userRes = await query('SELECT id, email, phone, display_name, kyc_status, onboarding_step, region_id FROM users WHERE id = $1', [userId]);
     if (userRes.rows.length === 0) throw new AppError('User not found', 404);
     const rolesRes = await query('SELECT role, entity_id, is_primary FROM user_roles WHERE user_id = $1', [userId]);
     const profileRes = await query('SELECT * FROM user_profiles WHERE user_id = $1', [userId]);
+    const user = userRes.rows[0];
+    const prof = profileRes.rows[0] || {};
     return {
-      ...userRes.rows[0],
+      ...user,
+      first_name: prof.legal_first_name || '',
+      last_name: prof.legal_last_name || '',
+      avatar_url: prof.avatar_url || null,
+      phone: user.phone || prof.phone || '',
       roles: rolesRes.rows,
-      profile: profileRes.rows[0] || null,
-      onboarding_step: profileRes.rows[0]?.onboarding_step || 1
+      profile: prof,
     };
   }
+  static async forgotPassword(email: string) {
+    const userRes = await query('SELECT id FROM users WHERE email = $1', [email]);
+    if (userRes.rows.length === 0) throw new AppError('User not found', 404);
 
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60000); // 10 minutes from now
+
+    // We can assume the migration has run, but to be safe we can use a query that ignores error if column is missing, or just rely on it.
+    await query(
+      'UPDATE users SET reset_otp = $1, reset_otp_expires_at = $2 WHERE email = $3',
+      [otp, expiresAt.toISOString(), email]
+    );
+
+    // Mock sending email
+    console.log(`[MOCK EMAIL] Password reset OTP for ${email} is: ${otp}`);
+    return { message: 'OTP sent successfully (check console)' };
+  }
+
+  static async verifyOtp(email: string, otp: string) {
+    const userRes = await query(
+      'SELECT id, reset_otp_expires_at FROM users WHERE email = $1 AND reset_otp = $2',
+      [email, otp]
+    );
+    if (userRes.rows.length === 0) throw new AppError('Invalid OTP', 400);
+    
+    const user = userRes.rows[0];
+    if (new Date(user.reset_otp_expires_at) < new Date()) {
+      throw new AppError('OTP has expired', 400);
+    }
+
+    const resetToken = jwt.sign({ email: email, purpose: 'password_reset' }, config.jwtSecret, { expiresIn: '15m' });
+    
+    return { resetToken };
+  }
+
+  static async resetPassword(resetToken: string, newPassword: string) {
+    let decoded: any;
+    try {
+      decoded = jwt.verify(resetToken, config.jwtSecret);
+      if (decoded.purpose !== 'password_reset') throw new Error();
+    } catch (e) {
+      throw new AppError('Invalid or expired reset token', 400);
+    }
+
+    const hash = await bcrypt.hash(newPassword, config.bcryptRounds);
+    
+    await query(
+      'UPDATE users SET password_hash = $1, reset_otp = NULL, reset_otp_expires_at = NULL WHERE email = $2',
+      [hash, decoded.email]
+    );
+
+    return { message: 'Password updated successfully' };
+  }
 }

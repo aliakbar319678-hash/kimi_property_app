@@ -4,7 +4,7 @@ import 'package:tenant_and_landlord_application/provider/vendor_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/provider/vendor_provider.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
-import 'package:tenant_and_landlord_application/screens/vendor/vendor_shell.dart';
+import 'package:tenant_and_landlord_application/screens/vendor/vendor_find_jobs_screen.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_appbar.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_mock_map.dart';
 
@@ -129,10 +129,10 @@ class VendorDashboardScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               GestureDetector(
                 onTap: () {
-                  final shellState = context.findAncestorStateOfType<VendorShellState>();
-                  if (shellState != null) {
-                    shellState.setBiddingMode(true, initialTab: 1); // 1 = Find Jobs
-                  }
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (_) => const VendorFindJobsScreen())
+                  );
                 },
                 child: Container(
                   width: double.infinity,

@@ -444,7 +444,16 @@ class PayRentScreen extends ConsumerWidget {
           ],
         ),
       ),
-      bottomNavigationBar: const TLBottomNav(selectedIndex: 2),
+      bottomNavigationBar: const TLBottomNav(
+        selectedIndex: 2,
+        items: [
+          (Icons.home_rounded, Icons.home_outlined, 'Home'),
+          (Icons.search_rounded, Icons.search_outlined, 'Search'),
+          (Icons.payment_rounded, Icons.payment_outlined, 'Pay Rent'),
+          (Icons.build_rounded, Icons.build_outlined, 'Tickets'),
+          (Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+        ],
+      ),
     );
   }
 

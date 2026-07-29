@@ -268,7 +268,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                           ),
                           SizedBox(height: h * 0.012),
                           GestureDetector(
-                            onTap: () {},
+                            onTap: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Billing Support...'))); },
                             child: Text(
                               'Contact Billing Support →',
                               style: TextStyle(
@@ -409,7 +409,7 @@ class _PaymentRow extends StatelessWidget {
             ),
           ),
           OutlinedButton.icon(
-            onPressed: () {},
+            onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Downloading Statement...'))); },
             icon: Icon(
               Icons.download_outlined,
               size: w * 0.038,

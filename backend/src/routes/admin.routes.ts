@@ -1,380 +1,169 @@
 import { Router } from 'express';
 import { AdminService } from '../services/admin.service';
 import { authenticate, AuthRequest, requireRole } from '../middleware/auth';
-import { validate, schemas } from '../utils/validation';
+import { adminOrJwtAuth } from '../middleware/adminKey';
+import { query } from '../db';
 
 const router = Router();
 
-/**
- * @swagger
- * tags:
- *   name: Admin
- *   description: System administration and moderation
- */
-
-/**
- * @swagger
- * /api/v1/admin/dashboard:
- *   get:
- *     summary: Get admin dashboard statistics
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Dashboard stats
- */
-router.get('/dashboard', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+router.get('/dashboard', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
   try {
-    const stats = await AdminService.getDashboardStats();
+    const period = req.query.period as string | undefined;
+    const stats = await AdminService.getDashboardStats(period);
     res.json({ success: true, data: stats });
   } catch (e) { next(e); }
 });
 
-/**
- * @swagger
- * /api/v1/admin/audit-logs:
- *   get:
- *     summary: Get system audit logs
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: List of audit logs
- */
-router.get('/audit-logs', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+router.get('/audit-logs', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
   try {
     const logs = await AdminService.getAuditLogs(req.query);
     res.json({ success: true, data: logs });
   } catch (e) { next(e); }
 });
 
-/**
- * @swagger
- * /api/v1/admin/verification-queue:
- *   get:
- *     summary: Get user verification queue
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: status
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Verification queue
- */
-router.get('/verification-queue', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+router.get('/audit-stats', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const stats = await AdminService.getAuditStats();
+    res.json({ success: true, data: stats });
+  } catch (e) { next(e); }
+});
+
+router.get('/verification-queue', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
   try {
     const queue = await AdminService.getVerificationQueue(req.query.status as string);
     res.json({ success: true, data: queue });
   } catch (e) { next(e); }
 });
 
-/**
- * @swagger
- * /api/v1/admin/verification-queue/{id}/approve:
- *   post:
- *     summary: Approve a verification request
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               notes:
- *                 type: string
- *     responses:
- *       200:
- *         description: Approved successfully
- */
-router.post('/verification-queue/:id/approve', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+router.post('/verification-queue/:id/approve', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
   try {
     const result = await AdminService.reviewVerification(req.params.id, req.user!.id, 'approved', req.body.notes);
     res.json({ success: true, data: result });
   } catch (e) { next(e); }
 });
 
-/**
- * @swagger
- * /api/v1/admin/verification-queue/{id}/reject:
- *   post:
- *     summary: Reject a verification request
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               notes:
- *                 type: string
- *     responses:
- *       200:
- *         description: Rejected successfully
- */
-router.post('/verification-queue/:id/reject', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+router.post('/verification-queue/:id/reject', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
   try {
     const result = await AdminService.reviewVerification(req.params.id, req.user!.id, 'rejected', req.body.notes);
     res.json({ success: true, data: result });
   } catch (e) { next(e); }
 });
 
-/**
- * @swagger
- * /api/v1/admin/users/{id}/suspend:
- *   put:
- *     summary: Suspend a user
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               reason:
- *                 type: string
- *     responses:
- *       200:
- *         description: User suspended
- */
-router.put('/users/:id/suspend', authenticate, requireRole('super_admin'), async (req: AuthRequest, res, next) => {
+router.post('/properties/:id/approve', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
+  try {
+    if (req.body.resubmit) {
+      await query("UPDATE properties SET verification_status = 'pending', status = 'pending_verification' WHERE id = $1", [req.params.id]);
+      res.json({ success: true, data: { status: 'pending' } });
+    } else {
+      await query("UPDATE properties SET verification_status = 'approved', status = 'active' WHERE id = $1", [req.params.id]);
+      res.json({ success: true, data: { status: 'approved' } });
+    }
+  } catch (e) { next(e); }
+});
+
+router.post('/properties/:id/reject', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const reason = req.body.notes || 'No reason provided';
+    const entry = JSON.stringify([{ reason, rejected_at: new Date().toISOString() }]);
+    await query(
+      `UPDATE properties SET verification_status = 'rejected', status = 'inactive',
+       rejection_history = COALESCE(rejection_history, '[]'::jsonb) || $1::jsonb
+       WHERE id = $2`,
+      [entry, req.params.id]
+    );
+    res.json({ success: true, data: { status: 'rejected' } });
+  } catch (e) { next(e); }
+});
+
+router.put('/users/:id/suspend', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
   try {
     const result = await AdminService.suspendUser(req.params.id, req.user!.id, req.body.reason);
     res.json({ success: true, data: result });
   } catch (e) { next(e); }
 });
 
-/**
- * @swagger
- * /api/v1/admin/system-health:
- *   get:
- *     summary: Get detailed system health metrics
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: System health details
- */
-router.get('/system-health', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+router.get('/system-health', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
   try {
     const health = await AdminService.getSystemHealth();
     res.json({ success: true, data: health });
   } catch (e) { next(e); }
 });
 
-/**
- * @swagger
- * /api/v1/admin/properties/{id}/reject:
- *   post:
- *     summary: Reject a property verification request
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Property ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [reason, deadline]
- *             properties:
- *               reason:
- *                 type: string
- *                 example: "Property images are blurry."
- *               deadline:
- *                 type: string
- *                 format: date-time
- *                 example: "2026-06-20T17:00:00Z"
- *     responses:
- *       200:
- *         description: Rejected successfully
- */
-router.post('/properties/:id/reject', authenticate, requireRole('admin', 'super_admin'), validate(schemas.propertyReject), async (req: AuthRequest, res, next) => {
+// Notifications Route
+router.get('/notifications/all', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
   try {
-    const { reason, deadline } = req.body;
-    const result = await AdminService.rejectProperty(req.params.id, req.user!.id, reason, new Date(deadline));
-    res.json({ success: true, data: result });
+    const result = await query('SELECT * FROM notifications ORDER BY created_at DESC LIMIT 50');
+    res.json({ success: true, data: result.rows });
   } catch (e) { next(e); }
 });
 
-/**
- * @swagger
- * /api/v1/admin/users:
- *   get:
- *     summary: Get all users (Admin only)
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: role
- *         schema:
- *           type: string
- *         description: Filter by role
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: List of all users
- */
-router.get('/users', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+// Support Tickets Routes
+router.get('/tickets', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
   try {
-    const { role, page = 1, limit = 20, search } = req.query as any;
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-    let sql = `SELECT u.id, u.email, u.display_name, u.phone, u.kyc_status, u.is_active, u.created_at,
-                      array_agg(ur.role) as roles
-               FROM users u
-               LEFT JOIN user_roles ur ON ur.user_id = u.id`;
-    const params: any[] = [];
-    let idx = 1;
-    const conditions: string[] = [];
-    if (role) { conditions.push(`ur.role = $${idx++}`); params.push(role); }
-    if (search) { conditions.push(`(u.email ILIKE $${idx} OR u.display_name ILIKE $${idx++})`); params.push(`%${search}%`); }
-    if (conditions.length > 0) sql += ` WHERE ${conditions.join(' AND ')}`;
-    sql += ` GROUP BY u.id ORDER BY u.created_at DESC LIMIT $${idx++} OFFSET $${idx++}`;
-    params.push(parseInt(limit), offset);
-    const { query: dbQuery } = require('../db');
-    const res2 = await dbQuery(sql, params);
-    res.json({ success: true, data: res2.rows, meta: { page: parseInt(page), limit: parseInt(limit) } });
+    const result = await query(`
+      SELECT st.*, 
+             COALESCE((SELECT json_agg(u ORDER BY u.created_at ASC) 
+              FROM support_ticket_updates u 
+              WHERE u.ticket_id = st.id), '[]'::json) as updates
+      FROM support_tickets st
+      ORDER BY st.created_at DESC
+    `);
+    res.json({ success: true, data: result.rows });
   } catch (e) { next(e); }
 });
 
-/**
- * @swagger
- * /api/v1/admin/users/{id}:
- *   get:
- *     summary: Get user by ID (Admin only)
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: User detail
- *       404:
- *         description: User not found
- */
-router.get('/users/:id', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+router.post('/tickets', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
   try {
-    const { query: dbQuery } = require('../db');
-    const userRes = await dbQuery(
-      `SELECT u.*, array_agg(ur.role) as roles FROM users u
-       LEFT JOIN user_roles ur ON ur.user_id = u.id
-       WHERE u.id = $1 GROUP BY u.id`,
-      [req.params.id]
+    const { title, priority, status, description, reporter, reporter_role, reporter_detail } = req.body;
+    // Use authenticated admin as reporter if not supplied
+    const finalReporter = reporter ?? req.user!.id;
+    const finalReporterRole = reporter_role ?? (req.user!.roles?.[0] ?? 'admin');
+    const finalReporterDetail = reporter_detail ?? null;
+    const result = await query(
+      `INSERT INTO support_tickets (title, priority, status, description, reporter, reporter_role, reporter_detail)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [title, priority, status || 'open', description, finalReporter, finalReporterRole, finalReporterDetail]
     );
-    if (userRes.rows.length === 0) { res.status(404).json({ success: false, message: 'User not found' }); return; }
-    const user = { ...userRes.rows[0] };
-    delete user.password_hash;
-    res.json({ success: true, data: user });
+    const newTicket = result.rows[0];
+    await query(`INSERT INTO support_ticket_updates (ticket_id, user_name, action, note) VALUES ($1, 'System', 'created', 'Ticket automatically routed to support queue')`, [newTicket.id]);
+    res.status(201).json({ success: true, data: newTicket });
   } catch (e) { next(e); }
 });
 
-/**
- * @swagger
- * /api/v1/admin/properties/{id}/request-revision:
- *   post:
- *     summary: Request a revision for a property
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- */
-router.post('/properties/:id/request-revision', authenticate, requireRole('admin', 'super_admin', 'landlord'), async (req: AuthRequest, res, next) => {
+router.put('/tickets/:id', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
   try {
-    const { reason, requestedDocuments } = req.body;
-    const result = await AdminService.requestRevisionProperty(req.params.id, req.user!.id, reason, requestedDocuments);
-    res.json({ success: true, data: result });
-  } catch (e) { next(e); }
-});
+    const { id } = req.params;
+    const { priority, status, assigned_to, resolution_notes, update_note } = req.body;
+    
+    const result = await query(
+      `UPDATE support_tickets 
+       SET priority = COALESCE($1, priority), 
+           status = COALESCE($2, status),
+           assigned_to = COALESCE($3, assigned_to),
+           resolution_notes = COALESCE($4, resolution_notes),
+           updated_at = NOW()
+       WHERE id = $5 RETURNING *`,
+      [priority, status, assigned_to, resolution_notes, id]
+    );
 
-/**
- * @swagger
- * /api/v1/admin/properties/{id}/permanent-reject:
- *   post:
- *     summary: Permanently reject a property
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- */
-router.post('/properties/:id/permanent-reject', authenticate, requireRole('admin', 'super_admin', 'landlord'), async (req: AuthRequest, res, next) => {
-  try {
-    const { reason } = req.body;
-    const result = await AdminService.permanentRejectProperty(req.params.id, req.user!.id, reason);
-    res.json({ success: true, data: result });
-  } catch (e) { next(e); }
-});
-
-/**
- * @swagger
- * /api/v1/admin/properties/{id}/approve:
- *   post:
- *     summary: Approve a property
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- */
-router.post('/properties/:id/approve', authenticate, requireRole('admin', 'super_admin', 'landlord'), async (req: AuthRequest, res, next) => {
-  try {
-    const result = await AdminService.approveProperty(req.params.id, req.user!.id);
-    res.json({ success: true, data: result });
+    // Determine action and insert update
+    let action = 'note';
+    let user_name = 'Admin';
+    if (assigned_to) {
+        action = 'assigned';
+        user_name = assigned_to;
+    } else if (status === 'resolved') {
+        action = 'resolved';
+    } else if (status === 'escalated') {
+        action = 'escalated';
+    } else if (status) {
+        action = 'status_change';
+    }
+    
+    const note = update_note || resolution_notes || (assigned_to ? `Assigned to ${assigned_to}` : `Status changed to ${status}`);
+    await query(`INSERT INTO support_ticket_updates (ticket_id, user_name, action, note) VALUES ($1, $2, $3, $4)`, [id, user_name, action, note]);
+    
+    res.json({ success: true, data: result.rows[0] });
   } catch (e) { next(e); }
 });
 

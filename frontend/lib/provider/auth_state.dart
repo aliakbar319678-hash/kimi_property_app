@@ -31,8 +31,11 @@ abstract class RegisterState with _$RegisterState {
 abstract class OtpState with _$OtpState {
   const factory OtpState({
     @Default(['', '', '', '']) List<String> otpDigits,
+    @Default('') String email,
     @Default(false) bool isLoading,
     @Default(false) bool isVerified,
+    @Default(0) int resendCountdown,
     String? errorMessage,
   }) = _OtpState;
 }
+

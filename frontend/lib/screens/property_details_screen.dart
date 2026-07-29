@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_mock_map.dart';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
+import 'package:tenant_and_landlord_application/provider/auth_provider.dart';
 
 // Simple list of images for the carousel (replace with real URLs as needed)
 const List<String> _detailImages = [
@@ -18,6 +20,227 @@ class PropertyDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
+  Future<void> _handleGuestAction(BuildContext context, VoidCallback onLoggedIn) async {
+    final token = await ApiClient().getToken();
+    if (token == null || token.isEmpty) {
+      if (!context.mounted) return;
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: AppColors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (ctx) => Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Account Required',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Please sign in or create a quick account to apply for this property or contact the landlord.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(color: AppColors.border),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Cancel', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        ref.read(registerProvider.notifier).updateSelectedRole('tenant');
+                        ref.read(registerProvider.notifier).setLoginMode(true);
+                        Navigator.pushNamed(context, '/register');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Sign In / Register', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      onLoggedIn();
+    }
+  }
+
+  void _showShareModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Share Property',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.inputBg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.link, color: AppColors.textSecondary),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'https://propadmin.app/property/skyline-view-lofts',
+                      style: TextStyle(color: AppColors.textPrimary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Property link copied!')),
+                      );
+                    },
+                    child: const Text('Copy'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showScheduleTourModal(BuildContext context) {
+    String selectedDate = 'Today';
+    String selectedTime = '10:00 AM';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Schedule a Tour',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text('Select Date', style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: ['Today', 'Tomorrow', 'Oct 25'].map((date) {
+                  final isSelected = selectedDate == date;
+                  return ChoiceChip(
+                    label: Text(date),
+                    selected: isSelected,
+                    onSelected: (val) {
+                      if (val) setState(() => selectedDate = date);
+                    },
+                    selectedColor: AppColors.primary,
+                    labelStyle: TextStyle(color: isSelected ? AppColors.white : AppColors.textPrimary),
+                    showCheckmark: false,
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+              const Text('Select Time', style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: ['10:00 AM', '1:00 PM', '4:00 PM'].map((time) {
+                  final isSelected = selectedTime == time;
+                  return ChoiceChip(
+                    label: Text(time),
+                    selected: isSelected,
+                    onSelected: (val) {
+                      if (val) setState(() => selectedTime = time);
+                    },
+                    selectedColor: AppColors.primary,
+                    labelStyle: TextStyle(color: isSelected ? AppColors.white : AppColors.textPrimary),
+                    showCheckmark: false,
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Tour scheduled for $selectedDate at $selectedTime')),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Confirm Schedule', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -60,11 +283,15 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.share_outlined, color: AppColors.textSecondary, size: w * 0.055),
-            onPressed: () {},
+            onPressed: () => _handleGuestAction(context, () {
+              _showShareModal(context);
+            }),
           ),
           IconButton(
             icon: Icon(Icons.favorite_border_rounded, color: AppColors.textSecondary, size: w * 0.055),
-            onPressed: () {},
+            onPressed: () => _handleGuestAction(context, () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added to favorites!')));
+            }),
           ),
           SizedBox(width: w * 0.02),
         ],
@@ -422,7 +649,7 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        onPressed: () => Navigator.pushNamed(context, '/chat/detail'),
+                        onPressed: () => _handleGuestAction(context, () => Navigator.pushNamed(context, '/chat/detail')),
                       ),
                     ),
                   ],
@@ -444,31 +671,38 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
         ),
         child: Row(
           children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.favorite_border_rounded, color: AppColors.textSecondary, size: w * 0.06),
-                SizedBox(height: 2),
-                Text(
-                  'Save',
-                  style: TextStyle(
-                    fontSize: w * 0.028,
-                    color: AppColors.textSecondary,
+            GestureDetector(
+              onTap: () => _handleGuestAction(context, () {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added to favorites!')));
+              }),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.favorite_border_rounded, color: AppColors.textSecondary, size: w * 0.06),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Save',
+                    style: TextStyle(
+                      fontSize: w * 0.028,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             SizedBox(width: w * 0.05),
             Expanded(
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: w * 0.035),
-                  side: BorderSide(color: AppColors.primary, width: 1.5),
+                  side: const BorderSide(color: AppColors.primary, width: 1.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () {},
+                onPressed: () => _handleGuestAction(context, () {
+                  _showScheduleTourModal(context);
+                }),
                 child: Text(
                   'Schedule Tour',
                   style: TextStyle(
@@ -490,7 +724,7 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () => Navigator.pushNamed(
+                onPressed: () => _handleGuestAction(context, () => Navigator.pushNamed(
                   context, 
                   '/application_checkout',
                   arguments: {
@@ -499,7 +733,7 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
                     'propertyName': propertyName,
                     'unitName': unitName,
                   },
-                ),
+                )),
                 child: Text(
                   'Apply to Unit',
                   style: TextStyle(

@@ -160,7 +160,7 @@ class RequestTrackingScreen extends ConsumerWidget {
                           ),
                           SizedBox(height: h * 0.006),
                           GestureDetector(
-                            onTap: () {},
+                            onTap: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Request Details...'))); },
                             child: Text(
                               'View Details >',
                               style: TextStyle(
@@ -467,7 +467,7 @@ class RequestTrackingScreen extends ConsumerWidget {
                               ),
                               const Spacer(),
                               GestureDetector(
-                                onTap: () {},
+                                onTap: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Invoice...'))); },
                                 child: Text(
                                   'View\nInvoice',
                                   textAlign: TextAlign.center,
@@ -491,7 +491,16 @@ class RequestTrackingScreen extends ConsumerWidget {
           ],
         ),
       ),
-      bottomNavigationBar: const TLBottomNav(selectedIndex: 3),
+      bottomNavigationBar: const TLBottomNav(
+        selectedIndex: 3,
+        items: [
+          (Icons.home_rounded, Icons.home_outlined, 'Home'),
+          (Icons.search_rounded, Icons.search_outlined, 'Search'),
+          (Icons.payment_rounded, Icons.payment_outlined, 'Pay Rent'),
+          (Icons.build_rounded, Icons.build_outlined, 'Tickets'),
+          (Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+        ],
+      ),
     );
   }
 }

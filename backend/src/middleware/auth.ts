@@ -8,6 +8,7 @@ export interface AuthRequest extends Request {
     id: string;
     email: string;
     roles: string[];
+    permissions: Record<string, boolean>;
     activeRole?: string;
     regionId?: string;
   };
@@ -26,12 +27,21 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     if (userResult.rows.length === 0) return res.status(401).json({ error: 'User not found' });
 
     const user = userResult.rows[0];
-    const rolesResult = await query('SELECT role FROM user_roles WHERE user_id = $1', [user.id]);
+    const rolesResult = await query('SELECT role, permissions FROM user_roles WHERE user_id = $1', [user.id]);
+
+    // Merge all permission objects across roles into a single flat map
+    const mergedPermissions: Record<string, boolean> = {};
+    for (const row of rolesResult.rows) {
+      if (row.permissions && typeof row.permissions === 'object') {
+        Object.assign(mergedPermissions, row.permissions);
+      }
+    }
 
     req.user = {
       id: user.id,
       email: user.email,
       roles: rolesResult.rows.map((r: any) => r.role),
+      permissions: mergedPermissions,
       activeRole: req.headers['x-active-role'] as string || rolesResult.rows[0]?.role,
       regionId: user.region_id,
     };

@@ -259,7 +259,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                                 ],
                               ),
                               GestureDetector(
-                                onTap: () => Navigator.pushNamed(context, '/search'),
+                                onTap: () => Navigator.pushReplacementNamed(context, '/search'),
                                 child: Text(
                                   'View all',
                                   style: TextStyle(
@@ -437,8 +437,7 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-// ── Featured property card ────────────────────
-class _FeaturedCard extends StatelessWidget {
+class _FeaturedCard extends StatefulWidget {
   final String imageUrl;
   final bool isPremium;
   final String title;
@@ -464,6 +463,25 @@ class _FeaturedCard extends StatelessWidget {
     required this.h,
     this.priceColor,
   });
+
+  @override
+  State<_FeaturedCard> createState() => _FeaturedCardState();
+}
+
+class _FeaturedCardState extends State<_FeaturedCard> {
+  bool _isFavorite = false;
+
+  void _toggleFavorite() {
+    setState(() {
+      _isFavorite = !_isFavorite;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_isFavorite ? 'Saved to Favorites' : 'Removed from Favorites'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -495,12 +513,12 @@ class _FeaturedCard extends StatelessWidget {
                     topRight: Radius.circular(16),
                   ),
                   child: Image.network(
-                    imageUrl,
-                    height: h * 0.24,
+                    widget.imageUrl,
+                    height: widget.h * 0.24,
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (_, _, _) => Container(
-                      height: h * 0.24,
+                      height: widget.h * 0.24,
                       color: AppColors.inputBg,
                       child: const Icon(
                         Icons.image_outlined,
@@ -509,13 +527,13 @@ class _FeaturedCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (isPremium)
+                if (widget.isPremium)
                   Positioned(
                     top: 12,
                     left: 12,
                     child: Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: w * 0.03,
+                        horizontal: widget.w * 0.03,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
@@ -525,7 +543,7 @@ class _FeaturedCard extends StatelessWidget {
                       child: Text(
                         'PREMIUM',
                         style: TextStyle(
-                          fontSize: w * 0.025,
+                          fontSize: widget.w * 0.025,
                           fontWeight: FontWeight.w700,
                           color: AppColors.white,
                           letterSpacing: 0.8,
@@ -536,17 +554,20 @@ class _FeaturedCard extends StatelessWidget {
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: Container(
-                    width: w * 0.09,
-                    height: w * 0.09,
-                    decoration: const BoxDecoration(
-                      color: AppColors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.favorite_border_rounded,
-                      size: w * 0.045,
-                      color: AppColors.textSecondary,
+                  child: GestureDetector(
+                    onTap: _toggleFavorite,
+                    child: Container(
+                      width: widget.w * 0.09,
+                      height: widget.w * 0.09,
+                      decoration: const BoxDecoration(
+                        color: AppColors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        size: widget.w * 0.045,
+                        color: _isFavorite ? AppColors.error : AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 ),
@@ -554,7 +575,7 @@ class _FeaturedCard extends StatelessWidget {
             ),
 
             Padding(
-              padding: EdgeInsets.all(w * 0.04),
+              padding: EdgeInsets.all(widget.w * 0.04),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -562,63 +583,63 @@ class _FeaturedCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        title,
+                        widget.title,
                         style: TextStyle(
-                          fontSize: w * 0.042,
+                          fontSize: widget.w * 0.042,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
                       ),
                       Text(
-                        price,
+                        widget.price,
                         style: TextStyle(
-                          fontSize: w * 0.042,
+                          fontSize: widget.w * 0.042,
                           fontWeight: FontWeight.w700,
-                          color: priceColor ?? AppColors.textPrimary,
+                          color: widget.priceColor ?? AppColors.textPrimary,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: h * 0.006),
+                  SizedBox(height: widget.h * 0.006),
                   Row(
                     children: [
                       Icon(
                         Icons.location_on_outlined,
-                        size: w * 0.035,
+                        size: widget.w * 0.035,
                         color: AppColors.textHint,
                       ),
                       SizedBox(width: 3),
                       Text(
-                        address,
+                        widget.address,
                         style: TextStyle(
-                          fontSize: w * 0.031,
+                          fontSize: widget.w * 0.031,
                           color: AppColors.textSecondary,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: h * 0.012),
+                  SizedBox(height: widget.h * 0.012),
                   Row(
                     children: [
                       _PropStat(
                         icon: Icons.bed_outlined,
-                        value: beds,
+                        value: widget.beds,
                         label: 'Beds',
-                        w: w,
+                        w: widget.w,
                       ),
-                      SizedBox(width: w * 0.06),
+                      SizedBox(width: widget.w * 0.06),
                       _PropStat(
                         icon: Icons.bathtub_outlined,
-                        value: baths,
+                        value: widget.baths,
                         label: 'Baths',
-                        w: w,
+                        w: widget.w,
                       ),
-                      SizedBox(width: w * 0.06),
+                      SizedBox(width: widget.w * 0.06),
                       _PropStat(
                         icon: Icons.straighten_rounded,
-                        value: sqft,
+                        value: widget.sqft,
                         label: 'sqft',
-                        w: w,
+                        w: widget.w,
                       ),
                     ],
                   ),
@@ -847,7 +868,7 @@ class _ActiveLeaseWidget extends ConsumerWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/search');
+                      Navigator.pushReplacementNamed(context, '/search');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,

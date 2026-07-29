@@ -2,7 +2,7 @@ class ApiConstants {
   // ── Base URL ────────────────────────────────────────────────────────────────
   // Use your computer's local network IP so a real phone on the same WiFi can
   // reach the backend. Change this if your IP changes.
-  static const String baseUrl = 'http://192.168.1.14:5000/api/v1';
+  static const String baseUrl = 'http://192.168.1.111:5000/api/v1';
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   static const String login = '/auth/login';

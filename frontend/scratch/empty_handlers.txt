@@ -1,0 +1,160 @@
+--- lib\screens\auth\welcome_screen.dart ---
+203:                       label: 'G',
+204:                       color: const Color(0xFFEA4335),
+205:                       onTap: () {},
+206:                     ),
+207:                     SizedBox(width: w * 0.04),
+
+--- lib\screens\auth\welcome_screen.dart ---
+210:                       label: '',
+211:                       color: AppColors.textPrimary,
+212:                       onTap: () {},
+213:                       isApple: true,
+214:                     ),
+
+--- lib\screens\auth\welcome_screen.dart ---
+277:     final w = MediaQuery.of(context).size.width;
+278:     return GestureDetector(
+279:       onTap: () {},
+280:       child: Text(
+281:         text,
+
+--- lib\screens\filter_screen.dart ---
+42:           IconButton(
+43:             icon: Icon(Icons.notifications_none_rounded, color: AppColors.primary, size: w * 0.065),
+44:             onPressed: () {},
+45:           ),
+46:           IconButton(
+
+--- lib\screens\landlord\job_chat_room_screen.dart ---
+115:                 ),
+116:                 GestureDetector(
+117:                   onTap: () {},
+118:                   child: Container(
+119:                     padding: const EdgeInsets.symmetric(
+
+--- lib\screens\landlord\job_chat_room_screen.dart ---
+300:                 children: [
+301:                   GestureDetector(
+302:                     onTap: () {},
+303:                     child: Container(
+304:                       padding: const EdgeInsets.all(10),
+
+--- lib\screens\landlord\maintenance_dashboard_screen.dart ---
+66:                           color: AppColors.textPrimary,
+67:                         ),
+68:                         onPressed: () {},
+69:                       ),
+70:                     ],
+
+--- lib\screens\landlord\tenant_details_screen.dart ---
+38:           IconButton(
+39:             icon: const Icon(Icons.more_vert_rounded),
+40:             onPressed: () {},
+41:           )
+42:         ],
+
+--- lib\screens\landlord\tenant_directory_screen.dart ---
+60:                   ),
+61:                   GestureDetector(
+62:                     onTap: () {},
+63:                     child: Container(
+64:                       padding: const EdgeInsets.all(8),
+
+--- lib\screens\landlord\work_order_details_screen.dart ---
+289:                         Expanded(
+290:                           child: OutlinedButton(
+291:                             onPressed: () {},
+292:                             style: OutlinedButton.styleFrom(
+293:                               foregroundColor: AppColors.primary,
+
+--- lib\screens\payment_history_screen.dart ---
+269:                           SizedBox(height: h * 0.012),
+270:                           GestureDetector(
+271:                             onTap: () {},
+272:                             child: Text(
+273:                               'Contact Billing Support →',
+
+--- lib\screens\payment_history_screen.dart ---
+410:           ),
+411:           OutlinedButton.icon(
+412:             onPressed: () {},
+413:             icon: Icon(
+414:               Icons.download_outlined,
+
+--- lib\screens\profile_screen.dart ---
+425:                           ),
+426:                           OutlinedButton(
+427:                             onPressed: () {},
+428:                             style: OutlinedButton.styleFrom(
+429:                               foregroundColor: AppColors.secondary,
+
+--- lib\screens\request_tracking_screen.dart ---
+161:                           SizedBox(height: h * 0.006),
+162:                           GestureDetector(
+163:                             onTap: () {},
+164:                             child: Text(
+165:                               'View Details >',
+
+--- lib\screens\request_tracking_screen.dart ---
+468:                               const Spacer(),
+469:                               GestureDetector(
+470:                                 onTap: () {},
+471:                                 child: Text(
+472:                                   'View\nInvoice',
+
+--- lib\screens\search_screen.dart ---
+83:                                   size: w * 0.05,
+84:                                 ),
+85:                                 onPressed: () {},
+86:                               ),
+87:                               Container(
+
+--- lib\screens\search_screen.dart ---
+96:                                   size: w * 0.05,
+97:                                 ),
+98:                                 onPressed: () {},
+99:                               ),
+100:                             ],
+
+--- lib\screens\tenant\tenant_create_ticket_screen.dart ---
+79:               const SizedBox(height: 40),
+80:               ElevatedButton(
+81:                 onPressed: () {},
+82:                 style: ElevatedButton.styleFrom(
+83:                   backgroundColor: AppColors.primary,
+
+--- lib\screens\tenant\tenant_dashboard_screen.dart ---
+14:         title: const Text('My Dashboard'),
+15:         actions: [
+16:           IconButton(icon: const Icon(Icons.notifications_none), onPressed: () {}),
+17:           const Padding(
+18:             padding: EdgeInsets.only(right: 16),
+
+--- lib\screens\tenant\tenant_pay_rent_screen.dart ---
+25:               const SizedBox(height: 30),
+26:               ElevatedButton(
+27:                 onPressed: () {},
+28:                 style: ElevatedButton.styleFrom(
+29:                   backgroundColor: AppColors.primary,
+
+--- lib\screens\tenant\tenant_saved_properties_screen.dart ---
+76:                 const SizedBox(width: 16),
+77:                 TextButton(
+78:                   onPressed: () {},
+79:                   child: const Text('Remove', style: TextStyle(color: AppColors.error)),
+80:                 ),
+
+--- lib\screens\tenant_kyc_upload_screen.dart ---
+57:               if (status != 'Verified')
+58:                 TextButton(
+59:                   onPressed: () {},
+60:                   child: const Text('Upload', style: TextStyle(fontWeight: FontWeight.w600)),
+61:                 ),
+
+--- lib\screens\vendor\vendor_work_order_details_screen.dart ---
+316:                         IconButton(
+317:                           icon: const Icon(Icons.phone_rounded, color: AppColors.secondary),
+318:                           onPressed: () {},
+319:                         ),
+320:                       ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tenant_and_landlord_application/provider/auth_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_primary_button.dart';
 
@@ -202,17 +203,42 @@ class WelcomeScreen extends ConsumerWidget {
                       icon: Icons.g_mobiledata_rounded,
                       label: 'G',
                       color: const Color(0xFFEA4335),
-                      onTap: () {},
+                      onTap: () async {
+                        final success = await ref.read(registerProvider.notifier).loginWithGoogle();
+                        if (context.mounted && success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Logged in with Google')),
+                          );
+                          Navigator.pushNamedAndRemoveUntil(context, '/home', (r) => false);
+                        }
+                      },
                     ),
                     SizedBox(width: w * 0.04),
                     _SocialButton(
                       icon: Icons.apple_rounded,
                       label: '',
                       color: AppColors.textPrimary,
-                      onTap: () {},
+                      onTap: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Apple Login...'))); },
                       isApple: true,
                     ),
                   ],
+                ),
+
+                SizedBox(height: h * 0.03),
+
+                // ── Guest Button ─────────────────────────
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/home');
+                  },
+                  icon: const Icon(Icons.travel_explore_rounded, color: AppColors.textSecondary, size: 20),
+                  label: const Text(
+                    'Explore Properties as Guest',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ),
 
                 SizedBox(height: h * 0.04),
@@ -259,7 +285,7 @@ class _FooterLink extends StatelessWidget {
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     return GestureDetector(
-      onTap: () {},
+      onTap: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Terms of Service...'))); },
       child: Text(
         text,
         style: TextStyle(fontSize: w * 0.029, color: AppColors.textHint),

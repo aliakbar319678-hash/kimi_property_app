@@ -174,6 +174,23 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                     : null,
               ),
 
+              SizedBox(height: h * 0.02),
+
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/home');
+                  },
+                  child: const Text(
+                    'Explore Properties as Guest',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+
               SizedBox(height: h * 0.03),
             ],
           ),

@@ -1,4 +1,4 @@
-import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
+import { Pool, PoolClient, QueryResult } from 'pg';
 import { config } from '../config';
 
 export const pool = new Pool({
@@ -8,12 +8,12 @@ export const pool = new Pool({
   connectionTimeoutMillis: 2000,
 });
 
-pool.on('error', (err: Error) => {
+pool.on('error', (err: any) => {
   console.error('Unexpected DB error', err);
   process.exit(-1);
 });
 
-export async function query<T extends QueryResultRow = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
+export async function query<T extends import('pg').QueryResultRow = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
   const start = Date.now();
   const res = await pool.query<T>(text, params);
   const duration = Date.now() - start;
@@ -42,30 +42,34 @@ export async function initPostGIS() {
   try {
     await query('CREATE EXTENSION IF NOT EXISTS postgis');
     console.log('✅ PostGIS extension ready');
-  } catch (e) {
-    console.warn('⚠️  PostGIS not installed - skipping (install via StackBuilder if needed)');
+  } catch (err: any) {
+    console.warn('⚠️  PostGIS extension not available (spatial features disabled):', err.message);
   }
   try {
     await query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
     console.log('✅ uuid-ossp extension ready');
-  } catch (e) {
-    console.warn('⚠️  uuid-ossp not available - skipping');
+  } catch (err: any) {
+    console.warn('⚠️  uuid-ossp extension not available:', err.message);
   }
   try {
     await query(`
-      CREATE TABLE IF NOT EXISTS landlord_payout_accounts (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE,
-        bank_name VARCHAR(255) NOT NULL,
-        account_holder VARCHAR(255) NOT NULL,
-        iban_account_no VARCHAR(255) NOT NULL,
-        payout_status VARCHAR(50) DEFAULT 'active',
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
+      CREATE TABLE IF NOT EXISTS ai_chat_logs (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        session_id VARCHAR(255),
+        user_id VARCHAR(255),
+        role VARCHAR(50) DEFAULT 'guest',
+        user_message TEXT NOT NULL,
+        ai_response TEXT NOT NULL,
+        source VARCHAR(50) DEFAULT 'ai_engine',
+        created_at TIMESTAMPTZ DEFAULT NOW()
       );
+      ALTER TABLE ai_chat_logs ADD COLUMN IF NOT EXISTS session_id VARCHAR(255);
+      CREATE INDEX IF NOT EXISTS idx_ai_chat_logs_session ON ai_chat_logs (session_id);
+      CREATE INDEX IF NOT EXISTS idx_ai_chat_logs_user ON ai_chat_logs (user_id);
     `);
-    console.log('✅ landlord_payout_accounts table ready');
-  } catch (e) {
-    console.warn('⚠️ Could not initialize landlord_payout_accounts table:', e);
+    console.log('✅ ai_chat_logs table and session_id column ready');
+  } catch (err: any) {
+    console.warn('⚠️  ai_chat_logs table init warning:', err.message);
   }
 }
+

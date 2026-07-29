@@ -41,7 +41,7 @@ class FilterScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.notifications_none_rounded, color: AppColors.primary, size: w * 0.065),
-            onPressed: () {},
+            onPressed: () { Navigator.pushNamed(context, '/notifications'); },
           ),
           IconButton(
             icon: Icon(Icons.close_rounded, color: AppColors.textPrimary, size: w * 0.065),

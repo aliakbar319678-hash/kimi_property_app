@@ -4,20 +4,18 @@ import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 class TLBottomNav extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int>? onTap;
+  final List<(IconData, IconData, String)> items;
 
-  const TLBottomNav({super.key, required this.selectedIndex, this.onTap});
+  const TLBottomNav({
+    super.key, 
+    required this.selectedIndex, 
+    required this.items,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
-
-    final items = [
-      (Icons.home_rounded, Icons.home_outlined, 'Home'),
-      (Icons.search_rounded, Icons.search_outlined, 'Search'),
-      (Icons.payment_rounded, Icons.payment_outlined, 'Payments'),
-      (Icons.chat_bubble_rounded, Icons.chat_bubble_outline_rounded, 'Chat'),
-      (Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
-    ];
 
     return Container(
       height: w * 0.18,

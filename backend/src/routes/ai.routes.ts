@@ -1,58 +1,80 @@
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import { AIService } from '../services/ai.service';
-import { authenticate, AuthRequest } from '../middleware/auth';
+import { query } from '../db';
 
 const router = Router();
 
-/**
- * @swagger
- * tags:
- *   name: AI Assistant
- *   description: AI property management assistant
- */
-
-/**
- * @swagger
- * /api/v1/ai/chat:
- *   post:
- *     summary: Chat with AI assistant
- *     tags: [AI Assistant]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [message]
- *             properties:
- *               message:
- *                 type: string
- *               propertyId:
- *                 type: string
- *               leaseId:
- *                 type: string
- *     responses:
- *       200:
- *         description: AI response
- */
-router.post('/chat', authenticate, async (req: AuthRequest, res, next) => {
+router.post('/chat', async (req: Request, res, next) => {
   try {
+    const user = (req as any).user;
+    const userId = req.body.userId || user?.id || 'guest';
+    const role = req.body.role || user?.activeRole || 'guest';
+    const sessionId = req.body.sessionId || `session_${Date.now()}`;
+    const offset = parseInt(req.body.offset || '0', 10);
+    const location = req.body.location || '';
+
     const result = await AIService.chat(req.body.message, {
-      userId: req.user!.id,
-      role: req.user!.activeRole!,
+      userId,
+      role,
+      sessionId,
+      offset,
+      location,
       propertyId: req.body.propertyId,
       leaseId: req.body.leaseId,
     });
-    res.json({ success: true, data: result });
+
+    res.json({ success: true, data: { ...result, sessionId } });
   } catch (e) { next(e); }
 });
 
-router.post('/landlord-chat', authenticate, async (req: AuthRequest, res, next) => {
+router.get('/sessions', async (req: Request, res, next) => {
   try {
-    const result = await AIService.landlordChat(req.user!.id, req.body.message || req.body.prompt || '');
-    res.status(200).json({ success: true, reply: result.reply });
+    const user = (req as any).user;
+    const userId = (req.query.userId as string) || user?.id || 'guest';
+
+    const sql = `
+      SELECT DISTINCT ON (COALESCE(session_id, 'default_session'))
+        COALESCE(session_id, 'default_session') as session_id,
+        user_message as title_snippet,
+        created_at
+      FROM ai_chat_logs
+      WHERE user_id = $1 OR user_id = 'guest'
+      ORDER BY COALESCE(session_id, 'default_session'), created_at ASC
+    `;
+    const sessions = await query(sql, [userId]);
+    res.json({ success: true, data: sessions.rows });
+  } catch (e) { next(e); }
+});
+
+router.get('/sessions/:sessionId', async (req: Request, res, next) => {
+  try {
+    const sessionId = req.params.sessionId;
+    const sql = `
+      SELECT id, session_id, role, user_message, ai_response, source, created_at 
+      FROM ai_chat_logs 
+      WHERE session_id = $1 
+      ORDER BY created_at ASC
+    `;
+    const logs = await query(sql, [sessionId]);
+    res.json({ success: true, data: logs.rows });
+  } catch (e) { next(e); }
+});
+
+router.get('/history', async (req: Request, res, next) => {
+  try {
+    const user = (req as any).user;
+    const userId = (req.query.userId as string) || user?.id || 'guest';
+    const role = (req.query.role as string) || 'guest';
+
+    const sql = `
+      SELECT id, session_id, role, user_message, ai_response, source, created_at 
+      FROM ai_chat_logs 
+      WHERE (user_id = $1 OR role = $2) 
+      ORDER BY created_at DESC 
+      LIMIT 20
+    `;
+    const logs = await query(sql, [userId, role]);
+    res.json({ success: true, data: logs.rows });
   } catch (e) { next(e); }
 });
 

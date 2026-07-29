@@ -406,101 +406,362 @@ class _MoveOutInspectionsScreenState
   }
 
   void _showProcessRefundDialog(Map<String, dynamic> item) {
-    final double refunded = (item['depositRefunded'] ?? 0.0) as double;
     final double deposit = (item['securityDeposit'] ?? 0.0) as double;
-    final double deductions = (item['totalDeductions'] ?? 0.0) as double;
+    final double existingDeductions = (item['totalDeductions'] ?? 0.0) as double;
 
-    showDialog(
+    final depositCtrl = TextEditingController(text: deposit.toStringAsFixed(2));
+    final repairCtrl = TextEditingController(text: existingDeductions.toStringAsFixed(2));
+    final cleaningCtrl = TextEditingController(text: '0.00');
+    String refundMethod = 'Direct Deposit / Bank Transfer';
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Process Deposit Refund',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Tenant: ${item['tenantName']}',
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-            Text('${item['propertyName']} - ${item['unitName']}',
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-            const SizedBox(height: 16),
-            const Divider(color: AppColors.border),
-            const SizedBox(height: 8),
-            _infoRow('Total Security Deposit', '\$${deposit.toStringAsFixed(2)}'),
-            _infoRow('Total Damage Deductions', '-\$${deductions.toStringAsFixed(2)}',
-                color: AppColors.error),
-            const SizedBox(height: 8),
-            const Divider(color: AppColors.border),
-            const SizedBox(height: 8),
-            _infoRow('Final Refund Amount', '\$${refunded.toStringAsFixed(2)}',
-                color: const Color(0xFF1B8E4D), isBold: true),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF1B8E4D),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final dep = double.tryParse(depositCtrl.text) ?? 0.0;
+          final rep = double.tryParse(repairCtrl.text) ?? 0.0;
+          final cln = double.tryParse(cleaningCtrl.text) ?? 0.0;
+          final netRefund = (dep - rep - cln).clamp(0.0, double.infinity);
+
+          return Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 24,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
             ),
-            onPressed: () async {
-              try {
-                await ApiClient().dio.post(
-                  '/move-out/deposit-returns',
-                  data: {
-                    'inspectionId': item['id'],
-                    'amount': refunded,
-                  },
-                );
-              } catch (_) {}
-
-              setState(() {
-                item['status'] = 'Finalized';
-              });
-
-              if (ctx.mounted) {
-                Navigator.pop(ctx);
-              }
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                        'Deposit refund of \$${refunded.toStringAsFixed(2)} processed for ${item['tenantName']}!'),
-                    backgroundColor: const Color(0xFF1B8E4D),
+            decoration: const BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.border,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
                   ),
-                );
-              }
-            },
-            child: const Text('Confirm & Refund'),
-          ),
-        ],
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1B8E4D).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.account_balance_wallet_rounded,
+                          color: Color(0xFF1B8E4D),
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Process Deposit Refund',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            'Tenant: ${item['tenantName']} (${item['unitName']})',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Deposit & Deductions Breakdown
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Total Deposit (\$)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            TextFormField(
+                              controller: depositCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              onChanged: (_) => setSheetState(() {}),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Repair Deductions (\$)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            TextFormField(
+                              controller: repairCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              onChanged: (_) => setSheetState(() {}),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Cleaning Deductions (\$)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            TextFormField(
+                              controller: cleaningCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              onChanged: (_) => setSheetState(() {}),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Refund Method',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            DropdownButtonFormField<String>(
+                              initialValue: refundMethod,
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 10,
+                                ),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'Direct Deposit / Bank Transfer',
+                                  child: Text('Bank Transfer', style: TextStyle(fontSize: 12)),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Paper Check',
+                                  child: Text('Paper Check', style: TextStyle(fontSize: 12)),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Stripe / Online Refund',
+                                  child: Text('Online Refund', style: TextStyle(fontSize: 12)),
+                                ),
+                              ],
+                              onChanged: (v) {
+                                if (v != null) setSheetState(() => refundMethod = v);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Calculated Net Refund Banner
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B8E4D).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF1B8E4D).withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Net Refund Payable:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Text(
+                              'Deposit - Repairs - Cleaning',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          '\$${netRefund.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                            color: Color(0xFF1B8E4D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Submit Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B8E4D),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: isSubmitting
+                          ? null
+                          : () async {
+                              setSheetState(() => isSubmitting = true);
+                              try {
+                                await ApiClient().dio.post(
+                                  '/move-out/deposit-returns',
+                                  data: {
+                                    'inspectionId': item['id'],
+                                    'amount': netRefund,
+                                    'refundMethod': refundMethod,
+                                    'repairDeductions': rep,
+                                    'cleaningDeductions': cln,
+                                  },
+                                );
+                              } catch (_) {}
+
+                              setState(() {
+                                item['status'] = 'Finalized';
+                                item['depositRefunded'] = netRefund;
+                                item['totalDeductions'] = rep + cln;
+                              });
+
+                              if (ctx.mounted) {
+                                Navigator.pop(ctx);
+                              }
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Deposit refund of \$${netRefund.toStringAsFixed(2)} processed via $refundMethod!',
+                                    ),
+                                    backgroundColor: const Color(0xFF1B8E4D),
+                                  ),
+                                );
+                              }
+                            },
+                      child: isSubmitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Confirm & Process Refund',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _infoRow(String label, String val,
-      {Color? color, bool isBold = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-          Text(
-            val,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-              color: color ?? AppColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildStatusBadge(String status) {
     final isFinalized = status.toLowerCase() == 'finalized';

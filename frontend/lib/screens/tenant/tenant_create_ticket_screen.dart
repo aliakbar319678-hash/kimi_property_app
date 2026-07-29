@@ -1,0 +1,224 @@
+import 'package:flutter/material.dart';
+import 'package:tenant_and_landlord_application/theme/apptheme.dart';
+
+class TenantCreateTicketScreen extends StatefulWidget {
+  const TenantCreateTicketScreen({super.key});
+
+  @override
+  State<TenantCreateTicketScreen> createState() => _TenantCreateTicketScreenState();
+}
+
+class _TenantCreateTicketScreenState extends State<TenantCreateTicketScreen> {
+  String _selectedPriority = 'Normal';
+  bool _hasAttachment = false;
+
+  void _showMediaBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (BuildContext ctx) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Add Attachment', style: AppTextStyles.headlineMedium),
+              const SizedBox(height: 24),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined, color: AppColors.primary),
+                title: const Text('Take Photo', style: AppTextStyles.bodyMedium),
+                onTap: () {
+                  setState(() { _hasAttachment = true; });
+                  Navigator.pop(ctx);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
+                title: const Text('Choose from Gallery', style: AppTextStyles.bodyMedium),
+                onTap: () {
+                  setState(() { _hasAttachment = true; });
+                  Navigator.pop(ctx);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.videocam_outlined, color: AppColors.primary),
+                title: const Text('Record Video', style: AppTextStyles.bodyMedium),
+                onTap: () {
+                  setState(() { _hasAttachment = true; });
+                  Navigator.pop(ctx);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _submitTicket() {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ticket created successfully!')),
+      );
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      } else {
+        // Reset form if it can't pop
+        setState(() {
+          _selectedPriority = 'Normal';
+          _hasAttachment = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error navigating: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    return Scaffold(
+      backgroundColor: AppColors.scaffoldBg,
+      appBar: AppBar(title: const Text('Report Issue')),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, bottomPadding + 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Issue Title', style: AppTextStyles.labelMedium),
+              const SizedBox(height: 8),
+              TextFormField(
+                decoration: const InputDecoration(hintText: 'e.g. Leaking Faucet'),
+              ),
+              const SizedBox(height: 20),
+              const Text('Category', style: AppTextStyles.labelMedium),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(hintText: 'Select Category'),
+                items: const [
+                  DropdownMenuItem(value: 'Plumbing', child: Text('Plumbing')),
+                  DropdownMenuItem(value: 'Electrical', child: Text('Electrical')),
+                  DropdownMenuItem(value: 'HVAC', child: Text('HVAC')),
+                  DropdownMenuItem(value: 'Other', child: Text('Other')),
+                ],
+                onChanged: (val) {},
+              ),
+              const SizedBox(height: 20),
+              const Text('Priority', style: AppTextStyles.labelMedium),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildPriorityButton('Normal', AppColors.primary),
+                  _buildPriorityButton('Urgent', Colors.orange),
+                  _buildPriorityButton('Emergency', AppColors.error),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Text('Description', style: AppTextStyles.labelMedium),
+              const SizedBox(height: 8),
+              TextFormField(
+                maxLines: 4,
+                decoration: const InputDecoration(hintText: 'Describe the issue in detail...'),
+              ),
+              const SizedBox(height: 20),
+              const Text('Attachments', style: AppTextStyles.labelMedium),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: _showMediaBottomSheet,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 30),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: _hasAttachment 
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            height: 80,
+                            width: 80,
+                            decoration: BoxDecoration(
+                              color: AppColors.scaffoldBg,
+                              borderRadius: BorderRadius.circular(8),
+                              image: const DecorationImage(
+                                image: NetworkImage('https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&q=80'),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text('Attachment added. Tap to change.', style: AppTextStyles.bodySmall),
+                        ],
+                      )
+                    : const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_a_photo, color: AppColors.textHint, size: 32),
+                          SizedBox(height: 8),
+                          Text('Tap to add photo/video', style: AppTextStyles.bodySmall),
+                        ],
+                      ),
+                ),
+              ),
+              const SizedBox(height: 40),
+              ElevatedButton(
+                onPressed: _submitTicket,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Text('Submit Ticket', style: AppTextStyles.buttonText),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPriorityButton(String label, Color color) {
+    bool selected = _selectedPriority == label;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedPriority = label;
+          });
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? color : AppColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: selected ? color : AppColors.border),
+            boxShadow: selected ? [BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 2))] : null,
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected ? AppColors.white : AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
