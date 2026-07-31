@@ -147,39 +147,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         SizedBox(height: h * 0.018),
                       ],
 
-                      // Role Selector (Only show in register)
-                      if (!state.isLogin) ...[
-                        _FieldLabel('I am a...', w),
-                        SizedBox(height: h * 0.008),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: w * 0.03),
-                          decoration: BoxDecoration(
-                            color: AppColors.inputBg,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: ['tenant', 'landlord', 'vendor'].contains(state.selectedRole.toLowerCase())
-                                  ? state.selectedRole.toLowerCase()
-                                  : 'tenant',
-                              isExpanded: true,
-                              icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                              items: const [
-                                DropdownMenuItem(value: 'tenant', child: Text('Tenant (Looking for / Renting Home)')),
-                                DropdownMenuItem(value: 'landlord', child: Text('Landlord / Property Manager')),
-                                DropdownMenuItem(value: 'vendor', child: Text('Vendor / Service Provider')),
-                              ],
-                              onChanged: (val) {
-                                if (val != null) {
-                                  notif.updateSelectedRole(val);
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: h * 0.018),
 
+
+                      if (!state.isLogin) ...[
                         _FieldLabel('Full Name', w),
                         SizedBox(height: h * 0.008),
                         TLInputField(
@@ -190,6 +160,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           errorText: state.fullNameError,
                         ),
                         SizedBox(height: h * 0.018),
+
+                        if (state.selectedRole == 'tenant') ...[
+                          _FieldLabel('Username', w),
+                          SizedBox(height: h * 0.008),
+                          TLInputField(
+                            key: const ValueKey('register_username'),
+                            hint: 'alex123',
+                            prefixIcon: Icons.account_circle_outlined,
+                            onChanged: notif.updateUsername,
+                            errorText: state.usernameError,
+                          ),
+                          SizedBox(height: h * 0.018),
+                        ],
                       ],
 
                       // Email
@@ -358,8 +341,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                     context, '/home', (r) => false);
                               }
                             } else {
-                              // Registration succeeded → go to OTP verification
-                              Navigator.pushNamed(context, '/otp');
+                              // Registration succeeded -> auto-login succeeded -> go to home
+                              if (freshState.selectedRole == 'landlord') {
+                                Navigator.pushNamedAndRemoveUntil(
+                                    context, '/landlord_home', (r) => false);
+                              } else if (freshState.selectedRole == 'vendor') {
+                                Navigator.pushNamedAndRemoveUntil(
+                                    context, '/vendor_home', (r) => false);
+                              } else {
+                                Navigator.pushNamedAndRemoveUntil(
+                                    context, '/home', (r) => false);
+                              }
                             }
                           } else {
                             ScaffoldMessenger.of(context).clearSnackBars();
@@ -373,42 +365,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             );
                           }
                         },
-                      ),
-
-                      SizedBox(height: h * 0.02),
-
-                      // Continue with Google Button
-                      OutlinedButton.icon(
-                        onPressed: () async {
-                          final success = await notif.loginWithGoogle();
-                          if (context.mounted && success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Signed in with Google!')),
-                            );
-                            Navigator.pushNamedAndRemoveUntil(
-                              context, '/home', (r) => false);
-                          }
-                        },
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: Size(double.infinity, h * 0.062),
-                          side: const BorderSide(color: AppColors.border),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(
-                          Icons.g_mobiledata_rounded,
-                          color: Color(0xFFEA4335),
-                          size: 28,
-                        ),
-                        label: Text(
-                          'Continue with Google',
-                          style: TextStyle(
-                            fontSize: w * 0.038,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
                       ),
 
                       SizedBox(height: h * 0.025),

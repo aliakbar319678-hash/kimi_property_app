@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
+import 'package:tenant_and_landlord_application/widgets/landlord/release_escrow_dialog.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/vendor_rating_dialog.dart';
 
 class WorkOrderDetailsScreen extends ConsumerStatefulWidget {
@@ -370,27 +371,59 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
 
             // Bottom Buttons: Reassign, Mark Completed, or Rate Vendor
             if (updatedOrder.status == 'Completed')
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => const VendorRatingDialog(),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.white,
-                    minimumSize: Size(double.infinity, w * 0.13),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    elevation: 0,
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final res = await ReleaseEscrowDialog.show(
+                          context,
+                          workOrderId: updatedOrder.id,
+                          vendorName: updatedOrder.assignedVendorName,
+                          vendorId: updatedOrder.assignedVendorId,
+                          jobCost: updatedOrder.cost,
+                        );
+                        if (res != null && mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Escrow payout released successfully ✅'), backgroundColor: Color(0xFF27AE60)));
+                          _fetchFreshData(updatedOrder.id);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: Size(double.infinity, w * 0.13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.payments_rounded, color: Colors.white),
+                      label: const Text('Release Escrow Payout', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                    ),
                   ),
-                  icon: const Icon(Icons.star_rounded, color: Colors.white),
-                  label: const Text('Rate Vendor', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => const VendorRatingDialog(),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber,
+                        foregroundColor: Colors.white,
+                        minimumSize: Size(double.infinity, w * 0.13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.star_rounded, color: Colors.white),
+                      label: const Text('Rate Vendor', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                    ),
+                  ),
+                ],
               )
             else
               Row(

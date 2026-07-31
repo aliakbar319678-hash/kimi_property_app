@@ -79,6 +79,7 @@ import 'package:tenant_and_landlord_application/screens/landlord/marketing_listi
 import 'package:tenant_and_landlord_application/screens/landlord/communication_center_screen.dart';
 
 
+
 // ── Vendor Portal Screens ───────────────────────────
 import 'package:tenant_and_landlord_application/screens/vendor/vendor_onboarding_screen.dart';
 import 'package:tenant_and_landlord_application/screens/vendor/vendor_shell.dart';
@@ -91,9 +92,9 @@ import 'package:tenant_and_landlord_application/screens/vendor/vendor_submit_bid
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  print('=====================================================');
-  print('FLUTTER API BASE URL IN USE: ${ApiConstants.baseUrl}');
-  print('=====================================================');
+  debugPrint('=====================================================');
+  debugPrint('FLUTTER API BASE URL IN USE: ${ApiConstants.baseUrl}');
+  debugPrint('=====================================================');
   runApp(
     const ProviderScope(child: TLApp()));
 }
@@ -170,7 +171,7 @@ class TLApp extends StatelessWidget {
         '/landlord_showings': (_) => const LandlordPropertyShowingsScreen(),
         '/landlord_marketing_listings': (_) => const LandlordMarketingListingsScreen(),
         '/landlord_communication': (_) => const LandlordCommunicationCenterScreen(),
-        '/landlord_communication': (_) => const LandlordCommunicationCenterScreen(),
+
         // ── Vendor Portal Routes ──────────────────
         '/vendor_onboarding': (_) => const VendorOnboardingScreen(),
         '/vendor_home': (_) => const VendorShell(initialIndex: 0),

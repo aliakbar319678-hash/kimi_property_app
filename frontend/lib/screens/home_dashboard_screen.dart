@@ -88,7 +88,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                     },
                     child: CircleAvatar(
                       radius: w * 0.05,
-                      backgroundColor: AppColors.secondary.withOpacity(0.1),
+                      backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
                       backgroundImage: _avatarUrl.isNotEmpty ? NetworkImage(_avatarUrl) : null,
                       child: _avatarUrl.isEmpty ? Icon(Icons.person, size: w * 0.06, color: AppColors.secondary) : null,
                     ),
@@ -932,10 +932,11 @@ class _RecentActivityList extends ConsumerWidget {
     final financeAsync = ref.watch(tenantFinanceProvider);
     return financeAsync.when(
       data: (finance) {
-        final activity = finance['recentActivity'];
-        if (activity == null || (activity as List).isEmpty) {
+        final raw = finance['recentActivity'];
+        if (raw == null || raw is! List || raw.isEmpty) {
           return const SizedBox.shrink();
         }
+        final activityList = raw;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -964,7 +965,7 @@ class _RecentActivityList extends ConsumerWidget {
               ],
             ),
             SizedBox(height: h * 0.015),
-            ...(activity as List).take(3).map((p) {
+            ...activityList.take(3).map((p) {
               final amt = p['amount_paid'] ?? p['amount_due'] ?? 0;
               final isLate = p['status'] == 'late';
               return Container(
@@ -1009,7 +1010,7 @@ class _RecentActivityList extends ConsumerWidget {
                   ],
                 ),
               );
-            }).toList(),
+            }),
             SizedBox(height: h * 0.03),
           ],
         );

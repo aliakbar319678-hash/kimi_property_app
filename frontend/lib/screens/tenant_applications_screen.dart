@@ -22,7 +22,7 @@ class _TenantApplicationsScreenState extends State<TenantApplicationsScreen> {
 
   Future<void> _fetchApplications() async {
     try {
-      final response = await ApiClient().dio.get('${ApiConstants.applications}/tenant');
+      final response = await ApiClient().dio.get('${ApiConstants.applications}/me');
       final data = response.data;
       if (data['success'] == true) {
         if (mounted) {

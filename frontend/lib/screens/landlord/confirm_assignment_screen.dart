@@ -184,22 +184,20 @@ class _ConfirmAssignmentScreenState extends ConsumerState<ConfirmAssignmentScree
                 setState(() => _isAssigning = true);
                 try {
                   await ref.read(landlordProvider.notifier).assignBidToWorkOrder(order.id, bid);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Job successfully assigned!'), backgroundColor: Colors.green),
-                    );
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/landlord_home',
-                      (route) => false,
-                    );
-                  }
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Job successfully assigned!'), backgroundColor: Colors.green),
+                  );
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/landlord_home',
+                    (route) => false,
+                  );
                 } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to assign job: $e'), backgroundColor: Colors.red),
-                    );
-                  }
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to assign job: $e'), backgroundColor: Colors.red),
+                  );
                 } finally {
                   if (mounted) setState(() => _isAssigning = false);
                 }

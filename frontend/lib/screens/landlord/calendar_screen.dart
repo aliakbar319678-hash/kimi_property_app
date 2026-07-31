@@ -215,7 +215,7 @@ class _LandlordCalendarScreenState extends ConsumerState<LandlordCalendarScreen>
                               final validProp = propertyOptions.contains(selectedProperty) ? selectedProperty : propertyOptions.first;
 
                               return DropdownButtonFormField<String>(
-                                value: validProp,
+                                initialValue: validProp,
                                 decoration: _inputDeco('Property'),
                                 items: propertyOptions
                                     .map((p) => DropdownMenuItem(value: p, child: Text(p, style: const TextStyle(fontSize: 12))))
@@ -356,19 +356,18 @@ class _LandlordCalendarScreenState extends ConsumerState<LandlordCalendarScreen>
                               await ApiClient().dio.post('/calendar/events', data: newEvt);
                             } catch (_) {}
 
+                            if (!mounted) return;
                             setState(() {
                               _events.insert(0, newEvt);
                             });
 
                             if (ctx.mounted) Navigator.pop(ctx);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Event "${newEvt['title']}" added to calendar!'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Event "${newEvt['title']}" added to calendar!'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
                           },
                     child: isSaving
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))

@@ -18,7 +18,7 @@ mixin _$Property {
  String get type; List<String> get amenities; String get description; String get status;// Approval workflow fields
  String get verificationStatus;// 'pending' | 'approved' | 'rejected' | 'needs_revision' | 'resubmitted' | 'permanently_rejected'
  String? get rejectionReason; int get resubmissionCount; List<dynamic> get requestedDocuments; bool get isPermanentlyRejected; List<dynamic> get revisionHistory;// Extra dynamic fields
- Map<String, dynamic> get metadata;
+ Map<String, dynamic> get metadata; double get latitude; double get longitude;
 /// Create a copy of Property
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +29,16 @@ $PropertyCopyWith<Property> get copyWith => _$PropertyCopyWithImpl<Property>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Property&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.totalUnits, totalUnits) || other.totalUnits == totalUnits)&&(identical(other.occupiedUnits, occupiedUnits) || other.occupiedUnits == occupiedUnits)&&(identical(other.vacantUnits, vacantUnits) || other.vacantUnits == vacantUnits)&&(identical(other.monthlyRent, monthlyRent) || other.monthlyRent == monthlyRent)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other.amenities, amenities)&&(identical(other.description, description) || other.description == description)&&(identical(other.status, status) || other.status == status)&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.resubmissionCount, resubmissionCount) || other.resubmissionCount == resubmissionCount)&&const DeepCollectionEquality().equals(other.requestedDocuments, requestedDocuments)&&(identical(other.isPermanentlyRejected, isPermanentlyRejected) || other.isPermanentlyRejected == isPermanentlyRejected)&&const DeepCollectionEquality().equals(other.revisionHistory, revisionHistory)&&const DeepCollectionEquality().equals(other.metadata, metadata));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Property&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.totalUnits, totalUnits) || other.totalUnits == totalUnits)&&(identical(other.occupiedUnits, occupiedUnits) || other.occupiedUnits == occupiedUnits)&&(identical(other.vacantUnits, vacantUnits) || other.vacantUnits == vacantUnits)&&(identical(other.monthlyRent, monthlyRent) || other.monthlyRent == monthlyRent)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other.amenities, amenities)&&(identical(other.description, description) || other.description == description)&&(identical(other.status, status) || other.status == status)&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.resubmissionCount, resubmissionCount) || other.resubmissionCount == resubmissionCount)&&const DeepCollectionEquality().equals(other.requestedDocuments, requestedDocuments)&&(identical(other.isPermanentlyRejected, isPermanentlyRejected) || other.isPermanentlyRejected == isPermanentlyRejected)&&const DeepCollectionEquality().equals(other.revisionHistory, revisionHistory)&&const DeepCollectionEquality().equals(other.metadata, metadata)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,name,address,occupancyRate,imageUrl,totalUnits,occupiedUnits,vacantUnits,monthlyRent,type,const DeepCollectionEquality().hash(amenities),description,status,verificationStatus,rejectionReason,resubmissionCount,const DeepCollectionEquality().hash(requestedDocuments),isPermanentlyRejected,const DeepCollectionEquality().hash(revisionHistory),const DeepCollectionEquality().hash(metadata)]);
+int get hashCode => Object.hashAll([runtimeType,id,name,address,occupancyRate,imageUrl,totalUnits,occupiedUnits,vacantUnits,monthlyRent,type,const DeepCollectionEquality().hash(amenities),description,status,verificationStatus,rejectionReason,resubmissionCount,const DeepCollectionEquality().hash(requestedDocuments),isPermanentlyRejected,const DeepCollectionEquality().hash(revisionHistory),const DeepCollectionEquality().hash(metadata),latitude,longitude]);
 
 @override
 String toString() {
-  return 'Property(id: $id, name: $name, address: $address, occupancyRate: $occupancyRate, imageUrl: $imageUrl, totalUnits: $totalUnits, occupiedUnits: $occupiedUnits, vacantUnits: $vacantUnits, monthlyRent: $monthlyRent, type: $type, amenities: $amenities, description: $description, status: $status, verificationStatus: $verificationStatus, rejectionReason: $rejectionReason, resubmissionCount: $resubmissionCount, requestedDocuments: $requestedDocuments, isPermanentlyRejected: $isPermanentlyRejected, revisionHistory: $revisionHistory, metadata: $metadata)';
+  return 'Property(id: $id, name: $name, address: $address, occupancyRate: $occupancyRate, imageUrl: $imageUrl, totalUnits: $totalUnits, occupiedUnits: $occupiedUnits, vacantUnits: $vacantUnits, monthlyRent: $monthlyRent, type: $type, amenities: $amenities, description: $description, status: $status, verificationStatus: $verificationStatus, rejectionReason: $rejectionReason, resubmissionCount: $resubmissionCount, requestedDocuments: $requestedDocuments, isPermanentlyRejected: $isPermanentlyRejected, revisionHistory: $revisionHistory, metadata: $metadata, latitude: $latitude, longitude: $longitude)';
 }
 
 
@@ -49,7 +49,7 @@ abstract mixin class $PropertyCopyWith<$Res>  {
   factory $PropertyCopyWith(Property value, $Res Function(Property) _then) = _$PropertyCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String address, double occupancyRate, String imageUrl, int totalUnits, int occupiedUnits, int vacantUnits, double monthlyRent, String type, List<String> amenities, String description, String status, String verificationStatus, String? rejectionReason, int resubmissionCount, List<dynamic> requestedDocuments, bool isPermanentlyRejected, List<dynamic> revisionHistory, Map<String, dynamic> metadata
+ String id, String name, String address, double occupancyRate, String imageUrl, int totalUnits, int occupiedUnits, int vacantUnits, double monthlyRent, String type, List<String> amenities, String description, String status, String verificationStatus, String? rejectionReason, int resubmissionCount, List<dynamic> requestedDocuments, bool isPermanentlyRejected, List<dynamic> revisionHistory, Map<String, dynamic> metadata, double latitude, double longitude
 });
 
 
@@ -66,7 +66,7 @@ class _$PropertyCopyWithImpl<$Res>
 
 /// Create a copy of Property
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? address = null,Object? occupancyRate = null,Object? imageUrl = null,Object? totalUnits = null,Object? occupiedUnits = null,Object? vacantUnits = null,Object? monthlyRent = null,Object? type = null,Object? amenities = null,Object? description = null,Object? status = null,Object? verificationStatus = null,Object? rejectionReason = freezed,Object? resubmissionCount = null,Object? requestedDocuments = null,Object? isPermanentlyRejected = null,Object? revisionHistory = null,Object? metadata = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? address = null,Object? occupancyRate = null,Object? imageUrl = null,Object? totalUnits = null,Object? occupiedUnits = null,Object? vacantUnits = null,Object? monthlyRent = null,Object? type = null,Object? amenities = null,Object? description = null,Object? status = null,Object? verificationStatus = null,Object? rejectionReason = freezed,Object? resubmissionCount = null,Object? requestedDocuments = null,Object? isPermanentlyRejected = null,Object? revisionHistory = null,Object? metadata = null,Object? latitude = null,Object? longitude = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -88,7 +88,9 @@ as int,requestedDocuments: null == requestedDocuments ? _self.requestedDocuments
 as List<dynamic>,isPermanentlyRejected: null == isPermanentlyRejected ? _self.isPermanentlyRejected : isPermanentlyRejected // ignore: cast_nullable_to_non_nullable
 as bool,revisionHistory: null == revisionHistory ? _self.revisionHistory : revisionHistory // ignore: cast_nullable_to_non_nullable
 as List<dynamic>,metadata: null == metadata ? _self.metadata : metadata // ignore: cast_nullable_to_non_nullable
-as Map<String, dynamic>,
+as Map<String, dynamic>,latitude: null == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
+as double,longitude: null == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 
@@ -173,10 +175,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason,  int resubmissionCount,  List<dynamic> requestedDocuments,  bool isPermanentlyRejected,  List<dynamic> revisionHistory,  Map<String, dynamic> metadata)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason,  int resubmissionCount,  List<dynamic> requestedDocuments,  bool isPermanentlyRejected,  List<dynamic> revisionHistory,  Map<String, dynamic> metadata,  double latitude,  double longitude)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Property() when $default != null:
-return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason,_that.resubmissionCount,_that.requestedDocuments,_that.isPermanentlyRejected,_that.revisionHistory,_that.metadata);case _:
+return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason,_that.resubmissionCount,_that.requestedDocuments,_that.isPermanentlyRejected,_that.revisionHistory,_that.metadata,_that.latitude,_that.longitude);case _:
   return orElse();
 
 }
@@ -194,10 +196,10 @@ return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imag
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason,  int resubmissionCount,  List<dynamic> requestedDocuments,  bool isPermanentlyRejected,  List<dynamic> revisionHistory,  Map<String, dynamic> metadata)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason,  int resubmissionCount,  List<dynamic> requestedDocuments,  bool isPermanentlyRejected,  List<dynamic> revisionHistory,  Map<String, dynamic> metadata,  double latitude,  double longitude)  $default,) {final _that = this;
 switch (_that) {
 case _Property():
-return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason,_that.resubmissionCount,_that.requestedDocuments,_that.isPermanentlyRejected,_that.revisionHistory,_that.metadata);case _:
+return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason,_that.resubmissionCount,_that.requestedDocuments,_that.isPermanentlyRejected,_that.revisionHistory,_that.metadata,_that.latitude,_that.longitude);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -214,10 +216,10 @@ return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imag
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason,  int resubmissionCount,  List<dynamic> requestedDocuments,  bool isPermanentlyRejected,  List<dynamic> revisionHistory,  Map<String, dynamic> metadata)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String address,  double occupancyRate,  String imageUrl,  int totalUnits,  int occupiedUnits,  int vacantUnits,  double monthlyRent,  String type,  List<String> amenities,  String description,  String status,  String verificationStatus,  String? rejectionReason,  int resubmissionCount,  List<dynamic> requestedDocuments,  bool isPermanentlyRejected,  List<dynamic> revisionHistory,  Map<String, dynamic> metadata,  double latitude,  double longitude)?  $default,) {final _that = this;
 switch (_that) {
 case _Property() when $default != null:
-return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason,_that.resubmissionCount,_that.requestedDocuments,_that.isPermanentlyRejected,_that.revisionHistory,_that.metadata);case _:
+return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imageUrl,_that.totalUnits,_that.occupiedUnits,_that.vacantUnits,_that.monthlyRent,_that.type,_that.amenities,_that.description,_that.status,_that.verificationStatus,_that.rejectionReason,_that.resubmissionCount,_that.requestedDocuments,_that.isPermanentlyRejected,_that.revisionHistory,_that.metadata,_that.latitude,_that.longitude);case _:
   return null;
 
 }
@@ -229,7 +231,7 @@ return $default(_that.id,_that.name,_that.address,_that.occupancyRate,_that.imag
 
 
 class _Property implements Property {
-  const _Property({required this.id, required this.name, required this.address, required this.occupancyRate, required this.imageUrl, required this.totalUnits, required this.occupiedUnits, required this.vacantUnits, required this.monthlyRent, this.type = 'apartment', final  List<String> amenities = const [], this.description = '', this.status = 'active', this.verificationStatus = 'pending', this.rejectionReason = null, this.resubmissionCount = 0, final  List<dynamic> requestedDocuments = const [], this.isPermanentlyRejected = false, final  List<dynamic> revisionHistory = const [], final  Map<String, dynamic> metadata = const {}}): _amenities = amenities,_requestedDocuments = requestedDocuments,_revisionHistory = revisionHistory,_metadata = metadata;
+  const _Property({required this.id, required this.name, required this.address, required this.occupancyRate, required this.imageUrl, required this.totalUnits, required this.occupiedUnits, required this.vacantUnits, required this.monthlyRent, this.type = 'apartment', final  List<String> amenities = const [], this.description = '', this.status = 'active', this.verificationStatus = 'pending', this.rejectionReason = null, this.resubmissionCount = 0, final  List<dynamic> requestedDocuments = const [], this.isPermanentlyRejected = false, final  List<dynamic> revisionHistory = const [], final  Map<String, dynamic> metadata = const {}, this.latitude = 31.5204, this.longitude = 74.3587}): _amenities = amenities,_requestedDocuments = requestedDocuments,_revisionHistory = revisionHistory,_metadata = metadata;
   
 
 @override final  String id;
@@ -281,6 +283,8 @@ class _Property implements Property {
   return EqualUnmodifiableMapView(_metadata);
 }
 
+@override@JsonKey() final  double latitude;
+@override@JsonKey() final  double longitude;
 
 /// Create a copy of Property
 /// with the given fields replaced by the non-null parameter values.
@@ -292,16 +296,16 @@ _$PropertyCopyWith<_Property> get copyWith => __$PropertyCopyWithImpl<_Property>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Property&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.totalUnits, totalUnits) || other.totalUnits == totalUnits)&&(identical(other.occupiedUnits, occupiedUnits) || other.occupiedUnits == occupiedUnits)&&(identical(other.vacantUnits, vacantUnits) || other.vacantUnits == vacantUnits)&&(identical(other.monthlyRent, monthlyRent) || other.monthlyRent == monthlyRent)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other._amenities, _amenities)&&(identical(other.description, description) || other.description == description)&&(identical(other.status, status) || other.status == status)&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.resubmissionCount, resubmissionCount) || other.resubmissionCount == resubmissionCount)&&const DeepCollectionEquality().equals(other._requestedDocuments, _requestedDocuments)&&(identical(other.isPermanentlyRejected, isPermanentlyRejected) || other.isPermanentlyRejected == isPermanentlyRejected)&&const DeepCollectionEquality().equals(other._revisionHistory, _revisionHistory)&&const DeepCollectionEquality().equals(other._metadata, _metadata));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Property&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.address, address) || other.address == address)&&(identical(other.occupancyRate, occupancyRate) || other.occupancyRate == occupancyRate)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.totalUnits, totalUnits) || other.totalUnits == totalUnits)&&(identical(other.occupiedUnits, occupiedUnits) || other.occupiedUnits == occupiedUnits)&&(identical(other.vacantUnits, vacantUnits) || other.vacantUnits == vacantUnits)&&(identical(other.monthlyRent, monthlyRent) || other.monthlyRent == monthlyRent)&&(identical(other.type, type) || other.type == type)&&const DeepCollectionEquality().equals(other._amenities, _amenities)&&(identical(other.description, description) || other.description == description)&&(identical(other.status, status) || other.status == status)&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.resubmissionCount, resubmissionCount) || other.resubmissionCount == resubmissionCount)&&const DeepCollectionEquality().equals(other._requestedDocuments, _requestedDocuments)&&(identical(other.isPermanentlyRejected, isPermanentlyRejected) || other.isPermanentlyRejected == isPermanentlyRejected)&&const DeepCollectionEquality().equals(other._revisionHistory, _revisionHistory)&&const DeepCollectionEquality().equals(other._metadata, _metadata)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,name,address,occupancyRate,imageUrl,totalUnits,occupiedUnits,vacantUnits,monthlyRent,type,const DeepCollectionEquality().hash(_amenities),description,status,verificationStatus,rejectionReason,resubmissionCount,const DeepCollectionEquality().hash(_requestedDocuments),isPermanentlyRejected,const DeepCollectionEquality().hash(_revisionHistory),const DeepCollectionEquality().hash(_metadata)]);
+int get hashCode => Object.hashAll([runtimeType,id,name,address,occupancyRate,imageUrl,totalUnits,occupiedUnits,vacantUnits,monthlyRent,type,const DeepCollectionEquality().hash(_amenities),description,status,verificationStatus,rejectionReason,resubmissionCount,const DeepCollectionEquality().hash(_requestedDocuments),isPermanentlyRejected,const DeepCollectionEquality().hash(_revisionHistory),const DeepCollectionEquality().hash(_metadata),latitude,longitude]);
 
 @override
 String toString() {
-  return 'Property(id: $id, name: $name, address: $address, occupancyRate: $occupancyRate, imageUrl: $imageUrl, totalUnits: $totalUnits, occupiedUnits: $occupiedUnits, vacantUnits: $vacantUnits, monthlyRent: $monthlyRent, type: $type, amenities: $amenities, description: $description, status: $status, verificationStatus: $verificationStatus, rejectionReason: $rejectionReason, resubmissionCount: $resubmissionCount, requestedDocuments: $requestedDocuments, isPermanentlyRejected: $isPermanentlyRejected, revisionHistory: $revisionHistory, metadata: $metadata)';
+  return 'Property(id: $id, name: $name, address: $address, occupancyRate: $occupancyRate, imageUrl: $imageUrl, totalUnits: $totalUnits, occupiedUnits: $occupiedUnits, vacantUnits: $vacantUnits, monthlyRent: $monthlyRent, type: $type, amenities: $amenities, description: $description, status: $status, verificationStatus: $verificationStatus, rejectionReason: $rejectionReason, resubmissionCount: $resubmissionCount, requestedDocuments: $requestedDocuments, isPermanentlyRejected: $isPermanentlyRejected, revisionHistory: $revisionHistory, metadata: $metadata, latitude: $latitude, longitude: $longitude)';
 }
 
 
@@ -312,7 +316,7 @@ abstract mixin class _$PropertyCopyWith<$Res> implements $PropertyCopyWith<$Res>
   factory _$PropertyCopyWith(_Property value, $Res Function(_Property) _then) = __$PropertyCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String address, double occupancyRate, String imageUrl, int totalUnits, int occupiedUnits, int vacantUnits, double monthlyRent, String type, List<String> amenities, String description, String status, String verificationStatus, String? rejectionReason, int resubmissionCount, List<dynamic> requestedDocuments, bool isPermanentlyRejected, List<dynamic> revisionHistory, Map<String, dynamic> metadata
+ String id, String name, String address, double occupancyRate, String imageUrl, int totalUnits, int occupiedUnits, int vacantUnits, double monthlyRent, String type, List<String> amenities, String description, String status, String verificationStatus, String? rejectionReason, int resubmissionCount, List<dynamic> requestedDocuments, bool isPermanentlyRejected, List<dynamic> revisionHistory, Map<String, dynamic> metadata, double latitude, double longitude
 });
 
 
@@ -329,7 +333,7 @@ class __$PropertyCopyWithImpl<$Res>
 
 /// Create a copy of Property
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? address = null,Object? occupancyRate = null,Object? imageUrl = null,Object? totalUnits = null,Object? occupiedUnits = null,Object? vacantUnits = null,Object? monthlyRent = null,Object? type = null,Object? amenities = null,Object? description = null,Object? status = null,Object? verificationStatus = null,Object? rejectionReason = freezed,Object? resubmissionCount = null,Object? requestedDocuments = null,Object? isPermanentlyRejected = null,Object? revisionHistory = null,Object? metadata = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? address = null,Object? occupancyRate = null,Object? imageUrl = null,Object? totalUnits = null,Object? occupiedUnits = null,Object? vacantUnits = null,Object? monthlyRent = null,Object? type = null,Object? amenities = null,Object? description = null,Object? status = null,Object? verificationStatus = null,Object? rejectionReason = freezed,Object? resubmissionCount = null,Object? requestedDocuments = null,Object? isPermanentlyRejected = null,Object? revisionHistory = null,Object? metadata = null,Object? latitude = null,Object? longitude = null,}) {
   return _then(_Property(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -351,7 +355,9 @@ as int,requestedDocuments: null == requestedDocuments ? _self._requestedDocument
 as List<dynamic>,isPermanentlyRejected: null == isPermanentlyRejected ? _self.isPermanentlyRejected : isPermanentlyRejected // ignore: cast_nullable_to_non_nullable
 as bool,revisionHistory: null == revisionHistory ? _self._revisionHistory : revisionHistory // ignore: cast_nullable_to_non_nullable
 as List<dynamic>,metadata: null == metadata ? _self._metadata : metadata // ignore: cast_nullable_to_non_nullable
-as Map<String, dynamic>,
+as Map<String, dynamic>,latitude: null == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
+as double,longitude: null == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 
@@ -973,7 +979,7 @@ mixin _$WorkOrder {
  String get id; String get title; String get description; String get propertyName; String get unitName; String get tenantName; String get priority;// 'Low', 'Medium', 'High', 'Emergency'
  String get status;// 'Request', 'Assigned', 'In-Progress', 'Completed'
  List<String> get photos; String get category;// 'Plumbing', 'Electrical', 'HVAC', 'General Repair', etc.
- String get date; String get timeSlot; String get accessInstructions; String? get vendorName; String? get vendorPhone; double? get bidAmount;
+ String get date; String get timeSlot; String get accessInstructions; String? get vendorName; String? get vendorPhone; double? get bidAmount; String get assignedVendorName; String get assignedVendorId; double get cost;
 /// Create a copy of WorkOrder
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -984,16 +990,16 @@ $WorkOrderCopyWith<WorkOrder> get copyWith => _$WorkOrderCopyWithImpl<WorkOrder>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkOrder&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.propertyName, propertyName) || other.propertyName == propertyName)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.photos, photos)&&(identical(other.category, category) || other.category == category)&&(identical(other.date, date) || other.date == date)&&(identical(other.timeSlot, timeSlot) || other.timeSlot == timeSlot)&&(identical(other.accessInstructions, accessInstructions) || other.accessInstructions == accessInstructions)&&(identical(other.vendorName, vendorName) || other.vendorName == vendorName)&&(identical(other.vendorPhone, vendorPhone) || other.vendorPhone == vendorPhone)&&(identical(other.bidAmount, bidAmount) || other.bidAmount == bidAmount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkOrder&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.propertyName, propertyName) || other.propertyName == propertyName)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.photos, photos)&&(identical(other.category, category) || other.category == category)&&(identical(other.date, date) || other.date == date)&&(identical(other.timeSlot, timeSlot) || other.timeSlot == timeSlot)&&(identical(other.accessInstructions, accessInstructions) || other.accessInstructions == accessInstructions)&&(identical(other.vendorName, vendorName) || other.vendorName == vendorName)&&(identical(other.vendorPhone, vendorPhone) || other.vendorPhone == vendorPhone)&&(identical(other.bidAmount, bidAmount) || other.bidAmount == bidAmount)&&(identical(other.assignedVendorName, assignedVendorName) || other.assignedVendorName == assignedVendorName)&&(identical(other.assignedVendorId, assignedVendorId) || other.assignedVendorId == assignedVendorId)&&(identical(other.cost, cost) || other.cost == cost));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,description,propertyName,unitName,tenantName,priority,status,const DeepCollectionEquality().hash(photos),category,date,timeSlot,accessInstructions,vendorName,vendorPhone,bidAmount);
+int get hashCode => Object.hashAll([runtimeType,id,title,description,propertyName,unitName,tenantName,priority,status,const DeepCollectionEquality().hash(photos),category,date,timeSlot,accessInstructions,vendorName,vendorPhone,bidAmount,assignedVendorName,assignedVendorId,cost]);
 
 @override
 String toString() {
-  return 'WorkOrder(id: $id, title: $title, description: $description, propertyName: $propertyName, unitName: $unitName, tenantName: $tenantName, priority: $priority, status: $status, photos: $photos, category: $category, date: $date, timeSlot: $timeSlot, accessInstructions: $accessInstructions, vendorName: $vendorName, vendorPhone: $vendorPhone, bidAmount: $bidAmount)';
+  return 'WorkOrder(id: $id, title: $title, description: $description, propertyName: $propertyName, unitName: $unitName, tenantName: $tenantName, priority: $priority, status: $status, photos: $photos, category: $category, date: $date, timeSlot: $timeSlot, accessInstructions: $accessInstructions, vendorName: $vendorName, vendorPhone: $vendorPhone, bidAmount: $bidAmount, assignedVendorName: $assignedVendorName, assignedVendorId: $assignedVendorId, cost: $cost)';
 }
 
 
@@ -1004,7 +1010,7 @@ abstract mixin class $WorkOrderCopyWith<$Res>  {
   factory $WorkOrderCopyWith(WorkOrder value, $Res Function(WorkOrder) _then) = _$WorkOrderCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, String description, String propertyName, String unitName, String tenantName, String priority, String status, List<String> photos, String category, String date, String timeSlot, String accessInstructions, String? vendorName, String? vendorPhone, double? bidAmount
+ String id, String title, String description, String propertyName, String unitName, String tenantName, String priority, String status, List<String> photos, String category, String date, String timeSlot, String accessInstructions, String? vendorName, String? vendorPhone, double? bidAmount, String assignedVendorName, String assignedVendorId, double cost
 });
 
 
@@ -1021,7 +1027,7 @@ class _$WorkOrderCopyWithImpl<$Res>
 
 /// Create a copy of WorkOrder
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? description = null,Object? propertyName = null,Object? unitName = null,Object? tenantName = null,Object? priority = null,Object? status = null,Object? photos = null,Object? category = null,Object? date = null,Object? timeSlot = null,Object? accessInstructions = null,Object? vendorName = freezed,Object? vendorPhone = freezed,Object? bidAmount = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? description = null,Object? propertyName = null,Object? unitName = null,Object? tenantName = null,Object? priority = null,Object? status = null,Object? photos = null,Object? category = null,Object? date = null,Object? timeSlot = null,Object? accessInstructions = null,Object? vendorName = freezed,Object? vendorPhone = freezed,Object? bidAmount = freezed,Object? assignedVendorName = null,Object? assignedVendorId = null,Object? cost = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -1039,7 +1045,10 @@ as String,accessInstructions: null == accessInstructions ? _self.accessInstructi
 as String,vendorName: freezed == vendorName ? _self.vendorName : vendorName // ignore: cast_nullable_to_non_nullable
 as String?,vendorPhone: freezed == vendorPhone ? _self.vendorPhone : vendorPhone // ignore: cast_nullable_to_non_nullable
 as String?,bidAmount: freezed == bidAmount ? _self.bidAmount : bidAmount // ignore: cast_nullable_to_non_nullable
-as double?,
+as double?,assignedVendorName: null == assignedVendorName ? _self.assignedVendorName : assignedVendorName // ignore: cast_nullable_to_non_nullable
+as String,assignedVendorId: null == assignedVendorId ? _self.assignedVendorId : assignedVendorId // ignore: cast_nullable_to_non_nullable
+as String,cost: null == cost ? _self.cost : cost // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 
@@ -1124,10 +1133,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String description,  String propertyName,  String unitName,  String tenantName,  String priority,  String status,  List<String> photos,  String category,  String date,  String timeSlot,  String accessInstructions,  String? vendorName,  String? vendorPhone,  double? bidAmount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String description,  String propertyName,  String unitName,  String tenantName,  String priority,  String status,  List<String> photos,  String category,  String date,  String timeSlot,  String accessInstructions,  String? vendorName,  String? vendorPhone,  double? bidAmount,  String assignedVendorName,  String assignedVendorId,  double cost)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WorkOrder() when $default != null:
-return $default(_that.id,_that.title,_that.description,_that.propertyName,_that.unitName,_that.tenantName,_that.priority,_that.status,_that.photos,_that.category,_that.date,_that.timeSlot,_that.accessInstructions,_that.vendorName,_that.vendorPhone,_that.bidAmount);case _:
+return $default(_that.id,_that.title,_that.description,_that.propertyName,_that.unitName,_that.tenantName,_that.priority,_that.status,_that.photos,_that.category,_that.date,_that.timeSlot,_that.accessInstructions,_that.vendorName,_that.vendorPhone,_that.bidAmount,_that.assignedVendorName,_that.assignedVendorId,_that.cost);case _:
   return orElse();
 
 }
@@ -1145,10 +1154,10 @@ return $default(_that.id,_that.title,_that.description,_that.propertyName,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String description,  String propertyName,  String unitName,  String tenantName,  String priority,  String status,  List<String> photos,  String category,  String date,  String timeSlot,  String accessInstructions,  String? vendorName,  String? vendorPhone,  double? bidAmount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String description,  String propertyName,  String unitName,  String tenantName,  String priority,  String status,  List<String> photos,  String category,  String date,  String timeSlot,  String accessInstructions,  String? vendorName,  String? vendorPhone,  double? bidAmount,  String assignedVendorName,  String assignedVendorId,  double cost)  $default,) {final _that = this;
 switch (_that) {
 case _WorkOrder():
-return $default(_that.id,_that.title,_that.description,_that.propertyName,_that.unitName,_that.tenantName,_that.priority,_that.status,_that.photos,_that.category,_that.date,_that.timeSlot,_that.accessInstructions,_that.vendorName,_that.vendorPhone,_that.bidAmount);case _:
+return $default(_that.id,_that.title,_that.description,_that.propertyName,_that.unitName,_that.tenantName,_that.priority,_that.status,_that.photos,_that.category,_that.date,_that.timeSlot,_that.accessInstructions,_that.vendorName,_that.vendorPhone,_that.bidAmount,_that.assignedVendorName,_that.assignedVendorId,_that.cost);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1165,10 +1174,10 @@ return $default(_that.id,_that.title,_that.description,_that.propertyName,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String description,  String propertyName,  String unitName,  String tenantName,  String priority,  String status,  List<String> photos,  String category,  String date,  String timeSlot,  String accessInstructions,  String? vendorName,  String? vendorPhone,  double? bidAmount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String description,  String propertyName,  String unitName,  String tenantName,  String priority,  String status,  List<String> photos,  String category,  String date,  String timeSlot,  String accessInstructions,  String? vendorName,  String? vendorPhone,  double? bidAmount,  String assignedVendorName,  String assignedVendorId,  double cost)?  $default,) {final _that = this;
 switch (_that) {
 case _WorkOrder() when $default != null:
-return $default(_that.id,_that.title,_that.description,_that.propertyName,_that.unitName,_that.tenantName,_that.priority,_that.status,_that.photos,_that.category,_that.date,_that.timeSlot,_that.accessInstructions,_that.vendorName,_that.vendorPhone,_that.bidAmount);case _:
+return $default(_that.id,_that.title,_that.description,_that.propertyName,_that.unitName,_that.tenantName,_that.priority,_that.status,_that.photos,_that.category,_that.date,_that.timeSlot,_that.accessInstructions,_that.vendorName,_that.vendorPhone,_that.bidAmount,_that.assignedVendorName,_that.assignedVendorId,_that.cost);case _:
   return null;
 
 }
@@ -1180,7 +1189,7 @@ return $default(_that.id,_that.title,_that.description,_that.propertyName,_that.
 
 
 class _WorkOrder implements WorkOrder {
-  const _WorkOrder({required this.id, required this.title, required this.description, required this.propertyName, required this.unitName, required this.tenantName, required this.priority, required this.status, required final  List<String> photos, required this.category, required this.date, required this.timeSlot, required this.accessInstructions, this.vendorName, this.vendorPhone, this.bidAmount}): _photos = photos;
+  const _WorkOrder({required this.id, required this.title, required this.description, required this.propertyName, required this.unitName, required this.tenantName, required this.priority, required this.status, required final  List<String> photos, required this.category, required this.date, required this.timeSlot, required this.accessInstructions, this.vendorName, this.vendorPhone, this.bidAmount, this.assignedVendorName = '', this.assignedVendorId = '', this.cost = 0.0}): _photos = photos;
   
 
 @override final  String id;
@@ -1209,6 +1218,9 @@ class _WorkOrder implements WorkOrder {
 @override final  String? vendorName;
 @override final  String? vendorPhone;
 @override final  double? bidAmount;
+@override@JsonKey() final  String assignedVendorName;
+@override@JsonKey() final  String assignedVendorId;
+@override@JsonKey() final  double cost;
 
 /// Create a copy of WorkOrder
 /// with the given fields replaced by the non-null parameter values.
@@ -1220,16 +1232,16 @@ _$WorkOrderCopyWith<_WorkOrder> get copyWith => __$WorkOrderCopyWithImpl<_WorkOr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkOrder&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.propertyName, propertyName) || other.propertyName == propertyName)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._photos, _photos)&&(identical(other.category, category) || other.category == category)&&(identical(other.date, date) || other.date == date)&&(identical(other.timeSlot, timeSlot) || other.timeSlot == timeSlot)&&(identical(other.accessInstructions, accessInstructions) || other.accessInstructions == accessInstructions)&&(identical(other.vendorName, vendorName) || other.vendorName == vendorName)&&(identical(other.vendorPhone, vendorPhone) || other.vendorPhone == vendorPhone)&&(identical(other.bidAmount, bidAmount) || other.bidAmount == bidAmount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkOrder&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.propertyName, propertyName) || other.propertyName == propertyName)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._photos, _photos)&&(identical(other.category, category) || other.category == category)&&(identical(other.date, date) || other.date == date)&&(identical(other.timeSlot, timeSlot) || other.timeSlot == timeSlot)&&(identical(other.accessInstructions, accessInstructions) || other.accessInstructions == accessInstructions)&&(identical(other.vendorName, vendorName) || other.vendorName == vendorName)&&(identical(other.vendorPhone, vendorPhone) || other.vendorPhone == vendorPhone)&&(identical(other.bidAmount, bidAmount) || other.bidAmount == bidAmount)&&(identical(other.assignedVendorName, assignedVendorName) || other.assignedVendorName == assignedVendorName)&&(identical(other.assignedVendorId, assignedVendorId) || other.assignedVendorId == assignedVendorId)&&(identical(other.cost, cost) || other.cost == cost));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,description,propertyName,unitName,tenantName,priority,status,const DeepCollectionEquality().hash(_photos),category,date,timeSlot,accessInstructions,vendorName,vendorPhone,bidAmount);
+int get hashCode => Object.hashAll([runtimeType,id,title,description,propertyName,unitName,tenantName,priority,status,const DeepCollectionEquality().hash(_photos),category,date,timeSlot,accessInstructions,vendorName,vendorPhone,bidAmount,assignedVendorName,assignedVendorId,cost]);
 
 @override
 String toString() {
-  return 'WorkOrder(id: $id, title: $title, description: $description, propertyName: $propertyName, unitName: $unitName, tenantName: $tenantName, priority: $priority, status: $status, photos: $photos, category: $category, date: $date, timeSlot: $timeSlot, accessInstructions: $accessInstructions, vendorName: $vendorName, vendorPhone: $vendorPhone, bidAmount: $bidAmount)';
+  return 'WorkOrder(id: $id, title: $title, description: $description, propertyName: $propertyName, unitName: $unitName, tenantName: $tenantName, priority: $priority, status: $status, photos: $photos, category: $category, date: $date, timeSlot: $timeSlot, accessInstructions: $accessInstructions, vendorName: $vendorName, vendorPhone: $vendorPhone, bidAmount: $bidAmount, assignedVendorName: $assignedVendorName, assignedVendorId: $assignedVendorId, cost: $cost)';
 }
 
 
@@ -1240,7 +1252,7 @@ abstract mixin class _$WorkOrderCopyWith<$Res> implements $WorkOrderCopyWith<$Re
   factory _$WorkOrderCopyWith(_WorkOrder value, $Res Function(_WorkOrder) _then) = __$WorkOrderCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, String description, String propertyName, String unitName, String tenantName, String priority, String status, List<String> photos, String category, String date, String timeSlot, String accessInstructions, String? vendorName, String? vendorPhone, double? bidAmount
+ String id, String title, String description, String propertyName, String unitName, String tenantName, String priority, String status, List<String> photos, String category, String date, String timeSlot, String accessInstructions, String? vendorName, String? vendorPhone, double? bidAmount, String assignedVendorName, String assignedVendorId, double cost
 });
 
 
@@ -1257,7 +1269,7 @@ class __$WorkOrderCopyWithImpl<$Res>
 
 /// Create a copy of WorkOrder
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? description = null,Object? propertyName = null,Object? unitName = null,Object? tenantName = null,Object? priority = null,Object? status = null,Object? photos = null,Object? category = null,Object? date = null,Object? timeSlot = null,Object? accessInstructions = null,Object? vendorName = freezed,Object? vendorPhone = freezed,Object? bidAmount = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? description = null,Object? propertyName = null,Object? unitName = null,Object? tenantName = null,Object? priority = null,Object? status = null,Object? photos = null,Object? category = null,Object? date = null,Object? timeSlot = null,Object? accessInstructions = null,Object? vendorName = freezed,Object? vendorPhone = freezed,Object? bidAmount = freezed,Object? assignedVendorName = null,Object? assignedVendorId = null,Object? cost = null,}) {
   return _then(_WorkOrder(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -1275,7 +1287,10 @@ as String,accessInstructions: null == accessInstructions ? _self.accessInstructi
 as String,vendorName: freezed == vendorName ? _self.vendorName : vendorName // ignore: cast_nullable_to_non_nullable
 as String?,vendorPhone: freezed == vendorPhone ? _self.vendorPhone : vendorPhone // ignore: cast_nullable_to_non_nullable
 as String?,bidAmount: freezed == bidAmount ? _self.bidAmount : bidAmount // ignore: cast_nullable_to_non_nullable
-as double?,
+as double?,assignedVendorName: null == assignedVendorName ? _self.assignedVendorName : assignedVendorName // ignore: cast_nullable_to_non_nullable
+as String,assignedVendorId: null == assignedVendorId ? _self.assignedVendorId : assignedVendorId // ignore: cast_nullable_to_non_nullable
+as String,cost: null == cost ? _self.cost : cost // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 

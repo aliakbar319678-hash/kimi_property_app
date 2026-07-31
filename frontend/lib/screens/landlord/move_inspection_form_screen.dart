@@ -74,7 +74,7 @@ class _MoveInspectionFormScreenState extends State<MoveInspectionFormScreen> {
             const Text('Condition', style: AppTextStyles.labelMedium),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: room['condition'],
+              initialValue: room['condition'],
               decoration: InputDecoration(
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16),

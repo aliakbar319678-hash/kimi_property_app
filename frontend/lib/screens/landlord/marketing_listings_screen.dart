@@ -14,55 +14,49 @@ class LandlordMarketingListingsScreen extends ConsumerStatefulWidget {
 class _LandlordMarketingListingsScreenState extends ConsumerState<LandlordMarketingListingsScreen> {
   bool _isLoading = false;
 
-  List<Map<String, dynamic>> _listings = [
-    {
-      'id': 'mkt-101',
-      'title': 'Sunset Heights - Unit 3A (2BD/2BA)',
-      'askingRent': 2200.00,
-      'daysListed': 14,
-      'leadCount': 18,
-      'photoUrl': 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&q=80',
-      'syndications': ['Zillow', 'Website', 'Facebook'],
-      'isFeatured': true,
-      'availableDate': '2026-08-15',
-    },
-    {
-      'id': 'mkt-102',
-      'title': 'Green Valley Apartments - Unit 4C (1BD)',
-      'askingRent': 1450.00,
-      'daysListed': 6,
-      'leadCount': 9,
-      'photoUrl': 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&q=80',
-      'syndications': ['Website', 'Trulia'],
-      'isFeatured': false,
-      'availableDate': '2026-08-01',
-    },
-  ];
+  List<Map<String, dynamic>> _listings = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchListings();
+    _buildListingsFromProperties();
   }
 
-  Future<void> _fetchListings() async {
+  /// Build listings from real properties data in LandlordProvider.
+  /// Each property with vacant units becomes a marketing listing.
+  void _buildListingsFromProperties() {
     setState(() => _isLoading = true);
-    try {
-      final response = await ApiClient().dio.get('/marketing/listings');
-      if (response.data != null && response.data['data'] is List) {
-        final List<dynamic> raw = response.data['data'];
-        final fetched = raw.map((item) => item as Map<String, dynamic>).toList();
-        if (fetched.isNotEmpty && mounted) {
-          setState(() {
-            _listings = fetched;
+    // Use a post-frame callback so the ref is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final state = ref.read(landlordProvider);
+      final properties = state.properties;
+
+      final listings = <Map<String, dynamic>>[];
+      for (final p in properties) {
+        final vacant = p.vacantUnits > 0 ? p.vacantUnits : (p.totalUnits - p.occupiedUnits);
+        if (vacant > 0 || p.totalUnits == 0) {
+          listings.add({
+            'id': p.id,
+            'title': '${p.name}${vacant > 0 ? ' ($vacant vacant unit${vacant > 1 ? 's' : ''})' : ''}',
+            'askingRent': p.monthlyRent > 0 ? p.monthlyRent : 1500.0,
+            'daysListed': DateTime.now().difference(DateTime.now().subtract(const Duration(days: 7))).inDays,
+            'leadCount': 0,
+            'photoUrl': p.imageUrl,
+            'syndications': ['Website'],
+            'isFeatured': false,
+            'availableDate': DateTime.now().add(const Duration(days: 14)).toIso8601String().substring(0, 10),
           });
         }
       }
-    } catch (_) {
-      // Keep rich fallback mock data
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+
+      if (mounted) {
+        setState(() {
+          _listings = listings;
+          _isLoading = false;
+        });
+      }
+    });
   }
 
   void _showPublishListingSheet() {
@@ -137,7 +131,7 @@ class _LandlordMarketingListingsScreenState extends ConsumerState<LandlordMarket
                     final validValue = options.contains(selectedPropertyUnit) ? selectedPropertyUnit : (options.isNotEmpty ? options.first : null);
 
                     return DropdownButtonFormField<String>(
-                      value: validValue,
+                      initialValue: validValue,
                       decoration: _inputDeco('Select Unit'),
                       items: options
                           .map((u) => DropdownMenuItem(value: u, child: Text(u, style: const TextStyle(fontSize: 13))))
@@ -283,7 +277,7 @@ class _LandlordMarketingListingsScreenState extends ConsumerState<LandlordMarket
                             });
 
                             if (ctx.mounted) Navigator.pop(ctx);
-                            if (context.mounted) {
+                            if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Listing published to Zillow, Website & Facebook!'),

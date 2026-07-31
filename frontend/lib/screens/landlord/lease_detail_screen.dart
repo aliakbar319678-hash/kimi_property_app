@@ -5,6 +5,7 @@ import 'package:tenant_and_landlord_application/core/api_constants.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
+import 'package:tenant_and_landlord_application/widgets/landlord/lease_renewal_dialog.dart';
 
 class LandlordLeaseDetailScreen extends ConsumerStatefulWidget {
   const LandlordLeaseDetailScreen({super.key});
@@ -17,7 +18,9 @@ class LandlordLeaseDetailScreen extends ConsumerStatefulWidget {
 class _LandlordLeaseDetailScreenState
     extends ConsumerState<LandlordLeaseDetailScreen> {
   Map<String, dynamic>? _detail;
+  List<Map<String, dynamic>> _inspections = [];
   bool _isLoading = true;
+  bool _isInspectionsLoading = true;
   String _error = '';
   String? _leaseId;
 
@@ -33,12 +36,16 @@ class _LandlordLeaseDetailScreenState
 
   Future<void> _fetchDetail() async {
     if (_leaseId == null) return;
-    setState(() { _isLoading = true; _error = ''; });
+    setState(() { _isLoading = true; _isInspectionsLoading = true; _error = ''; });
     try {
       final resp = await ApiClient().dio.get(ApiConstants.leaseById(_leaseId!));
       setState(() { _detail = resp.data['data'] as Map<String, dynamic>?; _isLoading = false; });
+      
+      // Fetch inspections
+      final inspections = await ref.read(landlordProvider.notifier).getLeaseInspections(_leaseId!);
+      setState(() { _inspections = inspections; _isInspectionsLoading = false; });
     } catch (e) {
-      setState(() { _error = e.toString(); _isLoading = false; });
+      setState(() { _error = e.toString(); _isLoading = false; _isInspectionsLoading = false; });
     }
   }
 
@@ -111,6 +118,35 @@ class _LandlordLeaseDetailScreenState
                         _detailRow('Rent / Month', '\$${(double.tryParse((_detail?['rent_amount'] ?? lease?.rentAmount ?? 0).toString()) ?? 0.0).toStringAsFixed(0)}'),
                         _detailRow('Security Deposit', '\$${(double.tryParse((_detail?['security_deposit'] ?? _detail?['deposit_amount'] ?? 0).toString()) ?? 0.0).toStringAsFixed(0)}'),
                         _detailRow('Days Until Expiry', _daysLeft(lease)),
+                      ],
+                    ),
+                    SizedBox(height: h * 0.025),
+
+                    // Inspections
+                    _sectionCard(
+                      title: 'Inspections',
+                      icon: Icons.fact_check_outlined,
+                      children: [
+                        if (_isInspectionsLoading)
+                          const Padding(padding: EdgeInsets.all(12), child: Center(child: CircularProgressIndicator()))
+                        else if (_inspections.isEmpty)
+                          const Padding(padding: EdgeInsets.all(12), child: Text('No inspections found for this lease.', style: TextStyle(color: AppColors.textSecondary, fontStyle: FontStyle.italic)))
+                        else
+                          ..._inspections.map((insp) {
+                            return _detailRow(insp['type'] ?? 'Inspection', insp['status']?.toString().toUpperCase() ?? 'COMPLETED');
+                          }),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/landlord_move_inspection_form', arguments: {'leaseId': _leaseId, 'type': 'Mid-Lease'});
+                            },
+                            style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                            icon: const Icon(Icons.add_task_rounded, size: 18),
+                            label: const Text('New Inspection'),
+                          ),
+                        ),
                       ],
                     ),
                     SizedBox(height: h * 0.025),
@@ -243,81 +279,32 @@ class _LandlordLeaseDetailScreenState
     ]);
   }
 
-  void _showRenewSheet(BuildContext context, LandlordNotifier notifier, Lease lease) {
-    DateTime? newEndDate;
-    bool isLoading = false;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Container(
-          padding: EdgeInsets.only(left: 20, right: 20, top: 24, bottom: MediaQuery.of(ctx).viewInsets.bottom + 24),
-          decoration: const BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 20),
-            const Text('Renew Lease', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-            const SizedBox(height: 6),
-            Text('Current end date: ${lease.endDate}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-            const SizedBox(height: 20),
-            GestureDetector(
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: ctx,
-                  initialDate: DateTime.now().add(const Duration(days: 365)),
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(const Duration(days: 3650)),
-                );
-                if (picked != null) setSheetState(() => newEndDate = picked);
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.scaffoldBg,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: newEndDate != null ? AppColors.primary : AppColors.border),
-                ),
-                child: Row(children: [
-                  const Icon(Icons.calendar_today_rounded, color: AppColors.primary, size: 20),
-                  const SizedBox(width: 12),
-                  Text(
-                    newEndDate != null ? 'New end date: ${newEndDate!.year}-${newEndDate!.month.toString().padLeft(2,'0')}-${newEndDate!.day.toString().padLeft(2,'0')}' : 'Pick new end date',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: newEndDate != null ? AppColors.textPrimary : AppColors.textHint),
-                  ),
-                ]),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: isLoading || newEndDate == null ? null : () async {
-                  setSheetState(() => isLoading = true);
-                  try {
-                    final dateStr = '${newEndDate!.year}-${newEndDate!.month.toString().padLeft(2,'0')}-${newEndDate!.day.toString().padLeft(2,'0')}';
-                    await notifier.renewLease(lease.id, dateStr);
-                    if (ctx.mounted) {
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lease renewed successfully ✅'), backgroundColor: Color(0xFF27AE60)));
-                      _fetchDetail();
-                    }
-                  } catch (e) {
-                    if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
-                  } finally {
-                    if (ctx.mounted) setSheetState(() => isLoading = false);
-                  }
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                child: isLoading ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5)) : const Text('Confirm Renewal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
-              ),
-            ),
-          ]),
-        ),
-      ),
+  void _showRenewSheet(BuildContext context, LandlordNotifier notifier, Lease lease) async {
+    final data = await LeaseRenewalDialog.show(
+      context,
+      tenantName: lease.tenantName,
+      currentRent: lease.rentAmount,
     );
+    if (data != null && context.mounted) {
+      try {
+        final start = data.startDate;
+        final end = DateTime(start.year, start.month + data.durationMonths, start.day);
+        await notifier.renewLease(lease.id, {
+          'rentAmount': data.proposedRent,
+          'startDate': start.toIso8601String(),
+          'endDate': end.toIso8601String(),
+          'notes': data.notes,
+        });
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lease renewed successfully ✅'), backgroundColor: Color(0xFF27AE60)));
+          _fetchDetail();
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+        }
+      }
+    }
   }
 
   void _confirmTerminate(BuildContext context, LandlordNotifier notifier, Lease lease) {

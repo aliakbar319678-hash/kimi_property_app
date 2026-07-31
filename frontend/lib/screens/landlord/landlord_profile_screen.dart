@@ -144,7 +144,7 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
                             children: [
                               CircleAvatar(
                                 radius: w * 0.12,
-                                backgroundColor: AppColors.secondary.withOpacity(0.1),
+                                backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
                                 backgroundImage: _newAvatarBytes != null
                                     ? MemoryImage(_newAvatarBytes!)
                                     : (_avatarUrl.isNotEmpty ? NetworkImage(_avatarUrl) : null) as ImageProvider?,

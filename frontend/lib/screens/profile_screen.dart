@@ -11,6 +11,7 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final userState = ref.watch(userProfileProvider);
     final state = ref.watch(profileProvider);
     final notif = ref.read(profileProvider.notifier);
     final w = MediaQuery.of(context).size.width;
@@ -62,154 +63,114 @@ class ProfileScreen extends ConsumerWidget {
             ),
 
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(pad),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title + Edit button
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Profile',
-                          style: TextStyle(
-                            fontSize: w * 0.07,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: () async {
-                            try {
-                              await ApiClient().dio.put(
-                                '/users/me/profile',
-                                data: {
-                                  'smartAlerts': state.smartAlerts,
-                                  'emailReceipts': state.emailReceipts,
-                                  'language': state.language,
+              child: userState.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      padding: EdgeInsets.all(pad),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Title + Edit button
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Profile',
+                                style: TextStyle(
+                                  fontSize: w * 0.07,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: () async {
+                                  try {
+                                    await ApiClient().dio.put(
+                                      '/users/me/profile',
+                                      data: {
+                                        'smartAlerts': state.smartAlerts,
+                                        'emailReceipts': state.emailReceipts,
+                                        'language': state.language,
+                                      },
+                                    );
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile settings saved!')));
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save profile: $e')));
+                                    }
+                                  }
                                 },
-                              );
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile settings saved!')));
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save profile: $e')));
-                              }
-                            }
-                          },
-                          icon: Icon(
-                            Icons.save_outlined,
-                            size: w * 0.04,
-                            color: AppColors.white,
+                                icon: Icon(
+                                  Icons.save_outlined,
+                                  size: w * 0.04,
+                                  color: AppColors.white,
+                                ),
+                                label: Text(
+                                  'Save Profile',
+                                  style: TextStyle(
+                                    fontSize: w * 0.034,
+                                    color: AppColors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: w * 0.04,
+                                    vertical: h * 0.012,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          label: Text(
-                            'Save Profile',
-                            style: TextStyle(
-                              fontSize: w * 0.034,
-                              color: AppColors.white,
-                              fontWeight: FontWeight.w500,
+
+                          SizedBox(height: h * 0.02),
+
+                          // ── Personal Info card ────────
+                          _SectionCard(
+                            icon: Icons.person_outline_rounded,
+                            iconBg: AppColors.secondary.withValues(alpha: 0.12),
+                            iconColor: AppColors.secondary,
+                            title: 'Personal Info',
+                            hasLeftBorder: true,
+                            w: w,
+                            h: h,
+                            child: Column(
+                              children: [
+                                _InfoRow(
+                                  label: 'Full Name',
+                                  value: userState.displayName.isNotEmpty ? userState.displayName : 'Not Provided',
+                                  w: w,
+                                  h: h,
+                                ),
+                                _InfoRow(
+                                  label: 'Email Address',
+                                  value: userState.email.isNotEmpty ? userState.email : 'Not Provided',
+                                  w: w,
+                                  h: h,
+                                ),
+                                _InfoRow(
+                                  label: 'Phone Number',
+                                  value: userState.phone.isNotEmpty ? userState.phone : 'Not Provided',
+                                  w: w,
+                                  h: h,
+                                ),
+                                _InfoRow(
+                                  label: 'Date of Birth',
+                                  value: userState.dateOfBirth.isNotEmpty ? userState.dateOfBirth : 'Not Provided',
+                                  w: w,
+                                  h: h,
+                                  isLast: true,
+                                ),
+                              ],
                             ),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: w * 0.04,
-                              vertical: h * 0.012,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    SizedBox(height: h * 0.02),
-
-                    // ── Personal Info card ────────
-                    _SectionCard(
-                      icon: Icons.person_outline_rounded,
-                      iconBg: AppColors.secondary.withValues(alpha: 0.12),
-                      iconColor: AppColors.secondary,
-                      title: 'Personal Info',
-                      hasLeftBorder: true,
-                      w: w,
-                      h: h,
-                      child: Column(
-                        children: [
-                          _InfoRow(
-                            label: 'Full Name',
-                            value: 'Jonathan Aris Thorne',
-                            w: w,
-                            h: h,
-                          ),
-                          _InfoRow(
-                            label: 'Email Address',
-                            value: 'j.thorne@example.com',
-                            w: w,
-                            h: h,
-                          ),
-                          _InfoRow(
-                            label: 'Phone Number',
-                            value: '+1 (555) 902-3481',
-                            w: w,
-                            h: h,
-                          ),
-                          _InfoRow(
-                            label: 'Date of Birth',
-                            value: 'May 12, 1988',
-                            w: w,
-                            h: h,
-                            isLast: true,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: h * 0.018),
-
-                    // ── Employment card ───────────
-                    _SectionCard(
-                      icon: Icons.work_outline_rounded,
-                      iconBg: const Color(0xFFFEF3E2),
-                      iconColor: const Color(0xFFE67E22),
-                      title: 'Employment',
-                      w: w,
-                      h: h,
-                      child: Column(
-                        children: [
-                          _InfoRowWithBadge(
-                            label: 'Employer',
-                            value: 'Lumina Tech Solutions',
-                            badge: 'VERIFIED',
-                            w: w,
-                            h: h,
-                          ),
-                          _InfoRow(
-                            label: 'Position',
-                            value: 'Senior Product Architect',
-                            w: w,
-                            h: h,
-                          ),
-                          _InfoRow(
-                            label: 'Employment Type',
-                            value: 'Full-Time (Remote)',
-                            w: w,
-                            h: h,
-                          ),
-                          _InfoRow(
-                            label: 'Annual Income',
-                            value: '••••••••',
-                            w: w,
-                            h: h,
-                            isLast: true,
-                          ),
-                        ],
-                      ),
-                    ),
 
                     SizedBox(height: h * 0.018),
 
@@ -595,65 +556,7 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-class _InfoRowWithBadge extends StatelessWidget {
-  final String label;
-  final String value;
-  final String badge;
-  final double w;
-  final double h;
 
-  const _InfoRowWithBadge({
-    required this.label,
-    required this.value,
-    required this.badge,
-    required this.w,
-    required this.h,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: w * 0.03, color: AppColors.textSecondary),
-        ),
-        SizedBox(height: 3),
-        Row(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: w * 0.036,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(width: w * 0.025),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: w * 0.025, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F8F0),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text(
-                badge,
-                style: TextStyle(
-                  fontSize: w * 0.026,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF27AE60),
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: h * 0.012),
-      ],
-    );
-  }
-}
 
 class _ToggleRow extends StatelessWidget {
   final IconData icon;

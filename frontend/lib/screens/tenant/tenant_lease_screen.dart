@@ -1,97 +1,60 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
-import 'package:tenant_and_landlord_application/provider/tenant_lease_provider.dart';
 
-class TenantLeaseScreen extends ConsumerWidget {
+class TenantLeaseScreen extends StatelessWidget {
   const TenantLeaseScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final leaseAsync = ref.watch(tenantLeaseProvider);
-
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(title: const Text('My Lease')),
       body: SafeArea(
-        child: leaseAsync.when(
-          data: (lease) {
-            if (lease.leaseId.isEmpty) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text(
-                    'No active lease found.',
-                    style: TextStyle(color: AppColors.textSecondary),
-                    textAlign: TextAlign.center,
-                  ),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, bottomPadding + 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                  ],
                 ),
-              );
-            }
-
-            return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(20, 20, 20, bottomPadding + 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Skyline View Lofts - Unit 402', style: AppTextStyles.headlineMedium),
+                    const SizedBox(height: 16),
+                    _buildDetailRow('Start Date', 'Oct 1, 2023'),
+                    _buildDetailRow('End Date', 'Sep 30, 2024'),
+                    _buildDetailRow('Monthly Rent', '\$2,450.00'),
+                    _buildDetailRow('Deposit Amount', '\$2,450.00'),
+                    _buildDetailRow('Landlord', 'John Doe'),
+                    const SizedBox(height: 16),
+                    const Row(
                       children: [
-                        Text(lease.propertyName, style: AppTextStyles.headlineMedium),
-                        const SizedBox(height: 4),
-                        Text('Unit ${lease.unitName}', style: const TextStyle(color: AppColors.textSecondary)),
-                        const SizedBox(height: 16),
-                        _buildDetailRow('Start Date', lease.startDate.isNotEmpty ? lease.startDate.split('T').first : 'N/A'),
-                        _buildDetailRow('End Date', lease.endDate.isNotEmpty ? lease.endDate.split('T').first : 'N/A'),
-                        _buildDetailRow('Monthly Rent', '\$${lease.rentAmount.toStringAsFixed(2)}'),
-                        _buildDetailRow('Deposit Amount', '\$${lease.securityDeposit.toStringAsFixed(2)}'),
-                        _buildDetailRow('Status', lease.status.toUpperCase()),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Icon(
-                              lease.status.toLowerCase() == 'active' ? Icons.verified : Icons.info,
-                              color: lease.status.toLowerCase() == 'active' ? Colors.green : Colors.orange,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              lease.status.toLowerCase() == 'active' ? 'Lease Active' : 'Lease Pending/Expired',
-                              style: TextStyle(
-                                color: lease.status.toLowerCase() == 'active' ? Colors.green : Colors.orange,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
+                        Icon(Icons.verified, color: Colors.green, size: 20),
+                        SizedBox(width: 8),
+                        Text('Lease Active', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                  const Text('Documents', style: AppTextStyles.headlineMedium),
-                  const SizedBox(height: 20),
-                  _buildDocTile('Lease_Agreement_${lease.leaseId.substring(0, 5)}.pdf', 'Generated dynamically'),
-                ],
+                  ],
+                ),
               ),
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: AppColors.error))),
+              const SizedBox(height: 30),
+              const Text('Documents', style: AppTextStyles.headlineMedium),
+              const SizedBox(height: 20),
+              _buildDocTile('Signed_Lease_Agreement.pdf', '2.4 MB'),
+              const SizedBox(height: 12),
+              _buildDocTile('House_Rules_2024.pdf', '1.1 MB'),
+            ],
+          ),
         ),
       ),
     );
@@ -107,7 +70,7 @@ class TenantLeaseScreen extends ConsumerWidget {
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              value,
+              value, 
               style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
               textAlign: TextAlign.right,
               overflow: TextOverflow.ellipsis,

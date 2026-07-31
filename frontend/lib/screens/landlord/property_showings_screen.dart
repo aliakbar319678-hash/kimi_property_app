@@ -172,7 +172,7 @@ class _LandlordPropertyShowingsScreenState extends ConsumerState<LandlordPropert
                               final validValue = options.contains(selectedPropertyUnit) ? selectedPropertyUnit : (options.isNotEmpty ? options.first : null);
 
                               return DropdownButtonFormField<String>(
-                                value: validValue,
+                                initialValue: validValue,
                                 decoration: _inputDeco('Select Unit'),
                                 items: options
                                     .map((u) => DropdownMenuItem(value: u, child: Text(u, style: const TextStyle(fontSize: 12))))
@@ -199,7 +199,7 @@ class _LandlordPropertyShowingsScreenState extends ConsumerState<LandlordPropert
                               final validSlot = slotOptions.contains(timeSlot) ? timeSlot : slotOptions.first;
 
                               return DropdownButtonFormField<String>(
-                                value: validSlot,
+                                initialValue: validSlot,
                                 decoration: _inputDeco('Slot'),
                                 items: const [
                                   DropdownMenuItem(value: '10:00 AM - 10:30 AM', child: Text('10:00 AM', style: TextStyle(fontSize: 12))),
@@ -305,7 +305,7 @@ class _LandlordPropertyShowingsScreenState extends ConsumerState<LandlordPropert
                             });
 
                             if (ctx.mounted) Navigator.pop(ctx);
-                            if (context.mounted) {
+                            if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Property tour scheduled for ${newShow['prospectName']}!'),

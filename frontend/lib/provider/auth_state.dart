@@ -11,6 +11,7 @@ abstract class WelcomeState with _$WelcomeState {
 abstract class RegisterState with _$RegisterState {
   const factory RegisterState({
     @Default('') String fullName,
+    @Default('') String username,
     @Default('') String email,
     @Default('') String phone,
     @Default('') String password,
@@ -21,6 +22,7 @@ abstract class RegisterState with _$RegisterState {
     @Default('tenant') String selectedRole,
     String? errorMessage,
     String? fullNameError,
+    String? usernameError,
     String? emailError,
     String? phoneError,
     String? passwordError,

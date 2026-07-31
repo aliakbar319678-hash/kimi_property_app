@@ -206,7 +206,7 @@ String toString() {
 /// @nodoc
 mixin _$RegisterState {
 
- String get fullName; String get email; String get phone; String get password; bool get agreeToTerms; bool get obscurePassword; bool get isLoading; bool get isLogin; String get selectedRole; String? get errorMessage; String? get fullNameError; String? get emailError; String? get phoneError; String? get passwordError;
+ String get fullName; String get username; String get email; String get phone; String get password; bool get agreeToTerms; bool get obscurePassword; bool get isLoading; bool get isLogin; String get selectedRole; String? get errorMessage; String? get fullNameError; String? get usernameError; String? get emailError; String? get phoneError; String? get passwordError;
 /// Create a copy of RegisterState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -217,16 +217,16 @@ $RegisterStateCopyWith<RegisterState> get copyWith => _$RegisterStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RegisterState&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.password, password) || other.password == password)&&(identical(other.agreeToTerms, agreeToTerms) || other.agreeToTerms == agreeToTerms)&&(identical(other.obscurePassword, obscurePassword) || other.obscurePassword == obscurePassword)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isLogin, isLogin) || other.isLogin == isLogin)&&(identical(other.selectedRole, selectedRole) || other.selectedRole == selectedRole)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.fullNameError, fullNameError) || other.fullNameError == fullNameError)&&(identical(other.emailError, emailError) || other.emailError == emailError)&&(identical(other.phoneError, phoneError) || other.phoneError == phoneError)&&(identical(other.passwordError, passwordError) || other.passwordError == passwordError));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RegisterState&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.username, username) || other.username == username)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.password, password) || other.password == password)&&(identical(other.agreeToTerms, agreeToTerms) || other.agreeToTerms == agreeToTerms)&&(identical(other.obscurePassword, obscurePassword) || other.obscurePassword == obscurePassword)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isLogin, isLogin) || other.isLogin == isLogin)&&(identical(other.selectedRole, selectedRole) || other.selectedRole == selectedRole)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.fullNameError, fullNameError) || other.fullNameError == fullNameError)&&(identical(other.usernameError, usernameError) || other.usernameError == usernameError)&&(identical(other.emailError, emailError) || other.emailError == emailError)&&(identical(other.phoneError, phoneError) || other.phoneError == phoneError)&&(identical(other.passwordError, passwordError) || other.passwordError == passwordError));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,fullName,email,phone,password,agreeToTerms,obscurePassword,isLoading,isLogin,selectedRole,errorMessage,fullNameError,emailError,phoneError,passwordError);
+int get hashCode => Object.hash(runtimeType,fullName,username,email,phone,password,agreeToTerms,obscurePassword,isLoading,isLogin,selectedRole,errorMessage,fullNameError,usernameError,emailError,phoneError,passwordError);
 
 @override
 String toString() {
-  return 'RegisterState(fullName: $fullName, email: $email, phone: $phone, password: $password, agreeToTerms: $agreeToTerms, obscurePassword: $obscurePassword, isLoading: $isLoading, isLogin: $isLogin, selectedRole: $selectedRole, errorMessage: $errorMessage, fullNameError: $fullNameError, emailError: $emailError, phoneError: $phoneError, passwordError: $passwordError)';
+  return 'RegisterState(fullName: $fullName, username: $username, email: $email, phone: $phone, password: $password, agreeToTerms: $agreeToTerms, obscurePassword: $obscurePassword, isLoading: $isLoading, isLogin: $isLogin, selectedRole: $selectedRole, errorMessage: $errorMessage, fullNameError: $fullNameError, usernameError: $usernameError, emailError: $emailError, phoneError: $phoneError, passwordError: $passwordError)';
 }
 
 
@@ -237,7 +237,7 @@ abstract mixin class $RegisterStateCopyWith<$Res>  {
   factory $RegisterStateCopyWith(RegisterState value, $Res Function(RegisterState) _then) = _$RegisterStateCopyWithImpl;
 @useResult
 $Res call({
- String fullName, String email, String phone, String password, bool agreeToTerms, bool obscurePassword, bool isLoading, bool isLogin, String selectedRole, String? errorMessage, String? fullNameError, String? emailError, String? phoneError, String? passwordError
+ String fullName, String username, String email, String phone, String password, bool agreeToTerms, bool obscurePassword, bool isLoading, bool isLogin, String selectedRole, String? errorMessage, String? fullNameError, String? usernameError, String? emailError, String? phoneError, String? passwordError
 });
 
 
@@ -254,9 +254,10 @@ class _$RegisterStateCopyWithImpl<$Res>
 
 /// Create a copy of RegisterState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? fullName = null,Object? email = null,Object? phone = null,Object? password = null,Object? agreeToTerms = null,Object? obscurePassword = null,Object? isLoading = null,Object? isLogin = null,Object? selectedRole = null,Object? errorMessage = freezed,Object? fullNameError = freezed,Object? emailError = freezed,Object? phoneError = freezed,Object? passwordError = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? fullName = null,Object? username = null,Object? email = null,Object? phone = null,Object? password = null,Object? agreeToTerms = null,Object? obscurePassword = null,Object? isLoading = null,Object? isLogin = null,Object? selectedRole = null,Object? errorMessage = freezed,Object? fullNameError = freezed,Object? usernameError = freezed,Object? emailError = freezed,Object? phoneError = freezed,Object? passwordError = freezed,}) {
   return _then(_self.copyWith(
 fullName: null == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
+as String,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,phone: null == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
 as String,password: null == password ? _self.password : password // ignore: cast_nullable_to_non_nullable
@@ -267,6 +268,7 @@ as bool,isLogin: null == isLogin ? _self.isLogin : isLogin // ignore: cast_nulla
 as bool,selectedRole: null == selectedRole ? _self.selectedRole : selectedRole // ignore: cast_nullable_to_non_nullable
 as String,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String?,fullNameError: freezed == fullNameError ? _self.fullNameError : fullNameError // ignore: cast_nullable_to_non_nullable
+as String?,usernameError: freezed == usernameError ? _self.usernameError : usernameError // ignore: cast_nullable_to_non_nullable
 as String?,emailError: freezed == emailError ? _self.emailError : emailError // ignore: cast_nullable_to_non_nullable
 as String?,phoneError: freezed == phoneError ? _self.phoneError : phoneError // ignore: cast_nullable_to_non_nullable
 as String?,passwordError: freezed == passwordError ? _self.passwordError : passwordError // ignore: cast_nullable_to_non_nullable
@@ -355,10 +357,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String fullName,  String email,  String phone,  String password,  bool agreeToTerms,  bool obscurePassword,  bool isLoading,  bool isLogin,  String selectedRole,  String? errorMessage,  String? fullNameError,  String? emailError,  String? phoneError,  String? passwordError)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String fullName,  String username,  String email,  String phone,  String password,  bool agreeToTerms,  bool obscurePassword,  bool isLoading,  bool isLogin,  String selectedRole,  String? errorMessage,  String? fullNameError,  String? usernameError,  String? emailError,  String? phoneError,  String? passwordError)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RegisterState() when $default != null:
-return $default(_that.fullName,_that.email,_that.phone,_that.password,_that.agreeToTerms,_that.obscurePassword,_that.isLoading,_that.isLogin,_that.selectedRole,_that.errorMessage,_that.fullNameError,_that.emailError,_that.phoneError,_that.passwordError);case _:
+return $default(_that.fullName,_that.username,_that.email,_that.phone,_that.password,_that.agreeToTerms,_that.obscurePassword,_that.isLoading,_that.isLogin,_that.selectedRole,_that.errorMessage,_that.fullNameError,_that.usernameError,_that.emailError,_that.phoneError,_that.passwordError);case _:
   return orElse();
 
 }
@@ -376,10 +378,10 @@ return $default(_that.fullName,_that.email,_that.phone,_that.password,_that.agre
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String fullName,  String email,  String phone,  String password,  bool agreeToTerms,  bool obscurePassword,  bool isLoading,  bool isLogin,  String selectedRole,  String? errorMessage,  String? fullNameError,  String? emailError,  String? phoneError,  String? passwordError)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String fullName,  String username,  String email,  String phone,  String password,  bool agreeToTerms,  bool obscurePassword,  bool isLoading,  bool isLogin,  String selectedRole,  String? errorMessage,  String? fullNameError,  String? usernameError,  String? emailError,  String? phoneError,  String? passwordError)  $default,) {final _that = this;
 switch (_that) {
 case _RegisterState():
-return $default(_that.fullName,_that.email,_that.phone,_that.password,_that.agreeToTerms,_that.obscurePassword,_that.isLoading,_that.isLogin,_that.selectedRole,_that.errorMessage,_that.fullNameError,_that.emailError,_that.phoneError,_that.passwordError);case _:
+return $default(_that.fullName,_that.username,_that.email,_that.phone,_that.password,_that.agreeToTerms,_that.obscurePassword,_that.isLoading,_that.isLogin,_that.selectedRole,_that.errorMessage,_that.fullNameError,_that.usernameError,_that.emailError,_that.phoneError,_that.passwordError);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -396,10 +398,10 @@ return $default(_that.fullName,_that.email,_that.phone,_that.password,_that.agre
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String fullName,  String email,  String phone,  String password,  bool agreeToTerms,  bool obscurePassword,  bool isLoading,  bool isLogin,  String selectedRole,  String? errorMessage,  String? fullNameError,  String? emailError,  String? phoneError,  String? passwordError)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String fullName,  String username,  String email,  String phone,  String password,  bool agreeToTerms,  bool obscurePassword,  bool isLoading,  bool isLogin,  String selectedRole,  String? errorMessage,  String? fullNameError,  String? usernameError,  String? emailError,  String? phoneError,  String? passwordError)?  $default,) {final _that = this;
 switch (_that) {
 case _RegisterState() when $default != null:
-return $default(_that.fullName,_that.email,_that.phone,_that.password,_that.agreeToTerms,_that.obscurePassword,_that.isLoading,_that.isLogin,_that.selectedRole,_that.errorMessage,_that.fullNameError,_that.emailError,_that.phoneError,_that.passwordError);case _:
+return $default(_that.fullName,_that.username,_that.email,_that.phone,_that.password,_that.agreeToTerms,_that.obscurePassword,_that.isLoading,_that.isLogin,_that.selectedRole,_that.errorMessage,_that.fullNameError,_that.usernameError,_that.emailError,_that.phoneError,_that.passwordError);case _:
   return null;
 
 }
@@ -411,10 +413,11 @@ return $default(_that.fullName,_that.email,_that.phone,_that.password,_that.agre
 
 
 class _RegisterState implements RegisterState {
-  const _RegisterState({this.fullName = '', this.email = '', this.phone = '', this.password = '', this.agreeToTerms = false, this.obscurePassword = false, this.isLoading = false, this.isLogin = false, this.selectedRole = 'tenant', this.errorMessage, this.fullNameError, this.emailError, this.phoneError, this.passwordError});
+  const _RegisterState({this.fullName = '', this.username = '', this.email = '', this.phone = '', this.password = '', this.agreeToTerms = false, this.obscurePassword = false, this.isLoading = false, this.isLogin = false, this.selectedRole = 'tenant', this.errorMessage, this.fullNameError, this.usernameError, this.emailError, this.phoneError, this.passwordError});
   
 
 @override@JsonKey() final  String fullName;
+@override@JsonKey() final  String username;
 @override@JsonKey() final  String email;
 @override@JsonKey() final  String phone;
 @override@JsonKey() final  String password;
@@ -425,6 +428,7 @@ class _RegisterState implements RegisterState {
 @override@JsonKey() final  String selectedRole;
 @override final  String? errorMessage;
 @override final  String? fullNameError;
+@override final  String? usernameError;
 @override final  String? emailError;
 @override final  String? phoneError;
 @override final  String? passwordError;
@@ -439,16 +443,16 @@ _$RegisterStateCopyWith<_RegisterState> get copyWith => __$RegisterStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RegisterState&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.password, password) || other.password == password)&&(identical(other.agreeToTerms, agreeToTerms) || other.agreeToTerms == agreeToTerms)&&(identical(other.obscurePassword, obscurePassword) || other.obscurePassword == obscurePassword)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isLogin, isLogin) || other.isLogin == isLogin)&&(identical(other.selectedRole, selectedRole) || other.selectedRole == selectedRole)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.fullNameError, fullNameError) || other.fullNameError == fullNameError)&&(identical(other.emailError, emailError) || other.emailError == emailError)&&(identical(other.phoneError, phoneError) || other.phoneError == phoneError)&&(identical(other.passwordError, passwordError) || other.passwordError == passwordError));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RegisterState&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.username, username) || other.username == username)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.password, password) || other.password == password)&&(identical(other.agreeToTerms, agreeToTerms) || other.agreeToTerms == agreeToTerms)&&(identical(other.obscurePassword, obscurePassword) || other.obscurePassword == obscurePassword)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isLogin, isLogin) || other.isLogin == isLogin)&&(identical(other.selectedRole, selectedRole) || other.selectedRole == selectedRole)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.fullNameError, fullNameError) || other.fullNameError == fullNameError)&&(identical(other.usernameError, usernameError) || other.usernameError == usernameError)&&(identical(other.emailError, emailError) || other.emailError == emailError)&&(identical(other.phoneError, phoneError) || other.phoneError == phoneError)&&(identical(other.passwordError, passwordError) || other.passwordError == passwordError));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,fullName,email,phone,password,agreeToTerms,obscurePassword,isLoading,isLogin,selectedRole,errorMessage,fullNameError,emailError,phoneError,passwordError);
+int get hashCode => Object.hash(runtimeType,fullName,username,email,phone,password,agreeToTerms,obscurePassword,isLoading,isLogin,selectedRole,errorMessage,fullNameError,usernameError,emailError,phoneError,passwordError);
 
 @override
 String toString() {
-  return 'RegisterState(fullName: $fullName, email: $email, phone: $phone, password: $password, agreeToTerms: $agreeToTerms, obscurePassword: $obscurePassword, isLoading: $isLoading, isLogin: $isLogin, selectedRole: $selectedRole, errorMessage: $errorMessage, fullNameError: $fullNameError, emailError: $emailError, phoneError: $phoneError, passwordError: $passwordError)';
+  return 'RegisterState(fullName: $fullName, username: $username, email: $email, phone: $phone, password: $password, agreeToTerms: $agreeToTerms, obscurePassword: $obscurePassword, isLoading: $isLoading, isLogin: $isLogin, selectedRole: $selectedRole, errorMessage: $errorMessage, fullNameError: $fullNameError, usernameError: $usernameError, emailError: $emailError, phoneError: $phoneError, passwordError: $passwordError)';
 }
 
 
@@ -459,7 +463,7 @@ abstract mixin class _$RegisterStateCopyWith<$Res> implements $RegisterStateCopy
   factory _$RegisterStateCopyWith(_RegisterState value, $Res Function(_RegisterState) _then) = __$RegisterStateCopyWithImpl;
 @override @useResult
 $Res call({
- String fullName, String email, String phone, String password, bool agreeToTerms, bool obscurePassword, bool isLoading, bool isLogin, String selectedRole, String? errorMessage, String? fullNameError, String? emailError, String? phoneError, String? passwordError
+ String fullName, String username, String email, String phone, String password, bool agreeToTerms, bool obscurePassword, bool isLoading, bool isLogin, String selectedRole, String? errorMessage, String? fullNameError, String? usernameError, String? emailError, String? phoneError, String? passwordError
 });
 
 
@@ -476,9 +480,10 @@ class __$RegisterStateCopyWithImpl<$Res>
 
 /// Create a copy of RegisterState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? fullName = null,Object? email = null,Object? phone = null,Object? password = null,Object? agreeToTerms = null,Object? obscurePassword = null,Object? isLoading = null,Object? isLogin = null,Object? selectedRole = null,Object? errorMessage = freezed,Object? fullNameError = freezed,Object? emailError = freezed,Object? phoneError = freezed,Object? passwordError = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? fullName = null,Object? username = null,Object? email = null,Object? phone = null,Object? password = null,Object? agreeToTerms = null,Object? obscurePassword = null,Object? isLoading = null,Object? isLogin = null,Object? selectedRole = null,Object? errorMessage = freezed,Object? fullNameError = freezed,Object? usernameError = freezed,Object? emailError = freezed,Object? phoneError = freezed,Object? passwordError = freezed,}) {
   return _then(_RegisterState(
 fullName: null == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
+as String,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,phone: null == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
 as String,password: null == password ? _self.password : password // ignore: cast_nullable_to_non_nullable
@@ -489,6 +494,7 @@ as bool,isLogin: null == isLogin ? _self.isLogin : isLogin // ignore: cast_nulla
 as bool,selectedRole: null == selectedRole ? _self.selectedRole : selectedRole // ignore: cast_nullable_to_non_nullable
 as String,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String?,fullNameError: freezed == fullNameError ? _self.fullNameError : fullNameError // ignore: cast_nullable_to_non_nullable
+as String?,usernameError: freezed == usernameError ? _self.usernameError : usernameError // ignore: cast_nullable_to_non_nullable
 as String?,emailError: freezed == emailError ? _self.emailError : emailError // ignore: cast_nullable_to_non_nullable
 as String?,phoneError: freezed == phoneError ? _self.phoneError : phoneError // ignore: cast_nullable_to_non_nullable
 as String?,passwordError: freezed == passwordError ? _self.passwordError : passwordError // ignore: cast_nullable_to_non_nullable

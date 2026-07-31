@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
 import 'package:dio/dio.dart';
 
 class LeaseManagementScreen extends ConsumerStatefulWidget {
@@ -455,11 +456,13 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
     final state = ref.read(landlordProvider);
     final rentCtrl = TextEditingController();
     final depositCtrl = TextEditingController();
+    final tenantEmailCtrl = TextEditingController();
     DateTime? startDate;
     DateTime? endDate;
     String schedule = 'monthly';
     bool autoRenew = false;
     bool isLoading = false;
+    String? tenantLookupError;
 
     // Build dropdown lists from state
     final properties = state.properties;
@@ -494,23 +497,34 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                 const SizedBox(height: 20),
 
                 // Tenant selection
-                if (tenants.isEmpty) ...[
-                  const Text('Tenant *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  const Text('No tenants found. Ask tenant to register first.', style: TextStyle(color: AppColors.error, fontSize: 13)),
-                  const SizedBox(height: 16),
-                ] else ...[
-                  const Text('Tenant *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
+                const Text('Tenant *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                if (tenants.isNotEmpty) ...[
                   DropdownButtonFormField<String>(
-                    initialValue: selectedTenantId,
+                    value: selectedTenantId,
                     hint: const Text('Select Tenant'),
+                    isExpanded: true,
                     decoration: _sheetFieldDeco(),
-                    items: tenants.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name))).toList(),
+                    items: tenants.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, overflow: TextOverflow.ellipsis))).toList(),
                     onChanged: (v) => setSheetState(() => selectedTenantId = v),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 6),
+                  const Text('Or enter tenant email manually:', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  const SizedBox(height: 6),
                 ],
+                TextField(
+                  controller: tenantEmailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: _sheetFieldDeco(hint: 'tenant@email.com'),
+                  onChanged: (_) => setSheetState(() => tenantLookupError = null),
+                ),
+                if (tenantLookupError != null) ...[
+                  const SizedBox(height: 4),
+                  Text(tenantLookupError!, style: const TextStyle(color: AppColors.error, fontSize: 12)),
+                ],
+                const SizedBox(height: 4),
+                const Text('Tenant must have a registered account in the app', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+                const SizedBox(height: 16),
 
                 // Property Selection
                 if (properties.isEmpty) ...[
@@ -702,14 +716,39 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                     onPressed: isLoading
                         ? null
                         : () async {
-                            final tId = selectedTenantId ?? '';
                             final uId = selectedUnitId ?? '';
                             final pId = selectedPropertyId ?? '';
-                            if (tId.isEmpty || uId.isEmpty || pId.isEmpty || startDate == null || endDate == null || rentCtrl.text.trim().isEmpty) {
+                            if (uId.isEmpty || pId.isEmpty || startDate == null || endDate == null || rentCtrl.text.trim().isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all required fields'), backgroundColor: AppColors.error));
                               return;
                             }
-                            setSheetState(() => isLoading = true);
+                            // Resolve tenant ID: prefer dropdown selection, else look up by email
+                            String tId = selectedTenantId ?? '';
+                            final emailInput = tenantEmailCtrl.text.trim();
+                            if (tId.isEmpty && emailInput.isEmpty) {
+                              setSheetState(() => tenantLookupError = 'Please select a tenant or enter tenant email');
+                              return;
+                            }
+                            setSheetState(() { isLoading = true; tenantLookupError = null; });
+                            if (tId.isEmpty && emailInput.isNotEmpty) {
+                              // Lookup tenant by email via backend
+                              try {
+                                final resp = await ApiClient().dio.get('/users', queryParameters: {'email': emailInput});
+                                final rows = (resp.data['data'] as List<dynamic>?);
+                                final match = rows?.firstWhere(
+                                  (u) => (u['email'] as String?)?.toLowerCase() == emailInput.toLowerCase(),
+                                  orElse: () => null,
+                                );
+                                if (match == null) {
+                                  setSheetState(() { isLoading = false; tenantLookupError = 'No user found with email: $emailInput'; });
+                                  return;
+                                }
+                                tId = match['id']?.toString() ?? '';
+                              } catch (_) {
+                                setSheetState(() { isLoading = false; tenantLookupError = 'Could not look up tenant. Check connection.'; });
+                                return;
+                              }
+                            }
                             try {
                               final sd = '${startDate!.year}-${startDate!.month.toString().padLeft(2, '0')}-${startDate!.day.toString().padLeft(2, '0')}';
                               final ed = '${endDate!.year}-${endDate!.month.toString().padLeft(2, '0')}-${endDate!.day.toString().padLeft(2, '0')}';

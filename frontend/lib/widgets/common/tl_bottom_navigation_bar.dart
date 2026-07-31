@@ -7,8 +7,8 @@ class TLBottomNav extends StatelessWidget {
   final List<(IconData, IconData, String)> items;
 
   const TLBottomNav({
-    super.key, 
-    required this.selectedIndex, 
+    super.key,
+    required this.selectedIndex,
     required this.items,
     this.onTap,
   });

@@ -1,366 +1,293 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
-import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
-class BidsReceivedScreen extends ConsumerStatefulWidget {
-  const BidsReceivedScreen({super.key});
+class BidsReceivedScreen extends StatefulWidget {
+  final String? jobId;
+
+  const BidsReceivedScreen({super.key, this.jobId});
 
   @override
-  ConsumerState<BidsReceivedScreen> createState() => _BidsReceivedScreenState();
+  State<BidsReceivedScreen> createState() => _BidsReceivedScreenState();
 }
 
-class _BidsReceivedScreenState extends ConsumerState<BidsReceivedScreen> {
-  WorkOrder? _order;
+class _BidsReceivedScreenState extends State<BidsReceivedScreen> {
+  bool _isLoading = true;
+  Map<String, dynamic>? _job;
+  List<dynamic> _bids = [];
+  String? _effectiveJobId;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_order == null) {
-      final order = ModalRoute.of(context)?.settings.arguments as WorkOrder?;
-      if (order != null) {
-        _order = order;
-        Future.microtask(() {
-          ref.read(landlordProvider.notifier).fetchBidsForWorkOrder(order.id);
-        });
+    if (_effectiveJobId == null) {
+      final passedId = widget.jobId ?? ModalRoute.of(context)?.settings.arguments as String?;
+      _effectiveJobId = passedId;
+      if (_effectiveJobId != null) {
+        _fetchJobBids(_effectiveJobId!);
       } else {
-        _order = ref.read(landlordProvider).workOrders.firstOrNull;
-        if (_order != null) {
-          Future.microtask(() {
-            ref.read(landlordProvider.notifier).fetchBidsForWorkOrder(_order!.id);
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _fetchJobBids(String jobId) async {
+    try {
+      final response = await ApiClient().dio.get('/jobs/$jobId/bids');
+      if (response.data['success'] == true) {
+        final data = response.data['data'];
+        if (mounted) {
+          setState(() {
+            _job = data['job'];
+            _bids = data['bids'] ?? [];
+            _isLoading = false;
           });
         }
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _acceptBid(String bidId) async {
+    if (_effectiveJobId == null) return;
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final resp = await ApiClient().dio.patch('/jobs/$_effectiveJobId/bids/$bidId/accept');
+      if (mounted) Navigator.pop(context);
+
+      if (resp.data['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Bid accepted! Job moved to in-progress.'), backgroundColor: Colors.green),
+          );
+        }
+        _fetchJobBids(_effectiveJobId!);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to accept bid: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  Future<void> _rejectBid(String bidId) async {
+    if (_effectiveJobId == null) return;
+    try {
+      final resp = await ApiClient().dio.patch('/jobs/$_effectiveJobId/bids/$bidId/reject');
+      if (resp.data['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Bid rejected.')),
+          );
+        }
+        _fetchJobBids(_effectiveJobId!);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to reject bid: $e'), backgroundColor: AppColors.error),
+        );
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(landlordProvider);
-    final size = MediaQuery.of(context).size;
-    final w = size.width;
-    final h = size.height;
+    final w = MediaQuery.of(context).size.width;
+    final h = MediaQuery.of(context).size.height;
     final pad = w * 0.05;
-
-    final order = _order;
-    if (order == null) {
-      return const Scaffold(body: Center(child: Text('No work order provided')));
-    }
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(
-        title: const Text(
-          'Job Details',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
+        title: Text(_job?['title'] ?? 'Vendor Bids Received', style: const TextStyle(fontWeight: FontWeight.w700)),
+        backgroundColor: AppColors.white,
+        elevation: 0.5,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: pad, vertical: h * 0.02),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Job Details Overview Header Box
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(w * 0.05),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(pad),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        order.title,
-                        style: TextStyle(
-                          fontSize: w * 0.045,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
+                  // Job Overview Card
+                  if (_job != null) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(w * 0.04),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.secondary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          'OPEN FOR BIDS',
-                          style: TextStyle(
-                            color: AppColors.secondary,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        size: 14,
-                        color: AppColors.textHint,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${order.propertyName}, ${order.unitName}',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.person_outline_rounded,
-                        size: 14,
-                        color: AppColors.textHint,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Tenant: ${order.tenantName}',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 24, color: AppColors.border),
-                  const Text(
-                    'BUDGET RANGE',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textHint,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'SAR 200 - SAR 500',
-                    style: TextStyle(
-                      fontSize: w * 0.045,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: h * 0.035),
-
-            // Bids received header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Bids Received (${state.bids.length})',
-                  style: TextStyle(
-                    fontSize: w * 0.042,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  'Sort by: Highest Rated',
-                  style: TextStyle(
-                    fontSize: w * 0.028,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-
-            SizedBox(height: h * 0.015),
-
-            // Bids Card List
-            if (state.isBidsLoading)
-              const Center(child: Padding(
-                padding: EdgeInsets.all(32.0),
-                child: CircularProgressIndicator(),
-              ))
-            else if (state.bids.isEmpty)
-              const Center(child: Padding(
-                padding: EdgeInsets.all(32.0),
-                child: Text('No bids yet.'),
-              ))
-            else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: state.bids.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 16),
-                itemBuilder: (context, idx) {
-                  final bid = state.bids[idx];
-
-                  return Container(
-                  padding: EdgeInsets.all(w * 0.045),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: w * 0.12,
-                            height: w * 0.12,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              image: DecorationImage(
-                                image: NetworkImage(bid.avatarUrl),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  bid.vendorName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.star_rounded,
-                                      color: Colors.amber,
-                                      size: 14,
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      '${bid.rating} (${bid.totalJobs} jobs)',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Available to fix this immediately. I carry all standard sink parts.',
-                                  style: TextStyle(
-                                    fontSize: w * 0.028,
-                                    color: AppColors.textHint,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'SAR ${bid.price.toStringAsFixed(0)}',
-                                style: TextStyle(
-                                  fontSize: w * 0.045,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.secondary,
+                              Expanded(
+                                child: Text(
+                                  _job!['title']?.toString() ?? 'Job Posting',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: w * 0.04),
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                bid.time,
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  color: AppColors.textHint,
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  (_job!['urgency'] ?? 'Standard').toString().toUpperCase(),
+                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary),
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                      const Divider(height: 24, color: AppColors.border),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/landlord_job_chat',
-                                );
-                              },
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppColors.border),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: const Text(
-                                'Chat',
-                                style: TextStyle(color: AppColors.textPrimary),
-                              ),
-                            ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _job!['description']?.toString() ?? '',
+                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/landlord_confirm_assignment',
-                                  arguments: {'order': order, 'bid': bid},
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: const Text(
-                                'Assign Job',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Budget: \$${_job!['budget_min'] ?? 0} - \$${_job!['budget_max'] ?? 0}',
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                           ),
                         ],
                       ),
-                    ],
+                    ),
+                    SizedBox(height: h * 0.025),
+                  ],
+
+                  // Bids list title
+                  Text(
+                    'Vendor Bids (${_bids.length})',
+                    style: TextStyle(fontSize: w * 0.045, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                   ),
-                );
-              },
+                  SizedBox(height: h * 0.015),
+
+                  if (_bids.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(30),
+                      alignment: Alignment.center,
+                      child: const Text('No vendor bids submitted yet.', style: TextStyle(color: AppColors.textHint)),
+                    )
+                  else
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _bids.length,
+                      itemBuilder: (ctx, i) {
+                        final b = _bids[i] as Map<String, dynamic>;
+                        final vendor = b['vendor'] as Map<String, dynamic>? ?? {};
+                        final status = b['status']?.toString().toLowerCase() ?? 'pending';
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 14),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                                    child: const Icon(Icons.build_rounded, color: AppColors.primary),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          vendor['display_name']?.toString() ?? 'Vendor',
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                        ),
+                                        Text(
+                                          vendor['email']?.toString() ?? '',
+                                          style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    '\$${b['bid_amount']}',
+                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green),
+                                  ),
+                                ],
+                              ),
+                              if (b['proposal_notes'] != null && b['proposal_notes'].toString().isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                Text(
+                                  'Proposal: ${b['proposal_notes']}',
+                                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                ),
+                              ],
+                              const SizedBox(height: 14),
+                              if (status == 'accepted')
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Text('ACCEPTED BID', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                                )
+                              else if (status == 'rejected')
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Text('REJECTED', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                                )
+                              else
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () => _rejectBid(b['id'].toString()),
+                                        child: const Text('Reject', style: TextStyle(color: Colors.red)),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                                        onPressed: () => _acceptBid(b['id'].toString()),
+                                        child: const Text('Accept Bid', style: TextStyle(color: Colors.white)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }

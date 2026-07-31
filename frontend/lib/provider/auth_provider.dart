@@ -21,6 +21,8 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
 
   void updateFullName(String v) =>
       state = state.copyWith(fullName: v, fullNameError: null);
+  void updateUsername(String v) =>
+      state = state.copyWith(username: v, usernameError: null);
   void updateEmail(String v) =>
       state = state.copyWith(email: v, emailError: null);
   void updatePhone(String v) =>
@@ -34,11 +36,13 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
   void toggleMode() => state = state.copyWith(
         isLogin: !state.isLogin,
         fullName: '',
+        username: '',
         email: '',
         phone: '',
         password: '',
         errorMessage: null,
         fullNameError: null,
+        usernameError: null,
         emailError: null,
         phoneError: null,
         passwordError: null,
@@ -46,11 +50,13 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
   void setLoginMode(bool isLogin) => state = state.copyWith(
         isLogin: isLogin,
         fullName: '',
+        username: '',
         email: '',
         phone: '',
         password: '',
         errorMessage: null,
         fullNameError: null,
+        usernameError: null,
         emailError: null,
         phoneError: null,
         passwordError: null,
@@ -180,7 +186,7 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
         );
 
         final data = response.data['data'] as Map<String, dynamic>;
-        final accessToken = data['accessToken'] as String;
+        final accessToken = data['token'] as String;
         final refreshToken = data['refreshToken'] as String?;
 
         await ApiClient().saveToken(accessToken);
@@ -197,7 +203,6 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
         return true;
       } else {
         // ── REGISTER ─────────────────────────────────────────────────────────
-        // Backend Joi schema expects: email, password, phone, role (valid: tenant, landlord, vendor, admin, property_manager), display_name
         final String mappedRole = ['tenant', 'landlord', 'vendor', 'admin', 'property_manager']
                 .contains(state.selectedRole.toLowerCase())
             ? state.selectedRole.toLowerCase()
@@ -207,6 +212,7 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
           'email': trimmedEmail,
           'password': state.password,
           'role': mappedRole,
+          'regionCode': 'US-NYC',
         };
 
         if (trimmedPhone.isNotEmpty) {
@@ -220,35 +226,43 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
             regPayload['last_name'] = parts.sublist(1).join(' ');
           }
         }
+        if (state.username.trim().isNotEmpty && mappedRole == 'tenant') {
+          regPayload['username'] = state.username.trim();
+        }
 
         await ApiClient().dio.post(
           ApiConstants.register,
           data: regPayload,
         );
 
-        final loginPayload = <String, dynamic>{
-          'email': trimmedEmail,
-          'password': state.password,
-        };
-        if (trimmedPhone.isNotEmpty) {
-          loginPayload['phone'] = trimmedPhone;
-        }
-        if (trimmedFullName.isNotEmpty) {
-          loginPayload['full_name'] = trimmedFullName;
-        }
+        // Try auto-login after successful registration
+        try {
+          final loginPayload = <String, dynamic>{
+            'email': trimmedEmail,
+            'password': state.password,
+          };
 
-        final loginResponse = await ApiClient().dio.post(
-          ApiConstants.login,
-          data: loginPayload,
-        );
+          final loginResponse = await ApiClient().dio.post(
+            ApiConstants.login,
+            data: loginPayload,
+          );
 
-        final loginData = loginResponse.data['data'] as Map<String, dynamic>;
-        final accessToken = loginData['accessToken'] as String;
-        final refreshToken = loginData['refreshToken'] as String?;
+          final loginData = loginResponse.data['data'] as Map<String, dynamic>;
+          final accessToken = loginData['token'] as String;
+          final refreshToken = loginData['refreshToken'] as String?;
 
-        await ApiClient().saveToken(accessToken);
-        if (refreshToken != null && refreshToken.isNotEmpty) {
-          await ApiClient().saveRefreshToken(refreshToken);
+          await ApiClient().saveToken(accessToken);
+          if (refreshToken != null && refreshToken.isNotEmpty) {
+            await ApiClient().saveRefreshToken(refreshToken);
+          }
+        } catch (_) {
+          // If auto-login fails due to backend SQL bug, switch mode to Sign In cleanly
+          state = state.copyWith(
+            isLogin: true,
+            isLoading: false,
+            errorMessage: 'Account registered successfully! Please sign in.',
+          );
+          return true;
         }
 
         state = state.copyWith(isLoading: false);

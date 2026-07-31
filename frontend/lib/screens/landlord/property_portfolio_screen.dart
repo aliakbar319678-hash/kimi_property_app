@@ -17,6 +17,14 @@ class _PropertyPortfolioScreenState
   String _selectedTab = 'All';
   String _searchQuery = '';
 
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(landlordProvider.notifier).loadProperties();
+    });
+  }
+
   Color _approvalColor(String status) {
     switch (status.toLowerCase()) {
       case 'approved': return Colors.green;
@@ -75,7 +83,12 @@ class _PropertyPortfolioScreenState
       backgroundColor: AppColors.scaffoldBg,
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab_property',
-        onPressed: () => Navigator.pushNamed(context, '/landlord_add_property'),
+        onPressed: () async {
+          await Navigator.pushNamed(context, '/landlord_add_property');
+          if (mounted) {
+            ref.read(landlordProvider.notifier).loadProperties();
+          }
+        },
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: const Text('Add Property', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
@@ -83,26 +96,46 @@ class _PropertyPortfolioScreenState
         elevation: 4,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: pad, vertical: h * 0.02),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Portfolio', style: TextStyle(fontSize: w * 0.06, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                  GestureDetector(
-                    onTap: () => Navigator.pushNamed(context, '/landlord_reports_analytics'),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(10)),
-                      child: Row(children: [
-                        const Icon(Icons.bar_chart_rounded, color: AppColors.white, size: 16),
-                        SizedBox(width: w * 0.015),
-                        Text('Reports', style: TextStyle(fontSize: w * 0.028, fontWeight: FontWeight.w600, color: AppColors.white)),
-                      ]),
-                    ),
+        child: RefreshIndicator(
+          onRefresh: () => ref.read(landlordProvider.notifier).loadProperties(),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.symmetric(horizontal: pad, vertical: h * 0.02),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(child: Text('Properties', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: w * 0.06, fontWeight: FontWeight.w700, color: AppColors.textPrimary))),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/search'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(color: AppColors.secondary, borderRadius: BorderRadius.circular(10)),
+                          child: Row(children: [
+                            const Icon(Icons.travel_explore_rounded, color: AppColors.white, size: 16),
+                            SizedBox(width: w * 0.01),
+                            Text('Market Search', style: TextStyle(fontSize: w * 0.026, fontWeight: FontWeight.w600, color: AppColors.white)),
+                          ]),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/landlord_reports_analytics'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(10)),
+                          child: Row(children: [
+                            const Icon(Icons.bar_chart_rounded, color: AppColors.white, size: 16),
+                            SizedBox(width: w * 0.01),
+                            Text('Reports', style: TextStyle(fontSize: w * 0.026, fontWeight: FontWeight.w600, color: AppColors.white)),
+                          ]),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -155,7 +188,7 @@ class _PropertyPortfolioScreenState
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: filteredProperties.length,
-                  separatorBuilder: (_, __) => SizedBox(height: h * 0.025),
+                  separatorBuilder: (_, _) => SizedBox(height: h * 0.025),
                   itemBuilder: (context, index) {
                     final prop = filteredProperties[index];
                     final aColor = _approvalColor(prop.verificationStatus);
@@ -235,8 +268,12 @@ class _PropertyPortfolioScreenState
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text('Units: ${prop.totalUnits}  |  Vacant: ${prop.vacantUnits}',
-                                        style: TextStyle(fontSize: w * 0.03, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                                    Expanded(
+                                      child: Text('Units: ${prop.totalUnits}  |  Vacant: ${prop.vacantUnits}',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(fontSize: w * 0.03, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                                    ),
                                     const Row(children: [
                                       Text('Manage', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
                                       Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.primary),
@@ -251,42 +288,14 @@ class _PropertyPortfolioScreenState
                     );
                   },
                 ),
-              SizedBox(height: h * 0.03),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(w * 0.05),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF1B3D6B)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: AppColors.white.withValues(alpha: 0.1), shape: BoxShape.circle),
-                    child: const Icon(Icons.insights_rounded, color: AppColors.white, size: 24),
-                  ),
-                  SizedBox(width: w * 0.04),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Portfolio Insight', style: TextStyle(fontSize: w * 0.038, fontWeight: FontWeight.w700, color: AppColors.white)),
-                      const SizedBox(height: 2),
-                      Builder(builder: (context) {
-                        final total = state.properties.fold<int>(0, (s, p) => s + p.totalUnits);
-                        final occ = '${(state.occupancyRate * 100).toInt()}%';
-                        return Text('Average occupancy across $total units is $occ.',
-                            style: TextStyle(fontSize: w * 0.03, color: AppColors.white.withValues(alpha: 0.8), height: 1.4));
-                      }),
-                    ]),
-                  ),
-                ]),
-              ),
               SizedBox(height: h * 0.02),
             ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _filterTab(String label, int count, Color? color, double w) {
     final isSelected = _selectedTab == label;

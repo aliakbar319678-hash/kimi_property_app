@@ -28,7 +28,10 @@ abstract class Property with _$Property {
     @Default([]) List<dynamic> revisionHistory,
     // Extra dynamic fields
     @Default({}) Map<String, dynamic> metadata,
+    @Default(31.5204) double latitude,
+    @Default(74.3587) double longitude,
   }) = _Property;
+
 }
 
 @freezed
@@ -92,7 +95,11 @@ abstract class WorkOrder with _$WorkOrder {
     String? vendorName,
     String? vendorPhone,
     double? bidAmount,
+    @Default('') String assignedVendorName,
+    @Default('') String assignedVendorId,
+    @Default(0.0) double cost,
   }) = _WorkOrder;
+
 }
 
 @freezed
@@ -219,3 +226,5 @@ abstract class LandlordState with _$LandlordState {
     @Default('') String errorMessage,
   }) = _LandlordState;
 }
+
+

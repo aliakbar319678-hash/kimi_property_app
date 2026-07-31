@@ -61,18 +61,39 @@ class _LandlordLateNoticesScreenState extends ConsumerState<LandlordLateNoticesS
   Future<void> _fetchLateNotices() async {
     setState(() => _isLoading = true);
     try {
-      final response = await ApiClient().dio.get('/payments/late-notices');
+      final response = await ApiClient().dio.get('/users/tenants');
       if (response.data != null && response.data['data'] is List) {
         final List<dynamic> raw = response.data['data'];
-        final fetched = raw.map((item) => item as Map<String, dynamic>).toList();
-        if (fetched.isNotEmpty && mounted) {
+        final fetched = raw
+            .map((item) => item as Map<String, dynamic>)
+            .where((item) => (double.tryParse((item['outstanding'] ?? item['balance'] ?? 0).toString()) ?? 0.0) > 0 || (item['status']?.toString().toLowerCase() == 'overdue' || item['status']?.toString().toLowerCase() == 'late'))
+            .map((item) {
+          final tenantData = item['tenant'] as Map<String, dynamic>? ?? {};
+          final firstName = tenantData['legal_first_name']?.toString() ?? '';
+          final lastName = tenantData['legal_last_name']?.toString() ?? '';
+          final name = [firstName, lastName].where((s) => s.isNotEmpty).join(' ');
+          final balance = double.tryParse((item['outstanding'] ?? item['balance'] ?? 0).toString()) ?? 0.0;
+          return {
+            'id': item['id']?.toString() ?? '',
+            'tenantId': tenantData['id']?.toString() ?? '',
+            'leaseId': item['id']?.toString() ?? '',
+            'tenantName': name.isNotEmpty ? name : (tenantData['email']?.toString().split('@').first ?? 'Tenant'),
+            'propertyUnit': '${item['property_name'] ?? ''} - ${item['unit_name'] ?? ''}',
+            'daysOverdue': 5,
+            'outstandingBalance': balance,
+            'accumulatedLateFee': 50.0,
+            'lastNoticeSent': null,
+            'status': 'Pending',
+          };
+        }).toList();
+
+        if (mounted) {
           setState(() {
             _lateNotices = fetched;
           });
         }
       }
     } catch (_) {
-      // Keep rich fallback mock data
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

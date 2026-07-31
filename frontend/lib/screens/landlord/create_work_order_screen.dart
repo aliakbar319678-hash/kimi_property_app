@@ -155,7 +155,7 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                       _selectedProperty = properties.first.name;
                     });
                     notifier.loadUnits(properties.first.id).catchError((e) {
-                      if (mounted) {
+                      if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Failed to load units: $e'), backgroundColor: Colors.red),
                         );
@@ -196,7 +196,7 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                           _selectedUnitName = '';
                         });
                         notifier.loadUnits(prop.id).catchError((e) {
-                          if (mounted) {
+                          if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Failed to load units: $e'), backgroundColor: Colors.red),
                             );

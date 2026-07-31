@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
+import '../../../theme/apptheme.dart';
+import '../../../widgets/landlord/location_picker_dialog.dart';
+import '../../../utils/country_data.dart';
 
 class AddPropertyScreen extends ConsumerStatefulWidget {
   const AddPropertyScreen({super.key});
@@ -37,6 +40,8 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
   String _countryCode = 'US';
   final Set<String> _selectedAmenities = {};
   bool _isSubmitting = false;
+  double? _latitude;
+  double? _longitude;
 
   // ── Dynamic Property Controllers ─────────────────────────────────────────
   final _houseBedsCtrl = TextEditingController();
@@ -148,6 +153,8 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
             amenities: _selectedAmenities.toList(),
             price: double.tryParse(_priceCtrl.text.trim()),
             metadata: metadata,
+            latitude: _latitude,
+            longitude: _longitude,
           );
 
       if (_pickedImageBytes != null && _pickedFileName != null) {
@@ -451,9 +458,71 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
 
           // Address
           _sectionCard(
-            title: 'Address',
+            title: 'Address & Map Location',
             icon: Icons.location_on_rounded,
             children: [
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final res = await LocationPickerDialog.show(
+                      context,
+                      initialLat: _latitude ?? 31.5204,
+                      initialLng: _longitude ?? 74.3587,
+                    );
+                    if (res != null) {
+                      setState(() {
+                        _latitude = res.latitude;
+                        _longitude = res.longitude;
+                        if (res.addressLine1.isNotEmpty) {
+                          _addressCtrl.text = res.addressLine1;
+                        }
+                        if (res.city.isNotEmpty) {
+                          _cityCtrl.text = res.city;
+                        }
+                        if (res.stateProvince.isNotEmpty) {
+                          _stateCtrl.text = res.stateProvince;
+                        }
+                        if (res.zipCode.isNotEmpty) {
+                          _postalCtrl.text = res.zipCode;
+                        }
+                        if (res.country.isNotEmpty) {
+                          if (CountryData.countries.containsKey(res.country)) {
+                            _countryCode = res.country;
+                          }
+                        }
+                      });
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Pin Location Set successfully!'),
+                            backgroundColor: const Color(0xFF27AE60),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    side: BorderSide(color: _latitude != null ? const Color(0xFF27AE60) : AppColors.primary, width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: Icon(
+                    _latitude != null ? Icons.check_circle_rounded : Icons.map_rounded,
+                    color: _latitude != null ? const Color(0xFF27AE60) : AppColors.primary,
+                  ),
+                  label: Text(
+                    _latitude != null
+                        ? 'Location Set Successfully'
+                        : 'Pick Pin Location on Map',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _latitude != null ? const Color(0xFF27AE60) : AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
               _label('Street Address *'),
               _field('123 Main Street', _addressCtrl),
               _label('City *'),
@@ -477,7 +546,8 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
               ),
               _label('Country'),
               DropdownButtonFormField<String>(
-                initialValue: _countryCode,
+                value: _countryCode,
+                isExpanded: true,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: AppColors.white,
@@ -485,16 +555,10 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
                 ),
-                items: const [
-                  DropdownMenuItem(value: 'US', child: Text('US – United States')),
-                  DropdownMenuItem(value: 'CA', child: Text('CA – Canada')),
-                  DropdownMenuItem(value: 'GB', child: Text('GB – United Kingdom')),
-                  DropdownMenuItem(value: 'AU', child: Text('AU – Australia')),
-                  DropdownMenuItem(value: 'PK', child: Text('PK – Pakistan')),
-                  DropdownMenuItem(value: 'IN', child: Text('IN – India')),
-                  DropdownMenuItem(value: 'AE', child: Text('AE – UAE')),
-                  DropdownMenuItem(value: 'SA', child: Text('SA – Saudi Arabia')),
-                ],
+                items: CountryData.countries.entries.map((e) => DropdownMenuItem(
+                  value: e.key,
+                  child: Text('${e.key} – ${e.value}', overflow: TextOverflow.ellipsis),
+                )).toList(),
                 onChanged: (v) => setState(() => _countryCode = v ?? 'US'),
               ),
             ],
@@ -528,7 +592,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
               children: [
                 _label('Category'),
                 DropdownButtonFormField<String>(
-                  value: _commercialCategory,
+                  initialValue: _commercialCategory,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: AppColors.white,

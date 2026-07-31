@@ -129,9 +129,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         SizedBox(height: h * 0.018),
                       ],
 
-                      // Email Field
+                      // Email / Username Field
                       Text(
-                        'Email Address',
+                        'Email or Username',
                         style: TextStyle(
                           fontSize: w * 0.036,
                           fontWeight: FontWeight.w500,
@@ -141,7 +141,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       SizedBox(height: h * 0.008),
                       TLInputField(
                         key: const ValueKey('login_email_field'),
-                        hint: 'alex@example.com',
+                        hint: 'alex@example.com or alex123',
                         prefixIcon: Icons.mail_outline_rounded,
                         keyboardType: TextInputType.emailAddress,
                         onChanged: notif.updateEmail,
@@ -219,63 +219,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             );
                           }
                         },
-                      ),
-
-                      SizedBox(height: h * 0.025),
-
-                      // Divider "OR"
-                      Row(
-                        children: [
-                          const Expanded(child: Divider(color: AppColors.border)),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: w * 0.03),
-                            child: Text(
-                              'OR',
-                              style: TextStyle(
-                                fontSize: w * 0.032,
-                                color: AppColors.textHint,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const Expanded(child: Divider(color: AppColors.border)),
-                        ],
-                      ),
-
-                      SizedBox(height: h * 0.02),
-
-                      // Continue with Google Button
-                      OutlinedButton.icon(
-                        onPressed: () async {
-                          final success = await notif.loginWithGoogle();
-                          if (mounted && success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Signed in with Google!')),
-                            );
-                            Navigator.pushNamedAndRemoveUntil(
-                              context, '/home', (r) => false);
-                          }
-                        },
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: Size(double.infinity, h * 0.062),
-                          side: const BorderSide(color: AppColors.border),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(
-                          Icons.g_mobiledata_rounded,
-                          color: Color(0xFFEA4335),
-                          size: 28,
-                        ),
-                        label: Text(
-                          'Continue with Google',
-                          style: TextStyle(
-                            fontSize: w * 0.038,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
                       ),
 
                       SizedBox(height: h * 0.025),

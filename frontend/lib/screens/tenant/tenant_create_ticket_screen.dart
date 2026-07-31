@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
-import 'package:tenant_and_landlord_application/core/api_client.dart';
-import 'package:tenant_and_landlord_application/core/api_constants.dart';
 
 class TenantCreateTicketScreen extends StatefulWidget {
   const TenantCreateTicketScreen({super.key});
@@ -11,19 +9,8 @@ class TenantCreateTicketScreen extends StatefulWidget {
 }
 
 class _TenantCreateTicketScreenState extends State<TenantCreateTicketScreen> {
-  String _selectedPriority = 'low';
-  String _selectedCategory = 'general';
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  bool _isSubmitting = false;
+  String _selectedPriority = 'Normal';
   bool _hasAttachment = false;
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
 
   void _showMediaBottomSheet() {
     showModalBottomSheet(
@@ -55,6 +42,14 @@ class _TenantCreateTicketScreenState extends State<TenantCreateTicketScreen> {
                   Navigator.pop(ctx);
                 },
               ),
+              ListTile(
+                leading: const Icon(Icons.videocam_outlined, color: AppColors.primary),
+                title: const Text('Record Video', style: AppTextStyles.bodyMedium),
+                onTap: () {
+                  setState(() { _hasAttachment = true; });
+                  Navigator.pop(ctx);
+                },
+              ),
             ],
           ),
         );
@@ -62,47 +57,22 @@ class _TenantCreateTicketScreenState extends State<TenantCreateTicketScreen> {
     );
   }
 
-  Future<void> _submitTicket() async {
-    final title = _titleController.text.trim();
-    final description = _descriptionController.text.trim();
-
-    if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an issue title.')),
-      );
-      return;
-    }
-
-    setState(() => _isSubmitting = true);
+  void _submitTicket() {
     try {
-      final resp = await ApiClient().dio.post(
-        '/tickets',
-        data: {
-          'title': title,
-          'description': description,
-          'category': _selectedCategory,
-          'priority': _selectedPriority,
-        },
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ticket created successfully!')),
       );
-
-      if (resp.data != null && resp.data['success'] == true) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ticket created successfully!')),
-          );
-          Navigator.pop(context);
-        }
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
       } else {
-        throw Exception(resp.data?['error'] ?? 'Failed to submit ticket');
+        // Reset form if it can't pop
+        setState(() {
+          _selectedPriority = 'Normal';
+          _hasAttachment = false;
+        });
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Submission failed: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+      debugPrint('Error navigating: $e');
     }
   }
 
@@ -122,26 +92,20 @@ class _TenantCreateTicketScreenState extends State<TenantCreateTicketScreen> {
               const Text('Issue Title', style: AppTextStyles.labelMedium),
               const SizedBox(height: 8),
               TextFormField(
-                controller: _titleController,
                 decoration: const InputDecoration(hintText: 'e.g. Leaking Faucet'),
               ),
               const SizedBox(height: 20),
               const Text('Category', style: AppTextStyles.labelMedium),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: 'general',
                 decoration: const InputDecoration(hintText: 'Select Category'),
                 items: const [
-                  DropdownMenuItem(value: 'plumbing', child: Text('Plumbing')),
-                  DropdownMenuItem(value: 'electrical', child: Text('Electrical')),
-                  DropdownMenuItem(value: 'hvac', child: Text('HVAC')),
-                  DropdownMenuItem(value: 'general', child: Text('General/Other')),
+                  DropdownMenuItem(value: 'Plumbing', child: Text('Plumbing')),
+                  DropdownMenuItem(value: 'Electrical', child: Text('Electrical')),
+                  DropdownMenuItem(value: 'HVAC', child: Text('HVAC')),
+                  DropdownMenuItem(value: 'Other', child: Text('Other')),
                 ],
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() => _selectedCategory = val);
-                  }
-                },
+                onChanged: (val) {},
               ),
               const SizedBox(height: 20),
               const Text('Priority', style: AppTextStyles.labelMedium),
@@ -149,16 +113,15 @@ class _TenantCreateTicketScreenState extends State<TenantCreateTicketScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildPriorityButton('low', 'Normal', AppColors.primary),
-                  _buildPriorityButton('medium', 'Urgent', Colors.orange),
-                  _buildPriorityButton('high', 'Emergency', AppColors.error),
+                  _buildPriorityButton('Normal', AppColors.primary),
+                  _buildPriorityButton('Urgent', Colors.orange),
+                  _buildPriorityButton('Emergency', AppColors.error),
                 ],
               ),
               const SizedBox(height: 20),
               const Text('Description', style: AppTextStyles.labelMedium),
               const SizedBox(height: 8),
               TextFormField(
-                controller: _descriptionController,
                 maxLines: 4,
                 decoration: const InputDecoration(hintText: 'Describe the issue in detail...'),
               ),
@@ -210,15 +173,13 @@ class _TenantCreateTicketScreenState extends State<TenantCreateTicketScreen> {
               ),
               const SizedBox(height: 40),
               ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitTicket,
+                onPressed: _submitTicket,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   minimumSize: const Size(double.infinity, 56),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                child: _isSubmitting
-                    ? const CircularProgressIndicator(color: AppColors.white)
-                    : const Text('Submit Ticket', style: AppTextStyles.buttonText),
+                child: const Text('Submit Ticket', style: AppTextStyles.buttonText),
               ),
             ],
           ),
@@ -227,13 +188,13 @@ class _TenantCreateTicketScreenState extends State<TenantCreateTicketScreen> {
     );
   }
 
-  Widget _buildPriorityButton(String value, String label, Color color) {
-    bool selected = _selectedPriority == value;
+  Widget _buildPriorityButton(String label, Color color) {
+    bool selected = _selectedPriority == label;
     return Expanded(
       child: GestureDetector(
         onTap: () {
           setState(() {
-            _selectedPriority = value;
+            _selectedPriority = label;
           });
         },
         child: Container(

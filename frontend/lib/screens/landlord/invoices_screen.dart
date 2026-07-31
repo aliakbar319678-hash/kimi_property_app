@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
+import 'package:tenant_and_landlord_application/theme/apptheme.dart';
+import 'package:tenant_and_landlord_application/widgets/landlord/record_manual_payment_dialog.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
 
 class LandlordInvoicesScreen extends ConsumerStatefulWidget {
@@ -64,20 +65,51 @@ class _LandlordInvoicesScreenState extends ConsumerState<LandlordInvoicesScreen>
     setState(() => _isLoading = true);
     try {
       final response = await ApiClient().dio.get('/finance/invoices');
-      if (response.data != null && response.data['data'] is List) {
-        final List<dynamic> raw = response.data['data'];
-        final fetched = raw.map((item) => item as Map<String, dynamic>).toList();
-        if (fetched.isNotEmpty && mounted) {
-          setState(() {
-            _invoices = fetched;
-          });
+      List<dynamic> raw = [];
+      if (response.data != null && response.data['data'] != null) {
+        if (response.data['data'] is List) {
+          raw = response.data['data'];
+        } else if (response.data['data']['transactions'] is List) {
+          raw = response.data['data']['transactions'];
         }
       }
-    } catch (_) {
-      // Keep rich fallback mock data
+      
+      if (raw.isEmpty) {
+        final statsResp = await ApiClient().dio.get('/finance/stats');
+        if (statsResp.data != null && statsResp.data['data'] != null && statsResp.data['data']['transactions'] is List) {
+          raw = statsResp.data['data']['transactions'];
+        }
+      }
+
+      if (raw.isNotEmpty && mounted) {
+        final fetched = raw.map((item) {
+          final m = item as Map<String, dynamic>;
+          final amt = double.tryParse((m['amount'] ?? 0).toString()) ?? 0.0;
+          return {
+            'id': m['id']?.toString() ?? 'INV-${m['created_at']?.toString().substring(0, 4) ?? '2026'}',
+            'tenantName': m['user_name']?.toString() ?? m['tenantName']?.toString() ?? m['payer_name']?.toString() ?? 'Tenant',
+            'unitName': m['unit_name']?.toString() ?? m['unitName']?.toString() ?? 'Unit',
+            'amount': amt,
+            'dueDate': m['created_at']?.toString().split('T').first ?? '2026-08-01',
+            'status': (m['status']?.toString().toLowerCase() == 'completed') ? 'Paid' : _capitalize(m['status']?.toString() ?? 'Pending'),
+            'category': m['type']?.toString() ?? 'Monthly Rent',
+          };
+        }).toList();
+
+        setState(() {
+          _invoices = fetched;
+        });
+      }
+    } catch (e) {
+      debugPrint('[InvoicesScreen] _fetchInvoices error: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1);
   }
 
   double get _totalInvoiced => _invoices.fold(0.0, (sum, i) => sum + (i['amount'] as double));
@@ -446,15 +478,52 @@ class _LandlordInvoicesScreenState extends ConsumerState<LandlordInvoicesScreen>
                               default: statusColor = Colors.orange;
                             }
 
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: AppColors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: Row(
+                            return GestureDetector(
+                              onTap: status.toLowerCase() == 'paid'
+                                  ? null
+                                  : () async {
+                                      final res = await showModalBottomSheet<String>(
+                                        context: context,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (ctx) => Container(
+                                          padding: const EdgeInsets.all(24),
+                                          decoration: const BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Text('Invoice Options', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                              const SizedBox(height: 16),
+                                              ListTile(
+                                                leading: const Icon(Icons.payments_rounded, color: AppColors.primary),
+                                                title: const Text('Record Manual Payment'),
+                                                onTap: () => Navigator.pop(ctx, 'record'),
+                                              ),
+                                              ListTile(
+                                                leading: const Icon(Icons.cancel_rounded),
+                                                title: const Text('Cancel'),
+                                                onTap: () => Navigator.pop(ctx),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                      if (res == 'record' && mounted) {
+                                        final payment = await RecordManualPaymentDialog.show(context);
+                                        if (payment != null && mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment recorded successfully!'), backgroundColor: Colors.green));
+                                          _fetchInvoices(); // Refresh
+                                        }
+                                      }
+                                    },
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: AppColors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
@@ -503,9 +572,10 @@ class _LandlordInvoicesScreenState extends ConsumerState<LandlordInvoicesScreen>
                                   ),
                                 ],
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          );
+                        },
+                      ),
                 ],
               ),
             ),

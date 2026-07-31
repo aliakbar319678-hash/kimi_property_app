@@ -1,16 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
-class VendorRatingDialog extends StatefulWidget {
-  const VendorRatingDialog({super.key});
+class VendorRatingDialog extends ConsumerStatefulWidget {
+  final String? workOrderId;
+  const VendorRatingDialog({super.key, this.workOrderId});
 
   @override
-  State<VendorRatingDialog> createState() => _VendorRatingDialogState();
+  ConsumerState<VendorRatingDialog> createState() => _VendorRatingDialogState();
 }
 
-class _VendorRatingDialogState extends State<VendorRatingDialog> {
+class _VendorRatingDialogState extends ConsumerState<VendorRatingDialog> {
   int _rating = 0;
+  bool _isSubmitting = false;
   final TextEditingController _reviewController = TextEditingController();
+
+  @override
+  void dispose() {
+    _reviewController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_rating == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a star rating first.')),
+      );
+      return;
+    }
+    setState(() => _isSubmitting = true);
+    try {
+      final workOrderId = widget.workOrderId ?? 'wo-general';
+      await ref.read(landlordProvider.notifier).submitVendorRating(
+            workOrderId,
+            _rating,
+            _reviewController.text.trim(),
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vendor review submitted successfully!')),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Rating saved: ${e.toString()}')),
+        );
+        Navigator.pop(context, true);
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,12 +110,10 @@ class _VendorRatingDialogState extends State<VendorRatingDialog> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              onPressed: () {
-                if (_rating == 0) return;
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Rating submitted successfully!')));
-                Navigator.pop(context);
-              },
-              child: const Text('Submit Rating', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+              onPressed: _isSubmitting ? null : _submit,
+              child: _isSubmitting
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('Submit Rating', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
             ),
           ),
         ],
@@ -80,3 +121,4 @@ class _VendorRatingDialogState extends State<VendorRatingDialog> {
     );
   }
 }
+

@@ -1,8 +1,6 @@
 class ApiConstants {
   // ── Base URL ────────────────────────────────────────────────────────────────
-  // Use your computer's local network IP so a real phone on the same WiFi can
-  // reach the backend. Change this if your IP changes.
-  static const String baseUrl = 'http://192.168.1.111:5000/api/v1';
+  static const String baseUrl = 'http://192.168.1.2:5000/api/v1';
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   static const String login = '/auth/login';
@@ -58,19 +56,19 @@ class ApiConstants {
   static const String generateInvoice = '/finance/invoices';
   static const String invoices = '/finance/invoices';
   static const String recordManualPayment = '/finance/invoices/record-manual';
-  static const String payoutAccount = '/finance/payout-account';
+  static const String payoutAccount = '/payouts/landlord/accounts';
 
-  // ── Maintenance ─────────────────────────────────────────────────────────────
+  // ── Maintenance & Jobs ───────────────────────────────────────────────────────
   static const String workOrders = '/maintenance/work-orders';
   static const String maintenanceBids = '/maintenance/bids';
   static const String vendorJobs = '/maintenance/vendor/jobs';
+  static const String jobs = '/jobs';
 
   // Dynamic maintenance routes
-  // GET  /maintenance/work-orders/{id}
-  // GET  /maintenance/work-orders/{id}/bids
-  // POST /maintenance/work-orders/{id}/bids
-  // POST /maintenance/bids/{id}/accept
-  // PUT  /maintenance/work-orders/{id}/status
+  static String workOrderById(String id) => '/maintenance/work-orders/$id';
+  static String workOrderBids(String id) => '/maintenance/work-orders/$id/bids';
+  static String bidAccept(String id) => '/maintenance/bids/$id/accept';
+  static String workOrderStatus(String id) => '/maintenance/work-orders/$id/status';
 
   // ── Tenant ───────────────────────────────────────────────────────────────────
   static const String tenantActiveLease = '/tenant/active-lease';
@@ -109,11 +107,7 @@ class ApiConstants {
   static String leaseById(String id) => '/leases/$id';
   static String leaseRenew(String id) => '/leases/$id/renew';
   static String leaseStatus(String id) => '/leases/$id/status';
+  static String leaseInspections(String id) => '/leases/$id/inspections';
 
-  // ── Helper: build maintenance URL ────────────────────────────────────────────
-  static String workOrderById(String id) => '/maintenance/work-orders/$id';
-  static String workOrderBids(String id) => '/maintenance/work-orders/$id/bids';
-  static String workOrderStatus(String id) =>
-      '/maintenance/work-orders/$id/status';
-  static String bidAccept(String bidId) => '/maintenance/bids/$bidId/accept';
+
 }

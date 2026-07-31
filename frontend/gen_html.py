@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
-from graphify.build import build_from_json
-from graphify.export import to_html
+from graphify.build import build_from_json  # type: ignore
+from graphify.export import to_html  # type: ignore
 
 if __name__ == '__main__':
     extraction = json.loads(Path('graphify-out/.graphify_extract.json').read_text(encoding='utf-8'))

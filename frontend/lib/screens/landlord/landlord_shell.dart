@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/portfolio_dashboard_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/property_portfolio_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/tenant_directory_screen.dart';
@@ -6,16 +8,16 @@ import 'package:tenant_and_landlord_application/screens/landlord/maintenance_das
 import 'package:tenant_and_landlord_application/screens/landlord/landlord_profile_screen.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
-class LandlordShell extends StatefulWidget {
+class LandlordShell extends ConsumerStatefulWidget {
   final int initialIndex;
 
   const LandlordShell({super.key, this.initialIndex = 0});
 
   @override
-  State<LandlordShell> createState() => _LandlordShellState();
+  ConsumerState<LandlordShell> createState() => _LandlordShellState();
 }
 
-class _LandlordShellState extends State<LandlordShell> {
+class _LandlordShellState extends ConsumerState<LandlordShell> {
   late int _currentIndex;
 
   final List<Widget> _pages = const [
@@ -30,6 +32,11 @@ class _LandlordShellState extends State<LandlordShell> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(landlordProvider.notifier).initialize();
+      }
+    });
   }
 
 

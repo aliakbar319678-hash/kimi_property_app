@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
+import 'package:tenant_and_landlord_application/widgets/landlord/add_unit_dialog.dart';
 
 class LandlordPropertyDetailsScreen extends ConsumerStatefulWidget {
   const LandlordPropertyDetailsScreen({super.key});
@@ -184,6 +187,68 @@ class _LandlordPropertyDetailsScreenState
                       const SizedBox(width: 8),
                       _approvalChip(property.verificationStatus, w),
                     ],
+                  ),
+
+                  // ── Map Location Preview ──
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    height: 130,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Stack(
+                      children: [
+                        FlutterMap(
+                          options: MapOptions(
+                            initialCenter: LatLng(property.latitude, property.longitude),
+                            initialZoom: 14,
+                            interactionOptions: const InteractionOptions(
+                              flags: InteractiveFlag.none,
+                            ),
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              userAgentPackageName: 'com.tenant_and_landlord_app',
+                            ),
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  point: LatLng(property.latitude, property.longitude),
+                                  width: 40,
+                                  height: 40,
+                                  child: const Icon(Icons.location_on, color: Colors.red, size: 30),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Positioned(
+                          bottom: 8,
+                          left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.7),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.location_on_rounded, color: Colors.white, size: 12),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Map Location',
+                                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
                   // ── Rejection & Revision callout ────────────
@@ -685,13 +750,13 @@ class _LandlordPropertyDetailsScreenState
           TextButton(onPressed: () => preNavigator.pop(), child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary))),
           ElevatedButton(
             onPressed: () async {
-              preNavigator.pop(); // close dialog
+              preNavigator.pop();
               setState(() => _deleteInProgress = true);
               try {
                 await notifier.deleteProperty(property.id);
                 if (mounted) {
                   preMessenger.showSnackBar(const SnackBar(content: Text('Property deleted.'), backgroundColor: Color(0xFF27AE60)));
-                  preNavigator.pop(); // go back to portfolio
+                  preNavigator.pop();
                 }
               } catch (e) {
                 if (mounted) {
@@ -709,123 +774,32 @@ class _LandlordPropertyDetailsScreenState
     );
   }
 
-  void _showAddUnitDialog(BuildContext context, LandlordNotifier notifier, Property property) {
-    final unitNumCtrl = TextEditingController();
-    final rentCtrl = TextEditingController();
-    final depositCtrl = TextEditingController();
-    final bedsCtrl = TextEditingController();
-    final bathsCtrl = TextEditingController();
-    final sqftCtrl = TextEditingController();
-    String status = 'vacant';
-    bool isLoading = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Container(
-          padding: EdgeInsets.only(left: 20, right: 20, top: 24, bottom: MediaQuery.of(ctx).viewInsets.bottom + 24),
-          decoration: const BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)))),
-                const SizedBox(height: 20),
-                const Text('Add New Unit', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                const SizedBox(height: 16),
-
-                const Text('Unit Number *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
-                TextField(controller: unitNumCtrl, decoration: _deco('e.g. Unit 101 or Apt A')),
-                const SizedBox(height: 12),
-
-                Row(
-                  children: [
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Monthly Rent (\$) *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), const SizedBox(height: 6), TextField(controller: rentCtrl, keyboardType: TextInputType.number, decoration: _deco('1500'))])),
-                    const SizedBox(width: 12),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Deposit (\$)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), const SizedBox(height: 6), TextField(controller: depositCtrl, keyboardType: TextInputType.number, decoration: _deco('3000'))])),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                Row(
-                  children: [
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Beds', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), const SizedBox(height: 6), TextField(controller: bedsCtrl, keyboardType: TextInputType.number, decoration: _deco('0'))])),
-                    const SizedBox(width: 8),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Baths', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), const SizedBox(height: 6), TextField(controller: bathsCtrl, keyboardType: TextInputType.number, decoration: _deco('0'))])),
-                    const SizedBox(width: 8),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Sq.Ft.', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)), const SizedBox(height: 6), TextField(controller: sqftCtrl, keyboardType: TextInputType.number, decoration: _deco('0'))])),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                const Text('Status', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
-                DropdownButtonFormField<String>(
-                  initialValue: status,
-                  decoration: _deco(''),
-                  items: const [
-                    DropdownMenuItem(value: 'vacant', child: Text('Vacant')),
-                    DropdownMenuItem(value: 'occupied', child: Text('Occupied')),
-                    DropdownMenuItem(value: 'maintenance', child: Text('Maintenance')),
-                  ],
-                  onChanged: (v) => setSheetState(() => status = v ?? 'vacant'),
-                ),
-                const SizedBox(height: 24),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: isLoading
-                        ? null
-                        : () async {
-                            if (unitNumCtrl.text.trim().isEmpty || rentCtrl.text.trim().isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unit number and rent are required'), backgroundColor: AppColors.error));
-                              return;
-                            }
-                            setSheetState(() => isLoading = true);
-                            try {
-                              final unit = Unit(
-                                id: '',
-                                name: unitNumCtrl.text.trim(),
-                                status: status,
-                                tenantName: '',
-                                rent: double.tryParse(rentCtrl.text.trim()) ?? 0.0,
-                                amenities: [],
-                                bedrooms: int.tryParse(bedsCtrl.text.trim()) ?? 0,
-                                bathrooms: int.tryParse(bathsCtrl.text.trim()) ?? 0,
-                                squareFeet: int.tryParse(sqftCtrl.text.trim()) ?? 0,
-                                depositAmount: double.tryParse(depositCtrl.text.trim()) ?? 0.0,
-                              );
-                              await notifier.addUnit(property.id, unit);
-                              if (ctx.mounted) {
-                                Navigator.pop(ctx);
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unit added successfully! ✅'), backgroundColor: Color(0xFF27AE60)));
-                              }
-                            } catch (e) {
-                              if (ctx.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
-                              }
-                            } finally {
-                              if (ctx.mounted) setSheetState(() => isLoading = false);
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                    child: isLoading
-                        ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                        : const Text('Add Unit', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  void _showAddUnitDialog(BuildContext context, LandlordNotifier notifier, Property property) async {
+    final data = await AddUnitDialog.show(context, propertyName: property.name);
+    if (data != null && context.mounted) {
+      try {
+        final unit = Unit(
+          id: '',
+          name: data.unitNumber,
+          status: data.status,
+          tenantName: '',
+          rent: data.rentAmount,
+          amenities: [],
+          bedrooms: data.bedrooms,
+          bathrooms: data.bathrooms.toInt(),
+          squareFeet: data.sqft,
+          depositAmount: data.depositAmount,
+        );
+        await notifier.addUnit(property.id, unit);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unit added successfully! ✅'), backgroundColor: Color(0xFF27AE60)));
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+        }
+      }
+    }
   }
 
   InputDecoration _deco(String hint) => InputDecoration(

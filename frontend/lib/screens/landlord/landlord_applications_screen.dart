@@ -1,7 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
 import 'package:tenant_and_landlord_application/core/api_constants.dart';
+import 'package:tenant_and_landlord_application/widgets/landlord/conditional_approval_dialog.dart';
 
 class LandlordApplicationsScreen extends StatefulWidget {
   const LandlordApplicationsScreen({super.key});
@@ -22,7 +23,7 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
 
   Future<void> _fetchApplications() async {
     try {
-      final response = await ApiClient().dio.get('${ApiConstants.applications}/landlord');
+      final response = await ApiClient().dio.get(ApiConstants.applications);
       final data = response.data;
       if (data['success'] == true) {
         if (mounted) {
@@ -39,7 +40,7 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
     }
   }
 
-  Future<void> _updateDecision(String appId, String decision) async {
+  Future<void> _updateDecision(String appId, String decision, {ConditionalTermsResult? terms}) async {
     try {
       showDialog(
         context: context,
@@ -47,9 +48,19 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
         builder: (ctx) => const Center(child: CircularProgressIndicator()),
       );
 
+      final targetStatus = decision == 'conditional' ? 'conditional_approval' : decision;
+
+      final Map<String, dynamic> body = {'status': targetStatus};
+      if (terms != null) {
+        body['conditionalTerms'] = {
+          'tags': terms.tags,
+          'note': terms.note,
+        };
+      }
+
       final response = await ApiClient().dio.patch(
-        '${ApiConstants.applications}/$appId/decision',
-        data: {'approval_status': decision},
+        '${ApiConstants.applications}/$appId/status',
+        data: body,
       );
 
       if (mounted) Navigator.pop(context);
@@ -57,7 +68,7 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
       if (response.data['success'] == true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Application marked as $decision')));
+              SnackBar(content: Text('Application status updated to $targetStatus')));
         }
         _fetchApplications();
       } else {
@@ -114,9 +125,12 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
                       padding: const EdgeInsets.symmetric(vertical: 15)),
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(ctx);
-                    _updateDecision(app['id'], 'conditional');
+                    final terms = await ConditionalApprovalDialog.show(context);
+                    if (terms != null) {
+                      _updateDecision(app['id'], 'conditional', terms: terms);
+                    }
                   },
                   child: const Text('Conditional Approval',
                       style: TextStyle(color: Colors.white, fontSize: 16)),
@@ -154,7 +168,7 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
   /// screening_applications, so no screening_application_id is returned.
   /// The backend team should add this join to remove the manual ID input.
   void _openScreeningReport(BuildContext context, Map<String, dynamic> app) {
-    final directId = app['screening_application_id']?.toString() ?? '';
+    final directId = app['screening_application_id']?.toString() ?? app['id']?.toString() ?? '';
     if (directId.isNotEmpty) {
       Navigator.pushNamed(
         context,
