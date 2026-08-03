@@ -319,14 +319,15 @@ class _LandlordLeaseDetailScreenState
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
+              final messenger = ScaffoldMessenger.of(context);
               try {
                 await notifier.updateLeaseStatus(lease.id, 'terminated');
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lease terminated.'), backgroundColor: AppColors.error));
+                  messenger.showSnackBar(const SnackBar(content: Text('Lease terminated.'), backgroundColor: AppColors.error));
                   _fetchDetail();
                 }
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+                if (mounted) messenger.showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),

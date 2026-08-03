@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
@@ -68,19 +70,39 @@ class _MoveOutInspectionsScreenState
   Future<void> _fetchInspections() async {
     setState(() => _isLoading = true);
     try {
-      final response =
-          await ApiClient().dio.get('/move-out/inspections/dashboard');
-      if (response.data != null && response.data['data'] is List) {
-        final List<dynamic> raw = response.data['data'];
-        final fetched = raw.map((item) => item as Map<String, dynamic>).toList();
-        if (fetched.isNotEmpty && mounted) {
-          setState(() {
-            _inspections = fetched;
-          });
-        }
+      final landlordState = ref.read(landlordProvider);
+      final leases = landlordState.leases;
+      List<Map<String, dynamic>> allInspections = [];
+
+      for (final lease in leases) {
+        try {
+          final res = await ApiClient().dio.get('/leases/${lease.id}/inspections');
+          final list = (res.data['inspections'] ?? res.data['data'] ?? []) as List<dynamic>;
+          for (final item in list) {
+            final m = item as Map<String, dynamic>;
+            allInspections.add({
+              'id': m['id']?.toString() ?? 'chk-${allInspections.length + 1}',
+              'propertyName': lease.propertyName,
+              'unitName': lease.unitName,
+              'tenantName': lease.tenantName,
+              'date': m['created_at'] != null ? m['created_at'].toString().split('T').first : '2026-08-01',
+              'status': m['status']?.toString() ?? 'Passed',
+              'securityDeposit': lease.rentAmount,
+              'depositRefunded': lease.rentAmount,
+              'totalDeductions': 0.0,
+              'damages': [],
+              'photos': m['photos'] is List ? (m['photos'] as List).map((p) => p.toString()).toList() : [],
+            });
+          }
+        } catch (_) {}
+      }
+
+      if (mounted && allInspections.isNotEmpty) {
+        setState(() {
+          _inspections = allInspections;
+        });
       }
     } catch (_) {
-      // Keep rich mock initial fallback
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -265,11 +287,14 @@ class _MoveOutInspectionsScreenState
                     Row(
                       children: [
                         GestureDetector(
-                          onTap: () {
-                            setModalState(() {
-                              photosList.add(
-                                  'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&q=80');
-                            });
+                          onTap: () async {
+                            final picker = ImagePicker();
+                            final picked = await picker.pickImage(source: ImageSource.gallery);
+                            if (picked != null) {
+                              setModalState(() {
+                                photosList.add(picked.path);
+                              });
+                            }
                           },
                           child: Container(
                             width: 70,
@@ -294,18 +319,33 @@ class _MoveOutInspectionsScreenState
                           ),
                         ),
                         const SizedBox(width: 10),
-                        ...photosList.map((url) => Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              width: 70,
-                              height: 70,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                image: DecorationImage(
-                                  image: NetworkImage(url),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            )),
+                        Expanded(
+                          child: SizedBox(
+                            height: 70,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: photosList.length,
+                              itemBuilder: (ctx, idx) {
+                                final urlOrPath = photosList[idx];
+                                final isNet = urlOrPath.startsWith('http');
+                                return Container(
+                                  margin: const EdgeInsets.only(right: 8),
+                                  width: 70,
+                                  height: 70,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    image: DecorationImage(
+                                      image: isNet
+                                          ? NetworkImage(urlOrPath) as ImageProvider
+                                          : FileImage(File(urlOrPath)),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -319,14 +359,21 @@ class _MoveOutInspectionsScreenState
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Calculated Deposit Refund:',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 13)),
-                          Text('\$${refundAmount.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Color(0xFF1B8E4D))),
+                          const Flexible(
+                            child: Text('Calculated Deposit Refund:',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w600, fontSize: 13),
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                          const SizedBox(width: 8),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text('\$${refundAmount.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Color(0xFF1B8E4D))),
+                          ),
                         ],
                       ),
                     ),
@@ -585,18 +632,24 @@ class _MoveOutInspectionsScreenState
                             child: ListView.builder(
                               scrollDirection: Axis.horizontal,
                               itemCount: photos.length,
-                              itemBuilder: (ctx, pIdx) => Container(
-                                margin: const EdgeInsets.only(right: 8),
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  image: DecorationImage(
-                                    image: NetworkImage(photos[pIdx].toString()),
-                                    fit: BoxFit.cover,
+                              itemBuilder: (ctx, pIdx) {
+                                final pPath = photos[pIdx].toString();
+                                final isNet = pPath.startsWith('http');
+                                return Container(
+                                  margin: const EdgeInsets.only(right: 8),
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    image: DecorationImage(
+                                      image: isNet
+                                          ? NetworkImage(pPath) as ImageProvider
+                                          : FileImage(File(pPath)),
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
-                                ),
-                              ),
+                                );
+                              },
                             ),
                           ),
                           const SizedBox(height: 14),

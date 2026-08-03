@@ -305,6 +305,7 @@ class _LandlordInvoicesScreenState extends ConsumerState<LandlordInvoicesScreen>
                               return;
                             }
                             setSheetState(() => isSaving = true);
+                            final messenger = ScaffoldMessenger.of(context);
 
                             final newInv = {
                               'id': 'INV-2026-00${_invoices.length + 1}',
@@ -334,7 +335,7 @@ class _LandlordInvoicesScreenState extends ConsumerState<LandlordInvoicesScreen>
 
                             if (ctx.mounted) Navigator.pop(ctx);
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              messenger.showSnackBar(
                                 SnackBar(
                                   content: Text('Invoice #${newInv['id']} issued for \$${amt.toStringAsFixed(2)}!'),
                                   backgroundColor: Colors.green,
@@ -482,6 +483,7 @@ class _LandlordInvoicesScreenState extends ConsumerState<LandlordInvoicesScreen>
                               onTap: status.toLowerCase() == 'paid'
                                   ? null
                                   : () async {
+                                      final messenger2 = ScaffoldMessenger.of(context);
                                       final res = await showModalBottomSheet<String>(
                                         context: context,
                                         backgroundColor: Colors.transparent,
@@ -510,7 +512,7 @@ class _LandlordInvoicesScreenState extends ConsumerState<LandlordInvoicesScreen>
                                       if (res == 'record' && mounted) {
                                         final payment = await RecordManualPaymentDialog.show(context);
                                         if (payment != null && mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment recorded successfully!'), backgroundColor: Colors.green));
+                                          messenger2.showSnackBar(const SnackBar(content: Text('Payment recorded successfully!'), backgroundColor: Colors.green));
                                           _fetchInvoices(); // Refresh
                                         }
                                       }

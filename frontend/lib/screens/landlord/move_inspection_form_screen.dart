@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
 
 class MoveInspectionFormScreen extends StatefulWidget {
   final String leaseId;
@@ -18,6 +21,43 @@ class _MoveInspectionFormScreenState extends State<MoveInspectionFormScreen> {
     {'name': 'Bedroom 1', 'condition': 'Good', 'notes': '', 'images': []},
     {'name': 'Bathroom', 'condition': 'Good', 'notes': '', 'images': []},
   ];
+
+  bool _isSubmitting = false;
+
+  Future<void> _submitInspection() async {
+    setState(() => _isSubmitting = true);
+    try {
+      final checklistData = _rooms.map((r) => {
+        'item': r['name']?.toString() ?? '',
+        'condition': (r['condition']?.toString() ?? 'GOOD').toUpperCase(),
+        'notes': r['notes']?.toString() ?? '',
+      }).toList();
+
+      await ApiClient().dio.post('/leases/${widget.leaseId}/inspections', data: {
+        'inspection_type': widget.type == 'Move-In' ? 'MOVE_IN' : 'MOVE_OUT',
+        'checklist_data': checklistData,
+        'inspector_role': 'LANDLORD',
+        'landlord_signature': 'Signed by Landlord',
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${widget.type} inspection submitted successfully!'), backgroundColor: AppColors.success),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to submit inspection. Please try again.'), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,11 +86,10 @@ class _MoveInspectionFormScreenState extends State<MoveInspectionFormScreen> {
                   minimumSize: const Size(double.infinity, 56),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${widget.type} inspection completed!')));
-                },
-                child: const Text('Submit Inspection', style: AppTextStyles.buttonText),
+                onPressed: _isSubmitting ? null : _submitInspection,
+                child: _isSubmitting
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Submit Inspection', style: AppTextStyles.buttonText),
               ),
             ),
           ],
@@ -105,11 +144,14 @@ class _MoveInspectionFormScreenState extends State<MoveInspectionFormScreen> {
             Row(
               children: [
                 GestureDetector(
-                  onTap: () {
-                    // Simulate adding image
-                    setState(() {
-                      room['images'].add('dummy_path');
-                    });
+                  onTap: () async {
+                    final picker = ImagePicker();
+                    final picked = await picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      setState(() {
+                        room['images'].add(picked.path);
+                      });
+                    }
                   },
                   child: Container(
                     height: 80,
@@ -130,14 +172,20 @@ class _MoveInspectionFormScreenState extends State<MoveInspectionFormScreen> {
                       scrollDirection: Axis.horizontal,
                       itemCount: room['images'].length,
                       itemBuilder: (ctx, i) {
+                        final imgPath = room['images'][i].toString();
+                        final isNet = imgPath.startsWith('http');
                         return Container(
                           width: 80,
                           margin: const EdgeInsets.only(right: 8),
                           decoration: BoxDecoration(
-                            color: Colors.grey[300],
                             borderRadius: BorderRadius.circular(12),
+                            image: DecorationImage(
+                              image: isNet
+                                  ? NetworkImage(imgPath) as ImageProvider
+                                  : FileImage(File(imgPath)),
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                          child: const Icon(Icons.image, color: Colors.grey),
                         );
                       },
                     ),

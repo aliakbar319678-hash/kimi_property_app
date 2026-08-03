@@ -58,7 +58,7 @@ import 'package:tenant_and_landlord_application/screens/landlord/confirm_assignm
 import 'package:tenant_and_landlord_application/screens/landlord/job_chat_room_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/lease_management_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/financial_overview_screen.dart';
-import 'package:tenant_and_landlord_application/screens/landlord/reports_analytics_screen.dart';
+
 import 'package:tenant_and_landlord_application/screens/landlord/ai_smart_assistant_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/add_property_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/edit_property_screen.dart';
@@ -71,12 +71,10 @@ import 'package:tenant_and_landlord_application/screens/landlord/screening_detai
 import 'package:tenant_and_landlord_application/screens/landlord/move_in_checklists_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/move_out_inspections_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/invoices_screen.dart';
-import 'package:tenant_and_landlord_application/screens/landlord/late_notices_screen.dart';
+
 import 'package:tenant_and_landlord_application/screens/landlord/vendor_directory_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/calendar_screen.dart';
-import 'package:tenant_and_landlord_application/screens/landlord/property_showings_screen.dart';
-import 'package:tenant_and_landlord_application/screens/landlord/marketing_listings_screen.dart';
-import 'package:tenant_and_landlord_application/screens/landlord/communication_center_screen.dart';
+
 
 
 
@@ -152,7 +150,7 @@ class TLApp extends StatelessWidget {
         '/landlord_job_chat': (_) => const JobChatRoomScreen(),
         '/landlord_lease_management': (_) => const LeaseManagementScreen(),
         '/landlord_financial_overview': (_) => const FinancialOverviewScreen(),
-        '/landlord_reports_analytics': (_) => const ReportsAnalyticsScreen(),
+
         '/landlord_profile': (_) => const LandlordProfileScreen(),
         '/landlord_ai_assistant': (_) => const AISmartAssistantScreen(),
         '/landlord_add_property': (_) => const AddPropertyScreen(),
@@ -165,12 +163,10 @@ class TLApp extends StatelessWidget {
         '/landlord_move_in_checklists': (_) => const MoveInChecklistsScreen(),
         '/landlord_move_out_inspections': (_) => const MoveOutInspectionsScreen(),
         '/landlord_invoices': (_) => const LandlordInvoicesScreen(),
-        '/landlord_late_notices': (_) => const LandlordLateNoticesScreen(),
+
         '/landlord_vendor_directory': (_) => const LandlordVendorDirectoryScreen(),
         '/landlord_calendar': (_) => const LandlordCalendarScreen(),
-        '/landlord_showings': (_) => const LandlordPropertyShowingsScreen(),
-        '/landlord_marketing_listings': (_) => const LandlordMarketingListingsScreen(),
-        '/landlord_communication': (_) => const LandlordCommunicationCenterScreen(),
+
 
         // ── Vendor Portal Routes ──────────────────
         '/vendor_onboarding': (_) => const VendorOnboardingScreen(),

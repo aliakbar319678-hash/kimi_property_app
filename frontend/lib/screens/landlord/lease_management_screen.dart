@@ -351,10 +351,11 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                 constraints: const BoxConstraints(),
                 onSelected: (newStatus) async {
                   if (newStatus == lease.status) return;
+                  final messenger = ScaffoldMessenger.of(context);
                   try {
                     await ref.read(landlordProvider.notifier).updateLeaseStatus(lease.id, newStatus);
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(
                           content: Text('Lease status updated to ${newStatus.toUpperCase()}'),
                           backgroundColor: Colors.green,
@@ -363,7 +364,7 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                     }
                   } catch (e) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
                       );
                     }

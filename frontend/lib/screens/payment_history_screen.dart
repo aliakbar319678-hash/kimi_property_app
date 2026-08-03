@@ -229,7 +229,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                             h: h,
                           ),
                         );
-                      }).toList()
+                      })
                     else
                       const Padding(
                         padding: EdgeInsets.all(16.0),

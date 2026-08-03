@@ -86,7 +86,7 @@ class _MoveInChecklistsScreenState
       final leases = landlordState.leases;
       List<Map<String, dynamic>> allInspections = [];
 
-      for (final lease in leases.take(5)) {
+      for (final lease in leases) {
         try {
           final res = await ApiClient().dio.get('/leases/${lease.id}/inspections');
           final list = (res.data['inspections'] ?? res.data['data'] ?? []) as List<dynamic>;

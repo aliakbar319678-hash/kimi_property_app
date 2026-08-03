@@ -189,9 +189,21 @@ class _DepositRefundCalculatorDialogState extends State<DepositRefundCalculatorD
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Net Refund to Tenant:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  Text('\$${net.toStringAsFixed(2)}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green)),
+                  const Flexible(
+                    child: Text(
+                      'Net Refund to Tenant:',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '\$${net.toStringAsFixed(2)}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green),
+                    ),
+                  ),
                 ],
               ),
             ),

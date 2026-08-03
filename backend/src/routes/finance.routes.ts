@@ -42,10 +42,12 @@ router.get('/stats', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
 
     const failedTxns = await query(`SELECT COUNT(*) as cnt, SUM(amount) as total_lost FROM transactions WHERE status = 'failed' AND created_at > NOW() - INTERVAL '24 hours'`);
     const disputedTxns = await query(`SELECT COUNT(*) as cnt FROM transactions WHERE status = 'disputed'`);
+    const frozenTxns = await query(`SELECT COUNT(*) as cnt FROM transactions WHERE hold_status = 'holding'`);
     
     const alerts = [];
     const failedCount = parseInt(failedTxns.rows[0].cnt);
     const disputedCount = parseInt(disputedTxns.rows[0].cnt);
+    const frozenCount = parseInt(frozenTxns.rows[0].cnt || '0');
     
     if (failedCount > 0) {
       alerts.push({
@@ -69,6 +71,8 @@ router.get('/stats', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
         total_expenses: parseFloat(expenseRes.rows[0].total) || 0,
         pending_payments: parseFloat(pendingRes.rows[0].total) || 0,
         net_profit: (parseFloat(incomeRes.rows[0].total) || 0) - (parseFloat(expenseRes.rows[0].total) || 0),
+        is_frozen: frozenCount > 0,
+        frozen_count: frozenCount,
         transactions: txnsRes.rows,
         alerts
       } 
@@ -131,6 +135,145 @@ router.post('/invoices', authenticate, requireRole('vendor', 'landlord', 'admin'
   try {
     const invoice = await FinanceService.generateInvoice(req.user!.id, req.body.workOrderId, req.body.items, req.body.due_date || req.body.dueDate);
     res.status(201).json({ success: true, data: invoice });
+  } catch (e) { next(e); }
+});
+
+router.post('/payments/freeze', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
+  try {
+    let { transaction_id } = req.body;
+    if (!transaction_id) {
+      return res.status(400).json({ success: false, error: 'transaction_id is required' });
+    }
+    
+    let queryStr = `UPDATE transactions SET hold_status = 'holding', updated_at = NOW() WHERE id = $1 RETURNING id`;
+    let queryArgs = [transaction_id];
+
+    if (transaction_id.startsWith('TXN-')) {
+      const shortId = transaction_id.replace('TXN-', '');
+      queryStr = `UPDATE transactions SET hold_status = 'holding', updated_at = NOW() WHERE id::text LIKE $1 RETURNING id`;
+      queryArgs = [`%${shortId}`];
+    } else if (transaction_id.length < 36) {
+      queryStr = `UPDATE transactions SET hold_status = 'holding', updated_at = NOW() WHERE id::text LIKE $1 RETURNING id`;
+      queryArgs = [`%${transaction_id}`];
+    }
+
+    const updateRes = await query(queryStr, queryArgs);
+    
+    if ((updateRes.rowCount ?? 0) === 0) {
+      return res.status(404).json({ success: false, error: 'Transaction not found' });
+    }
+    if ((updateRes.rowCount ?? 0) > 1) {
+      return res.status(400).json({ success: false, error: 'Multiple transactions matched this short ID. Please provide a more specific ID.' });
+    }
+    res.json({ success: true, message: `Transaction ${updateRes.rows[0]?.id || transaction_id} frozen successfully` });
+  } catch (e) { next(e); }
+});
+
+router.post('/payments/unfreeze', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
+  try {
+    let { transaction_id } = req.body;
+    if (!transaction_id) {
+      return res.status(400).json({ success: false, error: 'transaction_id is required' });
+    }
+    
+    let queryStr = `UPDATE transactions SET hold_status = 'released', updated_at = NOW() WHERE id = $1 RETURNING id`;
+    let queryArgs = [transaction_id];
+
+    if (transaction_id.startsWith('TXN-')) {
+      const shortId = transaction_id.replace('TXN-', '');
+      queryStr = `UPDATE transactions SET hold_status = 'released', updated_at = NOW() WHERE id::text LIKE $1 RETURNING id`;
+      queryArgs = [`%${shortId}`];
+    } else if (transaction_id.length < 36) {
+      queryStr = `UPDATE transactions SET hold_status = 'released', updated_at = NOW() WHERE id::text LIKE $1 RETURNING id`;
+      queryArgs = [`%${transaction_id}`];
+    }
+
+    const updateRes = await query(queryStr, queryArgs);
+    
+    if ((updateRes.rowCount ?? 0) === 0) {
+      return res.status(404).json({ success: false, error: 'Transaction not found' });
+    }
+    if ((updateRes.rowCount ?? 0) > 1) {
+      return res.status(400).json({ success: false, error: 'Multiple transactions matched this short ID. Please provide a more specific ID.' });
+    }
+    res.json({ success: true, message: `Transaction ${updateRes.rows[0]?.id || transaction_id} unfrozen successfully` });
+  } catch (e) { next(e); }
+});
+
+router.post('/payments/toggle-freeze', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const { action } = req.body;
+    
+    if (action === 'freeze') {
+      const updateRes = await query(`UPDATE transactions SET hold_status = 'holding', updated_at = NOW() WHERE hold_status IS NULL OR hold_status != 'holding'`);
+      return res.json({ 
+        success: true, 
+        is_frozen: true, 
+        affected_count: updateRes.rowCount,
+        message: 'All transactions frozen successfully. Payments halted.' 
+      });
+    } else {
+      const updateRes = await query(`UPDATE transactions SET hold_status = 'released', updated_at = NOW() WHERE hold_status = 'holding'`);
+      return res.json({ 
+        success: true, 
+        is_frozen: false, 
+        affected_count: updateRes.rowCount,
+        message: 'All transactions unfrozen successfully. Payments active.' 
+      });
+    }
+  } catch (e) { next(e); }
+});
+
+router.post('/payments/batch-retry', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const failedTxns = await query(`SELECT * FROM transactions WHERE status = 'failed'`);
+    if (!failedTxns.rows.length) {
+      return res.json({ success: true, data: { retried: 0 }, message: 'No failed transactions to retry' });
+    }
+
+    const Stripe = require('stripe');
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    let retryCount = 0;
+
+    for (const tx of failedTxns.rows) {
+      const piId = tx.metadata?.payment_intent_id || tx.gateway_transaction_id;
+      if (piId && piId.startsWith('pi_')) {
+        try {
+          const pi = await stripe.paymentIntents.retrieve(piId);
+          if (pi.status === 'requires_payment_method' || pi.status === 'requires_confirmation') {
+            await stripe.paymentIntents.confirm(piId);
+          }
+          await query(
+            `UPDATE transactions SET status = 'pending', metadata = metadata || '{"retry": true}'::jsonb, updated_at = NOW() WHERE id = $1`,
+            [tx.id]
+          );
+          retryCount++;
+          continue;
+        } catch (e) {
+          console.error(`Batch retry failed for ${tx.id} (intent):`, e);
+        }
+      }
+      
+      // Fallback: create new payment intent
+      try {
+        const pi = await stripe.paymentIntents.create({
+          amount: Math.round(tx.amount * 100),
+          currency: tx.currency || 'usd',
+          description: `Batch Retry of failed transaction ${tx.id}`,
+          metadata: { original_transaction_id: tx.id, retry: 'true', batch: 'true' }
+        });
+        await query(
+          `UPDATE transactions SET status = 'pending', gateway_transaction_id = $1,
+           metadata = metadata || $2, updated_at = NOW() WHERE id = $3`,
+          [pi.id, JSON.stringify({ payment_intent_id: pi.id, retry: true, batch: true }), tx.id]
+        );
+        retryCount++;
+      } catch (e) {
+        console.error(`Batch retry failed for ${tx.id} (new intent):`, e);
+      }
+    }
+
+    res.json({ success: true, data: { retried: retryCount }, message: 'Batch retry process completed' });
   } catch (e) { next(e); }
 });
 
@@ -198,6 +341,8 @@ router.get('/transactions/:id/details', adminOrJwtAuth, async (req: AuthRequest,
           u.id         AS user_id,
           u.display_name AS user_name,
           u.email      AS user_email,
+          u.avatar_url AS avatar_url,
+          u.phone      AS phone,
           ur.role      AS user_role
         FROM transactions t
         LEFT JOIN users u ON u.id = t.payer_id

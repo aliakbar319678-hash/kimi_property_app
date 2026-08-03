@@ -386,27 +386,33 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                 Color activeColor;
                 switch (priority.toLowerCase()) {
                   case 'emergency':
-                    activeColor = AppColors.error;
+                    activeColor = const Color(0xFFDC2626);
                     break;
                   case 'high':
-                    activeColor = Colors.orange;
+                    activeColor = const Color(0xFFEA580C);
                     break;
+                  case 'medium':
+                    activeColor = const Color(0xFF2563EB);
+                    break;
+                  case 'low':
                   default:
-                    activeColor = AppColors.primary;
+                    activeColor = const Color(0xFF16A34A);
+                    break;
                 }
 
                 return Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
                     child: GestureDetector(
                       onTap: () => setState(() => _selectedPriority = priority),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: isSelected ? activeColor : AppColors.white,
-                          borderRadius: BorderRadius.circular(10),
+                          color: isSelected ? activeColor : activeColor.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected ? activeColor : AppColors.border,
+                            color: isSelected ? activeColor : activeColor.withValues(alpha: 0.3),
+                            width: isSelected ? 1.5 : 1.0,
                           ),
                         ),
                         child: Center(
@@ -414,10 +420,8 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                             priority,
                             style: TextStyle(
                               fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: isSelected
-                                  ? AppColors.white
-                                  : AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? AppColors.white : activeColor,
                             ),
                           ),
                         ),
@@ -722,8 +726,7 @@ class _CreateWorkOrderScreenState extends ConsumerState<CreateWorkOrderScreen> {
                         unitName: _selectedUnitName,        // matched to ID in provider
                         tenantName: _selectedTenant,
                         priority: _selectedPriority,
-                        status: 'Completed', // Mock completed status for testing
-                        vendorName: 'Bob\'s Plumbing', // Mock vendor for rating test
+                        status: 'Request',
                         photos: [],
                         category: _selectedCategory,
                         date: '',

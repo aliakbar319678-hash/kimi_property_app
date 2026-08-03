@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
-import '../../../theme/apptheme.dart';
+
 import '../../../widgets/landlord/location_picker_dialog.dart';
 import '../../../utils/country_data.dart';
 

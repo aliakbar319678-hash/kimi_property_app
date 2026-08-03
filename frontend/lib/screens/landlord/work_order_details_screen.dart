@@ -104,25 +104,76 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
           children: [
             // Stage/Status Tab Row
             Row(
-              children: stages.map((stage) {
-                final isCurrent = updatedOrder.status.toLowerCase() == stage.toLowerCase();
+              children: stages.asMap().entries.map((entry) {
+                final stage = entry.value;
+                final orderStatus = updatedOrder.status.toLowerCase().replaceAll('_', '-').replaceAll(' ', '-');
+                final stageNorm = stage.toLowerCase().replaceAll(' ', '-');
+
+                // Determine if stage is completed/passed/current
+                final statusOrder = ['request', 'open', 'assigned', 'scheduled', 'in-progress', 'in_progress', 'waiting_parts', 'completed'];
+                final currentIdx = statusOrder.indexOf(orderStatus);
+
+                // Map stage name to canonical order index
+                int stageIdx;
+                if (stageNorm == 'request') { stageIdx = 0; }
+                else if (stageNorm == 'assigned') { stageIdx = 2; }
+                else if (stageNorm == 'in-progress') { stageIdx = 4; }
+                else { stageIdx = 7; } // completed
+
+                final isPassed = currentIdx > stageIdx;
+                final isCurrent = currentIdx == stageIdx ||
+                    (stageNorm == 'request' && (orderStatus == 'open' || orderStatus == 'request')) ||
+                    (stageNorm == 'assigned' && (orderStatus == 'assigned' || orderStatus == 'scheduled')) ||
+                    (stageNorm == 'in-progress' && (orderStatus == 'in-progress' || orderStatus == 'in_progress' || orderStatus == 'waiting_parts')) ||
+                    (stageNorm == 'completed' && orderStatus == 'completed');
+
+                Color bgColor;
+                Color textColor;
+                Color borderColor;
+                if (stageNorm == 'completed' && (isPassed || isCurrent)) {
+                  bgColor = const Color(0xFF16A34A);
+                  textColor = Colors.white;
+                  borderColor = const Color(0xFF16A34A);
+                } else if (isCurrent) {
+                  bgColor = AppColors.primary;
+                  textColor = Colors.white;
+                  borderColor = AppColors.primary;
+                } else if (isPassed) {
+                  bgColor = AppColors.primary.withValues(alpha: 0.12);
+                  textColor = AppColors.primary;
+                  borderColor = AppColors.primary.withValues(alpha: 0.3);
+                } else {
+                  bgColor = AppColors.white;
+                  textColor = AppColors.textSecondary;
+                  borderColor = AppColors.border;
+                }
+
                 return Expanded(
                   child: Container(
                     margin: const EdgeInsets.symmetric(horizontal: 2),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 9),
                     decoration: BoxDecoration(
-                      color: isCurrent ? AppColors.secondary : AppColors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: isCurrent ? AppColors.secondary : AppColors.border),
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: borderColor),
                     ),
                     child: Center(
-                      child: Text(
-                        stage,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: isCurrent ? AppColors.white : AppColors.textSecondary,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (stageNorm == 'completed' && (isPassed || isCurrent))
+                            const Icon(Icons.check_circle_rounded, size: 11, color: Colors.white),
+                          if (stageNorm == 'completed' && (isPassed || isCurrent))
+                            const SizedBox(width: 3),
+                          Text(
+                            stage,
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: textColor,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -318,20 +369,89 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
                               ],
                             ),
                           ),
-                          TextButton(
-                            onPressed: () {
+                          GestureDetector(
+                            onTap: () {
                               showDialog(
                                 context: context,
-                                builder: (_) => AlertDialog(
-                                  title: const Text('Certificate of Insurance', style: TextStyle(fontWeight: FontWeight.w700)),
-                                  content: const Text('Vendor is fully compliant with a \$1M general liability coverage.\n\nExpires: 12/31/2026\nStatus: Active'),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
-                                  ],
+                                builder: (dlgCtx) => Dialog(
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                  elevation: 0,
+                                  backgroundColor: Colors.transparent,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(28),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 64,
+                                          height: 64,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF16A34A).withValues(alpha: 0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(Icons.verified_user_rounded, color: Color(0xFF16A34A), size: 32),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text('Certificate of Insurance', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                                        const SizedBox(height: 6),
+                                        const Text('Vendor Insurance & Compliance Details', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                                        const SizedBox(height: 24),
+                                        _buildInsuranceRow('Coverage Type', 'General Liability'),
+                                        const SizedBox(height: 12),
+                                        _buildInsuranceRow('Coverage Amount', '\$1,000,000'),
+                                        const SizedBox(height: 12),
+                                        _buildInsuranceRow('Policy Number', '#INS-10492'),
+                                        const SizedBox(height: 12),
+                                        _buildInsuranceRow('Expiry Date', 'December 31, 2026'),
+                                        const SizedBox(height: 12),
+                                        Container(
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF16A34A).withValues(alpha: 0.08),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: const Row(
+                                            children: [
+                                              Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 16),
+                                              SizedBox(width: 8),
+                                              Text('Status: Active & Verified', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 24),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton(
+                                            onPressed: () => Navigator.pop(dlgCtx),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(0xFF16A34A),
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                              minimumSize: const Size(double.infinity, 48),
+                                              elevation: 0,
+                                            ),
+                                            child: const Text('Close', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               );
                             },
-                            child: const Text('View', style: TextStyle(fontWeight: FontWeight.w600)),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF16A34A).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text('View', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Color(0xFF16A34A))),
+                            ),
                           ),
                         ],
                       ),
@@ -359,7 +479,7 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
                     const Divider(height: 20),
                     _buildTimelineItem('Vendor assigned and contract drafted', 'May 19, 10:15 AM', true),
                   ],
-                  if (updatedOrder.status == 'Completed') ...[
+                  if (updatedOrder.status.toLowerCase() == 'completed') ...[
                     const Divider(height: 20),
                     _buildTimelineItem('Work order marked as completed', 'Just now', false),
                   ],
@@ -370,13 +490,14 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
             SizedBox(height: h * 0.05),
 
             // Bottom Buttons: Reassign, Mark Completed, or Rate Vendor
-            if (updatedOrder.status == 'Completed')
+            if (updatedOrder.status.toLowerCase() == 'completed')
               Column(
                 children: [
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () async {
+                        final messenger = ScaffoldMessenger.of(context);
                         final res = await ReleaseEscrowDialog.show(
                           context,
                           workOrderId: updatedOrder.id,
@@ -385,7 +506,7 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
                           jobCost: updatedOrder.cost,
                         );
                         if (res != null && mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Escrow payout released successfully ✅'), backgroundColor: Color(0xFF27AE60)));
+                          messenger.showSnackBar(const SnackBar(content: Text('Escrow payout released successfully ✅'), backgroundColor: Color(0xFF27AE60)));
                           _fetchFreshData(updatedOrder.id);
                         }
                       },
@@ -409,7 +530,7 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
                           context: context,
                           isScrollControlled: true,
                           backgroundColor: Colors.transparent,
-                          builder: (_) => const VendorRatingDialog(),
+                          builder: (_) => VendorRatingDialog(workOrderId: updatedOrder.id),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -445,21 +566,22 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: updatedOrder.status == 'Completed' || _isUpdating
+                      onPressed: updatedOrder.status.toLowerCase() == 'completed' || _isUpdating
                           ? null
                           : () async {
                               setState(() => _isUpdating = true);
+                              final messenger = ScaffoldMessenger.of(context);
                               try {
                                 await notifier.updateWorkOrderStatus(updatedOrder.id, 'Completed');
                                 if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  messenger.showSnackBar(
                                     const SnackBar(content: Text('Work order marked as completed'), backgroundColor: Colors.green),
                                   );
                                   _fetchFreshData(updatedOrder.id);
                                 }
                               } catch (e) {
                                 if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  messenger.showSnackBar(
                                     SnackBar(content: Text('Failed to update status: $e'), backgroundColor: Colors.red),
                                   );
                                 }
@@ -514,6 +636,16 @@ class _WorkOrderDetailsScreenState extends ConsumerState<WorkOrderDetailsScreen>
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildInsuranceRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+        Text(value, style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A), fontWeight: FontWeight.w700)),
       ],
     );
   }

@@ -25,18 +25,18 @@ router.get('/courses', adminOrJwtAuth, denyRole('vendor'), async (req: AuthReque
       WHERE 1=1
     `;
     const params: any[] = [];
-    
+
     if (!isAdmin) {
       sql += ' AND c.is_published = true';
     }
-    
-    if (req.query.category) { 
-      sql += ` AND c.category = $${params.length + 1}`; 
-      params.push(req.query.category); 
+
+    if (req.query.category) {
+      sql += ` AND c.category = $${params.length + 1}`;
+      params.push(req.query.category);
     }
-    if (req.query.difficulty) { 
-      sql += ` AND c.difficulty = $${params.length + 1}`; 
-      params.push(req.query.difficulty); 
+    if (req.query.difficulty) {
+      sql += ` AND c.difficulty = $${params.length + 1}`;
+      params.push(req.query.difficulty);
     }
     sql += ' GROUP BY c.id ORDER BY c.created_at DESC';
     const result = await query(sql, params);
@@ -161,7 +161,7 @@ router.post('/certificates', adminOrJwtAuth, denyRole('vendor'), async (req: Aut
   try {
     // TEMPORARY FIX FOR TESTING: Allowing all roles temporarily so you can test it
     const isAdmin = true; // req.user?.roles?.includes('admin') || req.user?.roles?.includes('super_admin');
-    
+
     if (!isAdmin) {
       return res.status(403).json({ success: false, message: 'Forbidden: Admin access required' });
     }

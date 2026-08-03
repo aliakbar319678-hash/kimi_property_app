@@ -21,8 +21,14 @@ class _BidsReceivedScreenState extends State<BidsReceivedScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_effectiveJobId == null) {
-      final passedId = widget.jobId ?? ModalRoute.of(context)?.settings.arguments as String?;
-      _effectiveJobId = passedId;
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is String) {
+        _effectiveJobId = args;
+      } else if (args != null && args.runtimeType.toString().contains('WorkOrder')) {
+        _effectiveJobId = (args as dynamic).id?.toString();
+      } else {
+        _effectiveJobId = widget.jobId;
+      }
       if (_effectiveJobId != null) {
         _fetchJobBids(_effectiveJobId!);
       } else {

@@ -26,38 +26,38 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
   final TextEditingController _notesCtrl = TextEditingController();
 
   DateTime? _bidDeadline;
-  String _selectedCategory = 'Essential Maintenance';
+  String _selectedCategory = 'essential_maintenance';
   String _selectedSubCategory = 'Plumbing';
   String _selectedUrgency = 'standard';
   bool _isSubmitting = false;
 
   final Map<String, List<String>> _categoryMap = {
-    'Essential Maintenance': [
+    'essential_maintenance': [
       'Plumbing',
       'Electrical',
       'HVAC',
       'Appliance Repair',
       'Handyman Services',
     ],
-    'Turnover & Cleaning': [
+    'turnover_cleaning': [
       'Janitorial/Cleaning',
       'Painting',
       'Flooring',
       'Junk Removal',
     ],
-    'Exterior & Seasonal': [
+    'exterior_seasonal': [
       'Landscaping',
       'Snow Removal',
       'Roofing',
       'Paving/Concrete',
     ],
-    'Safety & Security': [
+    'safety_security': [
       'Locksmith',
       'Pest Control',
       'Fire Safety',
       'Security Systems',
     ],
-    'Specialized Services': [
+    'specialized_services': [
       'Pool Maintenance',
       'Elevator Service',
       'Window Cleaning',
@@ -66,10 +66,46 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     ],
   };
 
+  // Display names for the UI
+  final Map<String, String> _categoryDisplayNames = {
+    'essential_maintenance': 'Essential Maintenance',
+    'turnover_cleaning': 'Turnover & Cleaning',
+    'exterior_seasonal': 'Exterior & Seasonal',
+    'safety_security': 'Safety & Security',
+    'specialized_services': 'Specialized Services',
+  };
+
   @override
   void initState() {
     super.initState();
     _bidDeadline = DateTime.now().add(const Duration(days: 7));
+  }
+
+  bool _isInit = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInit) {
+      _isInit = true;
+      final properties = ref.read(landlordProvider).properties;
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args != null && args.runtimeType.toString().contains('WorkOrder')) {
+        final wo = args as dynamic;
+        if (_titleCtrl.text.isEmpty && wo.title != null) _titleCtrl.text = wo.title;
+        if (_descCtrl.text.isEmpty && wo.description != null) _descCtrl.text = wo.description;
+        final propName = wo.propertyName;
+        for (final p in properties) {
+          if (p.name == propName) {
+            _selectedPropertyId = p.id;
+            break;
+          }
+        }
+      }
+      if ((_selectedPropertyId == null || _selectedPropertyId!.isEmpty) && properties.isNotEmpty) {
+        _selectedPropertyId = properties.first.id;
+      }
+    }
   }
 
   @override
@@ -219,7 +255,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 items: _categoryMap.keys.map((cat) {
-                  return DropdownMenuItem(value: cat, child: Text(cat));
+                  return DropdownMenuItem(value: cat, child: Text(_categoryDisplayNames[cat] ?? cat));
                 }).toList(),
                 onChanged: (val) {
                   if (val != null) {

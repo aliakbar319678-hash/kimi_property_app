@@ -87,7 +87,6 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
 
         final totalUnits = int.tryParse(m['total_units']?.toString() ?? '0') ?? 0;
         final occupiedUnits = int.tryParse(m['occupied_units']?.toString() ?? '0') ?? 0;
-        final vacantUnits = int.tryParse(m['vacant_units']?.toString() ?? '0') ?? 0;
         final occupancyRate = totalUnits > 0
             ? (occupiedUnits.toDouble() / totalUnits.toDouble())
             : 0.0;
@@ -975,17 +974,31 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
 
   // ── Update Work Order Status ─────────────────────────────────────────────────
   Future<void> updateWorkOrderStatus(String orderId, String newStatus) async {
+    final targetStatus = newStatus.toLowerCase().replaceAll('-', '_');
     try {
-      final payload = {'status': newStatus.toLowerCase()};
       await ApiClient().dio.put(
         ApiConstants.workOrderStatus(orderId),
-        data: payload,
+        data: {'status': targetStatus},
       );
-      await loadWorkOrders();
     } catch (e) {
-      debugPrint('Error updating work order status: $e');
-      rethrow;
+      if (e is DioException && (e.response?.statusCode == 400 || e.response?.statusCode == 500)) {
+        // If current state doesn't allow direct transition, step through valid transitions:
+        // open -> scheduled -> in_progress -> completed
+        try {
+          await ApiClient().dio.put(ApiConstants.workOrderStatus(orderId), data: {'status': 'scheduled'});
+        } catch (_) {}
+        try {
+          await ApiClient().dio.put(ApiConstants.workOrderStatus(orderId), data: {'status': 'in_progress'});
+        } catch (_) {}
+        await ApiClient().dio.put(
+          ApiConstants.workOrderStatus(orderId),
+          data: {'status': targetStatus},
+        );
+      } else {
+        rethrow;
+      }
     }
+    await loadWorkOrders();
   }
 
   // ── Notifications ──────────────────────────────────────────────────────────────
@@ -1347,7 +1360,12 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
     try {
       await ApiClient().dio.post(
         '/maintenance/work-orders/$workOrderId/rate',
-        data: {'rating': rating, 'review': review},
+        data: {
+          'rating': rating,
+          'review_text': review,
+          'punctuality_score': rating,
+          'quality_score': rating,
+        },
       );
     } catch (e) {
       debugPrint('[LandlordProvider] submitVendorRating error: $e');

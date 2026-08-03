@@ -303,7 +303,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
               ),
               SizedBox(height: h * 0.012),
 
-              // Row 1: Invoices & Late Notices
+              // Row 1: Invoices & Finance Overview
               Row(
                 children: [
                   Expanded(
@@ -323,23 +323,23 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                   SizedBox(width: w * 0.03),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/landlord_late_notices'),
+                      onPressed: () => Navigator.pushNamed(context, '/landlord_financial_overview'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.error,
+                        backgroundColor: AppColors.secondary,
                         foregroundColor: AppColors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
                       ),
-                      icon: const Icon(Icons.warning_amber_rounded, size: 20),
-                      label: const Text('Late Notices', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w600)),
+                      icon: const Icon(Icons.account_balance_wallet_rounded, size: 20),
+                      label: const Text('Finance', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
               ),
               SizedBox(height: h * 0.012),
 
-              // Row 2: Calendar & Showings
+              // Row 2: Calendar & Vendor Directory
               Row(
                 children: [
                   Expanded(
@@ -353,40 +353,6 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                       ),
                       icon: const Icon(Icons.calendar_month_rounded, size: 20, color: AppColors.primary),
                       label: const Text('Calendar', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                  SizedBox(width: w * 0.03),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/landlord_showings'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textPrimary,
-                        side: const BorderSide(color: AppColors.border, width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      icon: const Icon(Icons.visibility_rounded, size: 20, color: AppColors.primary),
-                      label: const Text('Showings', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: h * 0.012),
-
-              // Row 3: Marketing Listings & Vendor Directory
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/landlord_marketing_listings'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textPrimary,
-                        side: const BorderSide(color: AppColors.border, width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      icon: const Icon(Icons.storefront_rounded, size: 20, color: AppColors.primary),
-                      label: const Text('Marketing', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
                   SizedBox(width: w * 0.03),
@@ -443,23 +409,9 @@ class PortfolioDashboardScreen extends ConsumerWidget {
               ),
               SizedBox(height: h * 0.012),
 
-              // Row 4: Communication Center & Applications
+              // Row 4: Applications
               Row(
                 children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/landlord_communication'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textPrimary,
-                        side: const BorderSide(color: AppColors.border, width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      icon: const Icon(Icons.campaign_rounded, size: 20, color: AppColors.primary),
-                      label: const Text('Broadcast', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                  SizedBox(width: w * 0.03),
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => Navigator.pushNamed(context, '/landlord_applications'),
@@ -469,10 +421,12 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      icon: const Icon(Icons.description_rounded, size: 20),
+                      icon: const Icon(Icons.description_rounded, size: 20, color: AppColors.primary),
                       label: const Text('Applications', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
+                  SizedBox(width: w * 0.03),
+                  const Spacer(),
                 ],
               ),
               SizedBox(height: h * 0.012),
@@ -509,28 +463,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              SizedBox(height: h * 0.012),
 
-              // Row 6: Reports
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/landlord_reports_analytics'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textPrimary,
-                        side: const BorderSide(color: AppColors.border, width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      icon: const Icon(Icons.analytics_rounded, size: 20),
-                      label: const Text('Reports', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                  SizedBox(width: w * 0.03),
-                  const Spacer(),
-                ],
-              ),
 
               SizedBox(height: h * 0.03),
 
@@ -660,7 +593,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: alerts.length,
-                  separatorBuilder: (_, __) => SizedBox(height: h * 0.012),
+                  separatorBuilder: (_, ___) => SizedBox(height: h * 0.012),
                   itemBuilder: (context, index) {
                     final alert = alerts[index];
                     final isLease = alert.type == 'lease';

@@ -122,19 +122,8 @@ class _PropertyPortfolioScreenState
                           ]),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/landlord_reports_analytics'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(10)),
-                          child: Row(children: [
-                            const Icon(Icons.bar_chart_rounded, color: AppColors.white, size: 16),
-                            SizedBox(width: w * 0.01),
-                            Text('Reports', style: TextStyle(fontSize: w * 0.026, fontWeight: FontWeight.w600, color: AppColors.white)),
-                          ]),
-                        ),
-                      ),
+
+
                     ],
                   ),
                 ],

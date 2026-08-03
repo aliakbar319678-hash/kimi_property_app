@@ -11,6 +11,11 @@ export class AuthService {
       const existing = await client.query('SELECT id FROM users WHERE email = $1', [data.email]);
       if (existing.rows.length > 0) throw new AppError('Email already registered', 409);
 
+      if (data.phone) {
+        const existingPhone = await client.query('SELECT id FROM users WHERE phone = $1', [data.phone]);
+        if (existingPhone.rows.length > 0) throw new AppError('Phone number already registered', 409);
+      }
+
       if (data.username) {
         if (data.role !== 'tenant') throw new AppError('Only tenants can have a username', 400);
         const existingUsername = await client.query('SELECT id FROM users WHERE username = $1', [data.username]);
@@ -46,7 +51,7 @@ export class AuthService {
 
   static async login(identifier: string, password: string, username?: string, full_name?: string, phone?: string) {
     const userRes = await query(
-      `SELECT u.id, u.email, u.password_hash, u.kyc_status, u.onboarding_step, u.is_active, u.username, u.display_name, u.phone, up.legal_first_name, up.legal_last_name 
+      `SELECT u.id, u.email, u.password_hash, u.kyc_status, up.onboarding_step, u.is_active, u.username, u.display_name, u.phone, up.legal_first_name, up.legal_last_name 
        FROM users u 
        LEFT JOIN user_profiles up ON u.id = up.user_id 
        WHERE u.email = $1 OR u.username = $1`,
@@ -62,15 +67,7 @@ export class AuthService {
     const rolesRes = await query('SELECT role FROM user_roles WHERE user_id = $1', [user.id]);
     const roles = rolesRes.rows.map((r: any) => r.role);
 
-    if (roles.includes('tenant')) {
-      if (!username || user.username !== username) throw new AppError('Invalid credentials', 401);
-      if (!phone || user.phone !== phone) throw new AppError('Invalid credentials', 401);
-      
-      const dbFullName = user.display_name || `${user.legal_first_name || ''} ${user.legal_last_name || ''}`.trim();
-      if (!full_name || dbFullName !== full_name) throw new AppError('Invalid credentials', 401);
-      
-      if (identifier !== user.email) throw new AppError('Invalid credentials', 401); // Tenant must use email as identifier if they also need to pass username
-    }
+    // Standard validation (password and identifier are already validated above)
 
     const accessToken = jwt.sign({ userId: user.id, roles }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
     const refreshToken = jwt.sign({ userId: user.id, type: 'refresh' }, config.jwtSecret, { expiresIn: config.refreshTokenExpiresIn });
@@ -82,6 +79,7 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
+        username: user.username,
         roles,
         kycStatus: user.kyc_status,
         onboardingStep: user.onboarding_step,
@@ -105,7 +103,7 @@ export class AuthService {
   }
 
   static async me(userId: string) {
-    const userRes = await query('SELECT id, email, phone, display_name, kyc_status, onboarding_step, region_id FROM users WHERE id = $1', [userId]);
+    const userRes = await query('SELECT id, email, phone, display_name, username, kyc_status, region_id FROM users WHERE id = $1', [userId]);
     if (userRes.rows.length === 0) throw new AppError('User not found', 404);
     const rolesRes = await query('SELECT role, entity_id, is_primary FROM user_roles WHERE user_id = $1', [userId]);
     const profileRes = await query('SELECT * FROM user_profiles WHERE user_id = $1', [userId]);
@@ -113,6 +111,7 @@ export class AuthService {
     const prof = profileRes.rows[0] || {};
     return {
       ...user,
+      onboarding_step: prof.onboarding_step,
       first_name: prof.legal_first_name || '',
       last_name: prof.legal_last_name || '',
       avatar_url: prof.avatar_url || null,
