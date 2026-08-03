@@ -14,6 +14,7 @@ class LandlordApplicationsScreen extends StatefulWidget {
 class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen> {
   bool _isLoading = true;
   List<dynamic> _applications = [];
+  String _selectedFilter = 'all'; // 'all', 'pending', 'approved', 'rejected'
 
   @override
   void initState() {
@@ -22,8 +23,12 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
   }
 
   Future<void> _fetchApplications() async {
+    setState(() => _isLoading = true);
     try {
-      final response = await ApiClient().dio.get(ApiConstants.applications);
+      final url = _selectedFilter == 'all'
+          ? ApiConstants.applications
+          : '${ApiConstants.applications}?status=$_selectedFilter';
+      final response = await ApiClient().dio.get(url);
       final data = response.data;
       if (data['success'] == true) {
         if (mounted) {
@@ -32,6 +37,8 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
             _isLoading = false;
           });
         }
+      } else {
+        if (mounted) setState(() => _isLoading = false);
       }
     } catch (e) {
       if (mounted) {
@@ -160,13 +167,6 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
     );
   }
 
-  /// Opens a bottom sheet that navigates directly to the ScreeningDetailScreen
-  /// if the application record includes a [screening_application_id] field,
-  /// or prompts the landlord to paste a UUID as a stop-gap.
-  ///
-  /// ⚠️  Backend flag: [GET /applications/landlord] does not JOIN
-  /// screening_applications, so no screening_application_id is returned.
-  /// The backend team should add this join to remove the manual ID input.
   void _openScreeningReport(BuildContext context, Map<String, dynamic> app) {
     final directId = app['screening_application_id']?.toString() ?? app['id']?.toString() ?? '';
     if (directId.isNotEmpty) {
@@ -220,53 +220,22 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+              const Text('Enter Screening Application ID'),
               const SizedBox(height: 8),
-              Text(
-                'Tenant: ${app['tenant_name'] ?? 'Unknown'}',
-                style: const TextStyle(
-                    fontSize: 13, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD97706).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                      color: const Color(0xFFD97706).withValues(alpha: 0.3)),
-                ),
-                child: const Text(
-                  'Note: The applications list does not yet include the '
-                  'screening application ID. Enter the UUID from the '
-                  'screening_applications table, or ask the tenant for '
-                  'their screening application ID.\n\n'
-                  'Backend fix needed: JOIN applications with '
-                  'screening_applications on tenant_id + property_id.',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF92400E),
-                      height: 1.5),
-                ),
-              ),
-              const SizedBox(height: 16),
               TextField(
                 controller: controller,
-                autofocus: true,
                 decoration: InputDecoration(
-                  labelText: 'Screening Application ID (UUID)',
-                  hintText: 'e.g. 3fa85f64-5717-4562-b3fc-2c963f66afa6',
+                  hintText: 'e.g. uuid-1234...',
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.fingerprint_rounded),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                style: const TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
-                child: FilledButton.icon(
-                  icon: const Icon(Icons.open_in_new_rounded),
-                  label: const Text('Open Screening Report'),
+                child: FilledButton(
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -278,8 +247,7 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
                     if (id.isEmpty) {
                       ScaffoldMessenger.of(ctx).showSnackBar(
                         const SnackBar(
-                          content:
-                              Text('Please enter a screening application ID.'),
+                          content: Text('Please enter a screening application ID.'),
                         ),
                       );
                       return;
@@ -291,6 +259,7 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
                       arguments: id,
                     );
                   },
+                  child: const Text('View Report'),
                 ),
               ),
             ],
@@ -307,6 +276,7 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
       case 'rejected':
         return Colors.red;
       case 'conditional':
+      case 'conditional_approval':
         return Colors.orange;
       default:
         return Colors.blue;
@@ -334,115 +304,186 @@ class _LandlordApplicationsScreenState extends State<LandlordApplicationsScreen>
           icon: Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
+            onPressed: _fetchApplications,
+            tooltip: 'Refresh',
+          ),
+        ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _applications.isEmpty
-              ? Center(
-                  child: Text(
-                    'No incoming applications.',
-                    style: TextStyle(
-                        fontSize: w * 0.04, color: AppColors.textSecondary),
+      body: Column(
+        children: [
+          // ─── Status Filter Tabs ──────────────────────────────────────────
+          Container(
+            color: AppColors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                for (final filter in [
+                  ('all', 'All'),
+                  ('pending', 'Pending'),
+                  ('approved', 'Approved'),
+                  ('rejected', 'Rejected'),
+                ])
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        if (_selectedFilter != filter.$1) {
+                          setState(() => _selectedFilter = filter.$1);
+                          _fetchApplications();
+                        }
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _selectedFilter == filter.$1
+                              ? AppColors.primary
+                              : AppColors.scaffoldBg,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          filter.$2,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: w * 0.028,
+                            fontWeight: FontWeight.w600,
+                            color: _selectedFilter == filter.$1
+                                ? Colors.white
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                )
-              : ListView.builder(
-                  padding: EdgeInsets.all(w * 0.05),
-                  itemCount: _applications.length,
-                  itemBuilder: (context, index) {
-                    final app =
-                        _applications[index] as Map<String, dynamic>;
-                    final statusColor = _getStatusColor(
-                        (app['approval_status'] ?? 'pending').toString());
-                    return Card(
-                      elevation: 2,
-                      margin: EdgeInsets.only(bottom: w * 0.04),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: EdgeInsets.all(w * 0.04),
+              ],
+            ),
+          ),
+          // ─── Applications List ───────────────────────────────────────────
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _applications.isEmpty
+                    ? Center(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  app['tenant_name'] ?? 'Unknown Tenant',
-                                  style: TextStyle(
-                                    fontSize: w * 0.045,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        statusColor.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    (app['approval_status'] ?? 'pending')
-                                        .toString()
-                                        .toUpperCase(),
-                                    style: TextStyle(
-                                        color: statusColor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
+                            Icon(Icons.inbox_outlined,
+                                size: 64, color: AppColors.textHint),
+                            const SizedBox(height: 12),
                             Text(
-                              'Property: ${app['property_name']} (Unit ${app['unit_number']})',
-                              style: const TextStyle(
+                              _selectedFilter == 'all'
+                                  ? 'No applications yet.'
+                                  : 'No $_selectedFilter applications.',
+                              style: TextStyle(
+                                  fontSize: w * 0.04,
                                   color: AppColors.textSecondary),
-                            ),
-                            Text(
-                              'Email: ${app['tenant_email']}',
-                              style: const TextStyle(
-                                  color: AppColors.textSecondary),
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              children: [
-                                if (app['approval_status'] == 'pending') ...[
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () =>
-                                          _showActionModal(context, app),
-                                      child:
-                                          const Text('Review Decision'),
-                                    ),
-                                  ),
-                                  SizedBox(width: w * 0.03),
-                                ],
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    icon: const Icon(
-                                        Icons.person_search_rounded,
-                                        size: 16),
-                                    label: const Text('Screening Report'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: AppColors.primary,
-                                      side: const BorderSide(
-                                          color: AppColors.primary),
-                                    ),
-                                    onPressed: () =>
-                                        _openScreeningReport(context, app),
-                                  ),
-                                ),
-                              ],
                             ),
                           ],
                         ),
+                      )
+                    : ListView.builder(
+                        padding: EdgeInsets.all(w * 0.05),
+                        itemCount: _applications.length,
+                        itemBuilder: (context, index) {
+                          final app = _applications[index] as Map<String, dynamic>;
+                          final statusColor = _getStatusColor(
+                              (app['approval_status'] ?? 'pending').toString());
+                          return Card(
+                            elevation: 2,
+                            margin: EdgeInsets.only(bottom: w * 0.04),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            child: Padding(
+                              padding: EdgeInsets.all(w * 0.04),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          app['tenant_name'] ?? 'Unknown Tenant',
+                                          style: TextStyle(
+                                            fontSize: w * 0.045,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: statusColor.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          (app['approval_status'] ?? 'pending')
+                                              .toString()
+                                              .toUpperCase(),
+                                          style: TextStyle(
+                                              color: statusColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Property: ${app['property_name'] ?? '-'} (Unit ${app['unit_number'] ?? '-'})',
+                                    style: const TextStyle(
+                                        color: AppColors.textSecondary),
+                                  ),
+                                  Text(
+                                    'Email: ${app['tenant_email'] ?? '-'}',
+                                    style: const TextStyle(
+                                        color: AppColors.textSecondary),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  Row(
+                                    children: [
+                                      if (app['approval_status'] == 'pending' ||
+                                          app['approval_status'] == null) ...[
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () =>
+                                                _showActionModal(context, app),
+                                            child: const Text('Review Decision'),
+                                          ),
+                                        ),
+                                        SizedBox(width: w * 0.03),
+                                      ],
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          icon: const Icon(
+                                              Icons.person_search_rounded,
+                                              size: 16),
+                                          label: const Text('Screening'),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: AppColors.primary,
+                                            side: const BorderSide(
+                                                color: AppColors.primary),
+                                          ),
+                                          onPressed: () =>
+                                              _openScreeningReport(context, app),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
+          ),
+        ],
+      ),
     );
   }
 }

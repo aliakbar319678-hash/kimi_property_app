@@ -49,7 +49,7 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
         final generatedInvoices = <Map<String, dynamic>>[];
 
         for (final l in leases) {
-          final amt = l.rentAmount > 0 ? l.rentAmount : 1500.0;
+          final amt = l.rentAmount;
           if (l.status.toLowerCase() == 'active' || l.status.isEmpty) {
             collected += amt;
           } else {
@@ -66,7 +66,7 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
         }
 
         setState(() {
-          _totalCollected = collected > 0 ? collected : 4500.0;
+          _totalCollected = collected;
           _totalOutstanding = outstanding;
           _invoices = generatedInvoices;
           _isLoadingInvoices = false;
@@ -136,7 +136,7 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
                     const Text('Select Lease / Unit', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
-                      value: dropdownItems.any((l) => l.id == selectedLeaseId) ? selectedLeaseId : null,
+                      initialValue: dropdownItems.any((l) => l.id == selectedLeaseId) ? selectedLeaseId : null,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: AppColors.inputBg,
@@ -255,7 +255,7 @@ class _FinancialOverviewScreenState extends ConsumerState<FinancialOverviewScree
                                 setModalState(() => isSubmitting = true);
                                 try {
                                   await ApiClient().dio.post(ApiConstants.recordManualPayment, data: {
-                                    if (selectedLeaseId != null) 'leaseId': selectedLeaseId,
+                                    'leaseId': selectedLeaseId,
                                     'amount': amt,
                                     'paymentMethod': paymentMethod,
                                     'paymentDate': selectedDate.toIso8601String(),

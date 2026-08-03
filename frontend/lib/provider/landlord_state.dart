@@ -149,6 +149,8 @@ abstract class Lease with _$Lease {
     required String endDate,
     required String status, // 'active', 'expired', 'pending'
     @Default(0) int daysLeft,
+    @Default('') String tenantId,
+    @Default(0.0) double depositAmount,
   }) = _Lease;
 }
 

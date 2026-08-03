@@ -16,68 +16,63 @@ class _LandlordCalendarScreenState extends ConsumerState<LandlordCalendarScreen>
   String _selectedTag = 'All';
   bool _isLoading = false;
 
-  List<Map<String, dynamic>> _events = [
-    {
-      'id': 'evt-1',
-      'title': 'Lease Renewal - Sarah Connor',
-      'type': 'Lease Expiry',
-      'date': '2026-08-01',
-      'time': '10:00 AM',
-      'property': 'Sunset Heights - Unit 8B',
-      'description': 'Final lease agreement sign-off and key handover.',
-    },
-    {
-      'id': 'evt-2',
-      'title': 'Plumbing Repair Work Order',
-      'type': 'Maintenance',
-      'date': '2026-07-29',
-      'time': '02:30 PM',
-      'property': 'Green Valley Apartments - Unit 2A',
-      'description': 'Apex Plumbing assigned to fix kitchen drain leak.',
-    },
-    {
-      'id': 'evt-3',
-      'title': 'Move-Out Inspection - Robert Vance',
-      'type': 'Inspection',
-      'date': '2026-07-30',
-      'time': '11:00 AM',
-      'property': 'Grand Park Tower - Unit 4C',
-      'description': 'Move-out walkthrough inspection and security deposit assessment.',
-    },
-    {
-      'id': 'evt-4',
-      'title': 'Prospective Showing - John Doe',
-      'type': 'Property Showing',
-      'date': '2026-08-02',
-      'time': '04:00 PM',
-      'property': 'Sunset Heights - Unit 3A',
-      'description': 'Showing vacant 2BD unit to prospective tenant.',
-    },
-  ];
+  List<Map<String, dynamic>> _events = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchEvents();
+    // Ensure provider data is loaded first, then build events
+    WidgetsBinding.instance.addPostFrameCallback((_) => _buildEvents());
   }
 
-  Future<void> _fetchEvents() async {
+  /// Build calendar events from real provider data (leases + work orders).
+  /// The backend does not have a GET /calendar/events endpoint, so we derive
+  /// events from data we already have in the landlordProvider.
+  void _buildEvents() {
+    if (!mounted) return;
     setState(() => _isLoading = true);
-    try {
-      final response = await ApiClient().dio.get('/calendar/events');
-      if (response.data != null && response.data['data'] is List) {
-        final List<dynamic> raw = response.data['data'];
-        final fetched = raw.map((item) => item as Map<String, dynamic>).toList();
-        if (fetched.isNotEmpty && mounted) {
-          setState(() {
-            _events = fetched;
-          });
-        }
+    final state = ref.read(landlordProvider);
+    final List<Map<String, dynamic>> events = [];
+
+    // 1. Lease expiry events — from provider leases
+    for (final lease in state.leases) {
+      if (lease.endDate.isNotEmpty) {
+        events.add({
+          'id': 'lease-${lease.id}',
+          'title': 'Lease Expiry - ${lease.tenantName}',
+          'type': 'Lease Expiry',
+          'date': lease.endDate.split('T').first,
+          'time': '09:00 AM',
+          'property': '${lease.propertyName} - ${lease.unitName}',
+          'description': 'Lease expires on ${lease.endDate.split('T').first}. '
+              'Rent: \$${lease.rentAmount.toStringAsFixed(0)}/mo.',
+        });
       }
-    } catch (_) {
-      // Keep rich fallback mock data
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+    }
+
+    // 2. Work order events — from provider workOrders
+    for (final wo in state.workOrders) {
+      if (wo.date.isNotEmpty) {
+        events.add({
+          'id': 'wo-${wo.id}',
+          'title': wo.title,
+          'type': 'Maintenance',
+          'date': wo.date.split('T').first,
+          'time': wo.timeSlot.isNotEmpty ? wo.timeSlot : '10:00 AM',
+          'property': '${wo.propertyName} - ${wo.unitName}',
+          'description': wo.description.isNotEmpty ? wo.description : 'Work order for ${wo.category}.',
+        });
+      }
+    }
+
+    // Sort by date ascending
+    events.sort((a, b) => (a['date'] as String).compareTo(b['date'] as String));
+
+    if (mounted) {
+      setState(() {
+        _events = events;
+        _isLoading = false;
+      });
     }
   }
 
