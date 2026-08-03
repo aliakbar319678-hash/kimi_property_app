@@ -18,48 +18,7 @@ class MoveOutInspectionsScreen extends ConsumerStatefulWidget {
 class _MoveOutInspectionsScreenState
     extends ConsumerState<MoveOutInspectionsScreen> {
   bool _isLoading = false;
-
-  // Local list initialized with rich realistic records + dynamic items
-  List<Map<String, dynamic>> _inspections = [
-    {
-      'id': 'insp-101',
-      'propertyName': 'Green Valley Apartments',
-      'unitName': 'Unit 2A',
-      'tenantName': 'Michael Scott',
-      'date': '2026-07-10',
-      'status': 'Finalized',
-      'securityDeposit': 1800.00,
-      'depositRefunded': 1450.00,
-      'totalDeductions': 350.00,
-      'damages': [
-        {'item': 'Carpet stain in living room', 'cost': 150.00},
-        {'item': 'Drywall hole behind door', 'cost': 200.00},
-      ],
-      'photos': [
-        'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&q=80',
-        'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400&q=80',
-      ],
-    },
-    {
-      'id': 'insp-102',
-      'propertyName': 'Sunset Heights',
-      'unitName': 'Unit 8B',
-      'tenantName': 'Sarah Connor',
-      'date': '2026-07-20',
-      'status': 'Draft',
-      'securityDeposit': 2200.00,
-      'depositRefunded': 0.00,
-      'totalDeductions': 450.00,
-      'damages': [
-        {'item': 'Broken kitchen cabinet handle', 'cost': 50.00},
-        {'item': 'Uncleaned oven & stove grease', 'cost': 150.00},
-        {'item': 'Scratched hardwood flooring', 'cost': 250.00},
-      ],
-      'photos': [
-        'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=400&q=80',
-      ],
-    },
-  ];
+  List<Map<String, dynamic>> _inspections = [];
 
   @override
   void initState() {
@@ -80,24 +39,46 @@ class _MoveOutInspectionsScreenState
           final list = (res.data['inspections'] ?? res.data['data'] ?? []) as List<dynamic>;
           for (final item in list) {
             final m = item as Map<String, dynamic>;
+            final type = m['type']?.toString().toUpperCase() ?? 'MOVE_OUT';
+            if (type != 'MOVE_OUT') continue;
+
+            final checklist = m['checklist_data'] as List<dynamic>? ?? [];
+            final damages = <Map<String, dynamic>>[];
+            double totalDeductions = 0.0;
+
+            for (final c in checklist) {
+              if (c is Map) {
+                final itemStr = c['item']?.toString() ?? 'Damage item';
+                final costVal = double.tryParse(c['cost']?.toString() ?? '0') ?? 0.0;
+                totalDeductions += costVal;
+                damages.add({
+                  'item': itemStr,
+                  'cost': costVal,
+                });
+              }
+            }
+
+            final deposit = lease.depositAmount > 0 ? lease.depositAmount : lease.rentAmount;
+            final refunded = (deposit - totalDeductions).clamp(0.0, deposit);
+
             allInspections.add({
-              'id': m['id']?.toString() ?? 'chk-${allInspections.length + 1}',
+              'id': m['id']?.toString() ?? 'insp-${allInspections.length + 1}',
               'propertyName': lease.propertyName,
               'unitName': lease.unitName,
               'tenantName': lease.tenantName,
-              'date': m['created_at'] != null ? m['created_at'].toString().split('T').first : '2026-08-01',
-              'status': m['status']?.toString() ?? 'Passed',
-              'securityDeposit': lease.rentAmount,
-              'depositRefunded': lease.rentAmount,
-              'totalDeductions': 0.0,
-              'damages': [],
+              'date': m['inspection_date']?.toString() ?? m['created_at']?.toString().split('T').first ?? '2026-08-01',
+              'status': m['status']?.toString() ?? 'Finalized',
+              'securityDeposit': deposit,
+              'depositRefunded': refunded,
+              'totalDeductions': totalDeductions,
+              'damages': damages,
               'photos': m['photos'] is List ? (m['photos'] as List).map((p) => p.toString()).toList() : [],
             });
           }
         } catch (_) {}
       }
 
-      if (mounted && allInspections.isNotEmpty) {
+      if (mounted) {
         setState(() {
           _inspections = allInspections;
         });
@@ -388,54 +369,47 @@ class _MoveOutInspectionsScreenState
                               borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () async {
-                          final newItem = {
-                            'id':
-                                'insp-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
-                            'propertyName': selectedProperty,
-                            'unitName': unitName,
-                            'tenantName': tenantName,
-                            'date': DateTime.now().toString().substring(0, 10),
-                            'status': 'Draft',
-                            'securityDeposit': depositAmount,
-                            'depositRefunded': refundAmount,
-                            'totalDeductions': repairCost1,
-                            'damages': [
-                              {'item': damageItem1, 'cost': repairCost1}
-                            ],
-                            'photos': photosList.isNotEmpty
-                                ? photosList
-                                : [
-                                    'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=400&q=80'
-                                  ],
-                          };
+                          final messenger = ScaffoldMessenger.of(context);
+                          final leases = ref.read(landlordProvider).leases;
+                          final matchingLease = leases.firstWhere(
+                            (l) => l.propertyName.toLowerCase() == selectedProperty.toLowerCase(),
+                            orElse: () => leases.isNotEmpty ? leases.first : throw Exception('No active lease found'),
+                          );
+
+                          final checklistData = [
+                            {'item': damageItem1, 'condition': 'DAMAGED', 'cost': repairCost1, 'notes': 'Move-Out Deduction'},
+                          ];
 
                           try {
                             await ApiClient().dio.post(
-                              '/move-out/inspections',
+                              '/leases/${matchingLease.id}/inspections',
                               data: {
-                                'leaseId': 'lease_demo',
-                                'conditionRatings': {
-                                  'Damages': damageItem1,
-                                  'Deduction': repairCost1
-                                },
-                                'depositRefunded': refundAmount,
+                                'inspection_type': 'MOVE_OUT',
+                                'checklist_data': checklistData,
+                                'inspector_role': 'LANDLORD',
+                                'landlord_signature': 'Signed by Landlord',
                               },
                             );
-                          } catch (_) {}
 
-                          setState(() {
-                            _inspections.insert(0, newItem);
-                          });
-
-                          if (context.mounted) {
-                            Navigator.pop(ctx);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Move-Out Inspection saved successfully!'),
-                                backgroundColor: Color(0xFF1B8E4D),
-                              ),
-                            );
+                            if (context.mounted) {
+                              Navigator.pop(ctx);
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Move-Out Inspection saved successfully!'),
+                                  backgroundColor: Color(0xFF1B8E4D),
+                                ),
+                              );
+                            }
+                            _fetchInspections();
+                          } catch (e) {
+                            if (context.mounted) {
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to save inspection: $e'),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                            }
                           }
                         },
                         child: const Text('Save Inspection Report',

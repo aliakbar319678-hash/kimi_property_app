@@ -15,60 +15,7 @@ class MoveInChecklistsScreen extends ConsumerStatefulWidget {
 class _MoveInChecklistsScreenState
     extends ConsumerState<MoveInChecklistsScreen> {
   bool _isLoading = false;
-  // Local list initialized with realistic items + dynamic created items
-  List<Map<String, dynamic>> _checklists = [
-    {
-      'id': 'chk-001',
-      'propertyName': 'Green Valley Apartments',
-      'unitName': 'Unit 3B',
-      'tenantName': 'Alex Rivera',
-      'leaseId': 'lease-101',
-      'date': '2026-07-01',
-      'status': 'Passed',
-      'ratings': {
-        'Living Room': 'Excellent',
-        'Kitchen': 'Good',
-        'Master Bedroom': 'Good',
-        'Bathroom': 'Excellent',
-      },
-      'tenantSignature': 'Signed by Alex Rivera',
-      'landlordSignature': 'Signed by Landlord',
-    },
-    {
-      'id': 'chk-002',
-      'propertyName': 'Sunset Heights',
-      'unitName': 'Unit 12A',
-      'tenantName': 'Maria Santos',
-      'leaseId': 'lease-102',
-      'date': '2026-07-15',
-      'status': 'Pending',
-      'ratings': {
-        'Living Room': 'Good',
-        'Kitchen': 'Fair (Needs paint touch-up)',
-        'Master Bedroom': 'Good',
-        'Bathroom': 'Fair (Minor leak fixed)',
-      },
-      'tenantSignature': '',
-      'landlordSignature': 'Signed by Landlord',
-    },
-    {
-      'id': 'chk-003',
-      'propertyName': 'Grand Park Tower',
-      'unitName': 'Unit 405',
-      'tenantName': 'David Miller',
-      'leaseId': 'lease-103',
-      'date': '2026-06-20',
-      'status': 'Failed',
-      'ratings': {
-        'Living Room': 'Needs Repair (Broken window latch)',
-        'Kitchen': 'Needs Repair (Sink clog)',
-        'Master Bedroom': 'Fair',
-        'Bathroom': 'Good',
-      },
-      'tenantSignature': 'Signed by David Miller',
-      'landlordSignature': 'Needs Resigning',
-    },
-  ];
+  List<Map<String, dynamic>> _checklists = [];
 
   @override
   void initState() {
@@ -92,28 +39,41 @@ class _MoveInChecklistsScreenState
           final list = (res.data['inspections'] ?? res.data['data'] ?? []) as List<dynamic>;
           for (final item in list) {
             final m = item as Map<String, dynamic>;
+            final type = m['type']?.toString().toUpperCase() ?? 'MOVE_IN';
+            if (type == 'MOVE_OUT') continue;
+
+            final checklist = m['checklist_data'] as List<dynamic>? ?? [];
+            final ratings = <String, String>{};
+            for (final c in checklist) {
+              if (c is Map && c['item'] != null) {
+                ratings[c['item'].toString()] = c['condition']?.toString() ?? 'Good';
+              }
+            }
+
             allInspections.add({
               'id': m['id']?.toString() ?? 'chk-${allInspections.length + 1}',
               'propertyName': lease.propertyName,
               'unitName': lease.unitName,
               'tenantName': lease.tenantName,
               'leaseId': lease.id,
-              'date': m['created_at']?.toString().split('T').first ?? '2026-07-01',
+              'date': m['inspection_date']?.toString() ?? m['created_at']?.toString().split('T').first ?? '2026-08-01',
               'status': m['status']?.toString() ?? 'Passed',
-              'ratings': m['ratings'] ?? {
-                'Living Room': 'Good',
-                'Kitchen': 'Good',
-                'Master Bedroom': 'Good',
-                'Bathroom': 'Good',
-              },
-              'tenantSignature': 'Signed by ${lease.tenantName}',
-              'landlordSignature': 'Signed by Landlord',
+              'ratings': ratings.isNotEmpty
+                  ? ratings
+                  : {
+                      'Living Room': 'Good',
+                      'Kitchen': 'Good',
+                      'Master Bedroom': 'Good',
+                      'Bathroom': 'Good',
+                    },
+              'tenantSignature': m['tenant_signature'] ?? 'Pending Tenant Sign',
+              'landlordSignature': m['landlord_signature'] ?? 'Signed by Landlord',
             });
           }
         } catch (_) {}
       }
 
-      if (allInspections.isNotEmpty && mounted) {
+      if (mounted) {
         setState(() {
           _checklists = allInspections;
         });
@@ -294,6 +254,13 @@ class _MoveInChecklistsScreenState
                               borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          final leases = ref.read(landlordProvider).leases;
+                          final matchingLease = leases.firstWhere(
+                            (l) => l.propertyName.toLowerCase() == selectedProperty.toLowerCase(),
+                            orElse: () => leases.isNotEmpty ? leases.first : throw Exception('No active lease found'),
+                          );
+
                           final overallStatus = (livingRoomRating == 'Needs Repair' ||
                                   kitchenRating == 'Needs Repair' ||
                                   bedroomRating == 'Needs Repair' ||
@@ -301,50 +268,48 @@ class _MoveInChecklistsScreenState
                               ? 'Failed'
                               : 'Passed';
 
-                          final newItem = {
-                            'id': 'chk-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-                            'propertyName': selectedProperty,
-                            'unitName': unitName,
-                            'tenantName': tenantName,
-                            'date': DateTime.now()
-                                .toString()
-                                .substring(0, 10),
-                            'status': overallStatus,
-                            'ratings': {
-                              'Living Room': livingRoomRating,
-                              'Kitchen': kitchenRating,
-                              'Bedroom': bedroomRating,
-                              'Bathroom': bathroomRating,
-                            },
-                            'tenantSignature': 'Pending Tenant Sign',
-                            'landlordSignature': signatureController.text,
-                          };
+                          final checklistData = [
+                            {'item': 'Living Room', 'condition': livingRoomRating.toUpperCase(), 'notes': ''},
+                            {'item': 'Kitchen', 'condition': kitchenRating.toUpperCase(), 'notes': ''},
+                            {'item': 'Bedroom', 'condition': bedroomRating.toUpperCase(), 'notes': ''},
+                            {'item': 'Bathroom', 'condition': bathroomRating.toUpperCase(), 'notes': ''},
+                          ];
 
                           try {
                             await ApiClient().dio.post(
-                              '/move-in/checklists',
+                              '/leases/${matchingLease.id}/inspections',
                               data: {
-                                'leaseId': 'lease_demo',
-                                'conditionRatings': newItem['ratings'],
+                                'inspection_type': 'MOVE_IN',
+                                'checklist_data': checklistData,
+                                'inspector_role': 'LANDLORD',
+                                'landlord_signature': signatureController.text.isNotEmpty
+                                    ? signatureController.text
+                                    : 'Signed by Landlord',
                               },
                             );
-                          } catch (_) {}
 
-                          setState(() {
-                            _checklists.insert(0, newItem);
-                          });
-
-                          if (context.mounted) {
-                            Navigator.pop(ctx);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                    'Checklist created successfully ($overallStatus)!'),
-                                backgroundColor: overallStatus == 'Passed'
-                                    ? const Color(0xFF1B8E4D)
-                                    : AppColors.error,
-                              ),
-                            );
+                            if (context.mounted) {
+                              Navigator.pop(ctx);
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      'Checklist created successfully ($overallStatus)!'),
+                                  backgroundColor: overallStatus == 'Passed'
+                                      ? const Color(0xFF1B8E4D)
+                                      : AppColors.error,
+                                ),
+                              );
+                            }
+                            _fetchChecklists();
+                          } catch (e) {
+                            if (context.mounted) {
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to submit checklist: $e'),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                            }
                           }
                         },
                         child: const Text('Save & Issue Checklist',
