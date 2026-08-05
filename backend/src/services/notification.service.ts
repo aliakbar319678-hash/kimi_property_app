@@ -283,4 +283,34 @@ export class NotificationService {
       channels: ['in_app', 'email'],
     });
   }
+
+  // ─── LMS Notifications ───────────────────────────────────────────────
+
+  /** Sent to student when they enroll in a course */
+  static async createCourseEnrolled(userId: string, courseId: string, courseName: string) {
+    return this.create({
+      userId,
+      type: 'lms_enrollment',
+      title: 'Course Enrollment Successful',
+      message: `You have successfully enrolled in "${courseName}". Start learning now!`,
+      actionUrl: `/user/lms/classroom/${courseId}`,
+      actionType: 'navigate',
+      priority: 'normal',
+      channels: ['in_app'],
+    });
+  }
+
+  /** Sent to student when a certificate is issued */
+  static async createCertificateIssued(userId: string, courseName: string) {
+    return this.create({
+      userId,
+      type: 'lms_certificate',
+      title: 'Certificate Issued',
+      message: `Congratulations! Your certificate for "${courseName}" has been issued.`,
+      actionUrl: `/user/lms/certificates`,
+      actionType: 'navigate',
+      priority: 'high',
+      channels: ['in_app', 'email'],
+    });
+  }
 }

@@ -11,7 +11,7 @@ class ApiConstants {
   static const String resendOtp = '/auth/resend-otp';
 
   // ── Users / Profile ─────────────────────────────────────────────────────────
-  static const String userProfile = '/users/profile';
+  static const String userProfile = '/auth/me';
   static const String usersTenants = '/users/tenants';
   static const String updateProfile = '/users/me/profile';
   static const String onboardingStep = '/users/me/onboarding';

@@ -2113,7 +2113,7 @@ as String,
 mixin _$Lease {
 
  String get id; String get unitName; String get tenantName; String get propertyName; double get rentAmount; String get startDate; String get endDate; String get status;// 'active', 'expired', 'pending'
- int get daysLeft; String get tenantId; double get depositAmount;
+ int get daysLeft; String get tenantId;
 /// Create a copy of Lease
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2124,16 +2124,16 @@ $LeaseCopyWith<Lease> get copyWith => _$LeaseCopyWithImpl<Lease>(this as Lease, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Lease&&(identical(other.id, id) || other.id == id)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.propertyName, propertyName) || other.propertyName == propertyName)&&(identical(other.rentAmount, rentAmount) || other.rentAmount == rentAmount)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.status, status) || other.status == status)&&(identical(other.daysLeft, daysLeft) || other.daysLeft == daysLeft)&&(identical(other.tenantId, tenantId) || other.tenantId == tenantId)&&(identical(other.depositAmount, depositAmount) || other.depositAmount == depositAmount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Lease&&(identical(other.id, id) || other.id == id)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.propertyName, propertyName) || other.propertyName == propertyName)&&(identical(other.rentAmount, rentAmount) || other.rentAmount == rentAmount)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.status, status) || other.status == status)&&(identical(other.daysLeft, daysLeft) || other.daysLeft == daysLeft)&&(identical(other.tenantId, tenantId) || other.tenantId == tenantId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,unitName,tenantName,propertyName,rentAmount,startDate,endDate,status,daysLeft,tenantId,depositAmount);
+int get hashCode => Object.hash(runtimeType,id,unitName,tenantName,propertyName,rentAmount,startDate,endDate,status,daysLeft,tenantId);
 
 @override
 String toString() {
-  return 'Lease(id: $id, unitName: $unitName, tenantName: $tenantName, propertyName: $propertyName, rentAmount: $rentAmount, startDate: $startDate, endDate: $endDate, status: $status, daysLeft: $daysLeft, tenantId: $tenantId, depositAmount: $depositAmount)';
+  return 'Lease(id: $id, unitName: $unitName, tenantName: $tenantName, propertyName: $propertyName, rentAmount: $rentAmount, startDate: $startDate, endDate: $endDate, status: $status, daysLeft: $daysLeft, tenantId: $tenantId)';
 }
 
 
@@ -2144,7 +2144,7 @@ abstract mixin class $LeaseCopyWith<$Res>  {
   factory $LeaseCopyWith(Lease value, $Res Function(Lease) _then) = _$LeaseCopyWithImpl;
 @useResult
 $Res call({
- String id, String unitName, String tenantName, String propertyName, double rentAmount, String startDate, String endDate, String status, int daysLeft, String tenantId, double depositAmount
+ String id, String unitName, String tenantName, String propertyName, double rentAmount, String startDate, String endDate, String status, int daysLeft, String tenantId
 });
 
 
@@ -2161,7 +2161,7 @@ class _$LeaseCopyWithImpl<$Res>
 
 /// Create a copy of Lease
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? unitName = null,Object? tenantName = null,Object? propertyName = null,Object? rentAmount = null,Object? startDate = null,Object? endDate = null,Object? status = null,Object? daysLeft = null,Object? tenantId = null,Object? depositAmount = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? unitName = null,Object? tenantName = null,Object? propertyName = null,Object? rentAmount = null,Object? startDate = null,Object? endDate = null,Object? status = null,Object? daysLeft = null,Object? tenantId = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,unitName: null == unitName ? _self.unitName : unitName // ignore: cast_nullable_to_non_nullable
@@ -2173,8 +2173,7 @@ as String,endDate: null == endDate ? _self.endDate : endDate // ignore: cast_nul
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,daysLeft: null == daysLeft ? _self.daysLeft : daysLeft // ignore: cast_nullable_to_non_nullable
 as int,tenantId: null == tenantId ? _self.tenantId : tenantId // ignore: cast_nullable_to_non_nullable
-as String,depositAmount: null == depositAmount ? _self.depositAmount : depositAmount // ignore: cast_nullable_to_non_nullable
-as double,
+as String,
   ));
 }
 
@@ -2259,10 +2258,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String unitName,  String tenantName,  String propertyName,  double rentAmount,  String startDate,  String endDate,  String status,  int daysLeft,  String tenantId,  double depositAmount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String unitName,  String tenantName,  String propertyName,  double rentAmount,  String startDate,  String endDate,  String status,  int daysLeft,  String tenantId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Lease() when $default != null:
-return $default(_that.id,_that.unitName,_that.tenantName,_that.propertyName,_that.rentAmount,_that.startDate,_that.endDate,_that.status,_that.daysLeft,_that.tenantId,_that.depositAmount);case _:
+return $default(_that.id,_that.unitName,_that.tenantName,_that.propertyName,_that.rentAmount,_that.startDate,_that.endDate,_that.status,_that.daysLeft,_that.tenantId);case _:
   return orElse();
 
 }
@@ -2280,10 +2279,10 @@ return $default(_that.id,_that.unitName,_that.tenantName,_that.propertyName,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String unitName,  String tenantName,  String propertyName,  double rentAmount,  String startDate,  String endDate,  String status,  int daysLeft,  String tenantId,  double depositAmount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String unitName,  String tenantName,  String propertyName,  double rentAmount,  String startDate,  String endDate,  String status,  int daysLeft,  String tenantId)  $default,) {final _that = this;
 switch (_that) {
 case _Lease():
-return $default(_that.id,_that.unitName,_that.tenantName,_that.propertyName,_that.rentAmount,_that.startDate,_that.endDate,_that.status,_that.daysLeft,_that.tenantId,_that.depositAmount);case _:
+return $default(_that.id,_that.unitName,_that.tenantName,_that.propertyName,_that.rentAmount,_that.startDate,_that.endDate,_that.status,_that.daysLeft,_that.tenantId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2300,10 +2299,10 @@ return $default(_that.id,_that.unitName,_that.tenantName,_that.propertyName,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String unitName,  String tenantName,  String propertyName,  double rentAmount,  String startDate,  String endDate,  String status,  int daysLeft,  String tenantId,  double depositAmount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String unitName,  String tenantName,  String propertyName,  double rentAmount,  String startDate,  String endDate,  String status,  int daysLeft,  String tenantId)?  $default,) {final _that = this;
 switch (_that) {
 case _Lease() when $default != null:
-return $default(_that.id,_that.unitName,_that.tenantName,_that.propertyName,_that.rentAmount,_that.startDate,_that.endDate,_that.status,_that.daysLeft,_that.tenantId,_that.depositAmount);case _:
+return $default(_that.id,_that.unitName,_that.tenantName,_that.propertyName,_that.rentAmount,_that.startDate,_that.endDate,_that.status,_that.daysLeft,_that.tenantId);case _:
   return null;
 
 }
@@ -2315,7 +2314,7 @@ return $default(_that.id,_that.unitName,_that.tenantName,_that.propertyName,_tha
 
 
 class _Lease implements Lease {
-  const _Lease({required this.id, required this.unitName, required this.tenantName, required this.propertyName, required this.rentAmount, required this.startDate, required this.endDate, required this.status, this.daysLeft = 0, this.tenantId = '', this.depositAmount = 0.0});
+  const _Lease({required this.id, required this.unitName, required this.tenantName, required this.propertyName, required this.rentAmount, required this.startDate, required this.endDate, required this.status, this.daysLeft = 0, this.tenantId = ''});
   
 
 @override final  String id;
@@ -2329,7 +2328,6 @@ class _Lease implements Lease {
 // 'active', 'expired', 'pending'
 @override@JsonKey() final  int daysLeft;
 @override@JsonKey() final  String tenantId;
-@override@JsonKey() final  double depositAmount;
 
 /// Create a copy of Lease
 /// with the given fields replaced by the non-null parameter values.
@@ -2341,16 +2339,16 @@ _$LeaseCopyWith<_Lease> get copyWith => __$LeaseCopyWithImpl<_Lease>(this, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Lease&&(identical(other.id, id) || other.id == id)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.propertyName, propertyName) || other.propertyName == propertyName)&&(identical(other.rentAmount, rentAmount) || other.rentAmount == rentAmount)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.status, status) || other.status == status)&&(identical(other.daysLeft, daysLeft) || other.daysLeft == daysLeft)&&(identical(other.tenantId, tenantId) || other.tenantId == tenantId)&&(identical(other.depositAmount, depositAmount) || other.depositAmount == depositAmount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Lease&&(identical(other.id, id) || other.id == id)&&(identical(other.unitName, unitName) || other.unitName == unitName)&&(identical(other.tenantName, tenantName) || other.tenantName == tenantName)&&(identical(other.propertyName, propertyName) || other.propertyName == propertyName)&&(identical(other.rentAmount, rentAmount) || other.rentAmount == rentAmount)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.status, status) || other.status == status)&&(identical(other.daysLeft, daysLeft) || other.daysLeft == daysLeft)&&(identical(other.tenantId, tenantId) || other.tenantId == tenantId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,unitName,tenantName,propertyName,rentAmount,startDate,endDate,status,daysLeft,tenantId,depositAmount);
+int get hashCode => Object.hash(runtimeType,id,unitName,tenantName,propertyName,rentAmount,startDate,endDate,status,daysLeft,tenantId);
 
 @override
 String toString() {
-  return 'Lease(id: $id, unitName: $unitName, tenantName: $tenantName, propertyName: $propertyName, rentAmount: $rentAmount, startDate: $startDate, endDate: $endDate, status: $status, daysLeft: $daysLeft, tenantId: $tenantId, depositAmount: $depositAmount)';
+  return 'Lease(id: $id, unitName: $unitName, tenantName: $tenantName, propertyName: $propertyName, rentAmount: $rentAmount, startDate: $startDate, endDate: $endDate, status: $status, daysLeft: $daysLeft, tenantId: $tenantId)';
 }
 
 
@@ -2361,7 +2359,7 @@ abstract mixin class _$LeaseCopyWith<$Res> implements $LeaseCopyWith<$Res> {
   factory _$LeaseCopyWith(_Lease value, $Res Function(_Lease) _then) = __$LeaseCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String unitName, String tenantName, String propertyName, double rentAmount, String startDate, String endDate, String status, int daysLeft, String tenantId, double depositAmount
+ String id, String unitName, String tenantName, String propertyName, double rentAmount, String startDate, String endDate, String status, int daysLeft, String tenantId
 });
 
 
@@ -2378,7 +2376,7 @@ class __$LeaseCopyWithImpl<$Res>
 
 /// Create a copy of Lease
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? unitName = null,Object? tenantName = null,Object? propertyName = null,Object? rentAmount = null,Object? startDate = null,Object? endDate = null,Object? status = null,Object? daysLeft = null,Object? tenantId = null,Object? depositAmount = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? unitName = null,Object? tenantName = null,Object? propertyName = null,Object? rentAmount = null,Object? startDate = null,Object? endDate = null,Object? status = null,Object? daysLeft = null,Object? tenantId = null,}) {
   return _then(_Lease(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,unitName: null == unitName ? _self.unitName : unitName // ignore: cast_nullable_to_non_nullable
@@ -2390,8 +2388,7 @@ as String,endDate: null == endDate ? _self.endDate : endDate // ignore: cast_nul
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,daysLeft: null == daysLeft ? _self.daysLeft : daysLeft // ignore: cast_nullable_to_non_nullable
 as int,tenantId: null == tenantId ? _self.tenantId : tenantId // ignore: cast_nullable_to_non_nullable
-as String,depositAmount: null == depositAmount ? _self.depositAmount : depositAmount // ignore: cast_nullable_to_non_nullable
-as double,
+as String,
   ));
 }
 

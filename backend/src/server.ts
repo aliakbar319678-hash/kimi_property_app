@@ -195,7 +195,9 @@ app.get('/api-docs.json', (req, res) => {
 });
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));

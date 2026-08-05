@@ -35,7 +35,7 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
 
   Future<void> _loadProfile() async {
     try {
-      final resp = await ApiClient().dio.get('/users/profile');
+      final resp = await ApiClient().dio.get('/auth/me');
       final data = resp.data['data'] as Map<String, dynamic>? ?? {};
 
       setState(() {
@@ -175,8 +175,6 @@ class _LandlordProfileScreenState extends ConsumerState<LandlordProfileScreen> {
 
                       // Form Fields
                       _buildTextField('First Name', _firstNameCtrl, Icons.person_outline),
-                      const SizedBox(height: 16),
-                      _buildTextField('Last Name', _lastNameCtrl, Icons.person_outline),
                       const SizedBox(height: 16),
                       _buildTextField('Phone Number', _phoneCtrl, Icons.phone_outlined),
                       const SizedBox(height: 16),

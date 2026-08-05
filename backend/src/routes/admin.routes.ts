@@ -92,8 +92,25 @@ router.get('/system-health', adminOrJwtAuth, async (req: AuthRequest, res, next)
 // Notifications Route
 router.get('/notifications/all', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
   try {
-    const result = await query('SELECT * FROM notifications ORDER BY created_at DESC LIMIT 50');
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+    const result = await query('SELECT * FROM notifications ORDER BY created_at DESC LIMIT $1 OFFSET $2', [limit, offset]);
     res.json({ success: true, data: result.rows });
+  } catch (e) { next(e); }
+});
+
+router.put('/notifications/mark-all-read', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
+  try {
+    // For admin context, marking all as read. We can mark all notifications where is_read = false
+    await query('UPDATE notifications SET is_read = true WHERE is_read = false');
+    res.json({ success: true, message: 'All notifications marked as read' });
+  } catch (e) { next(e); }
+});
+
+router.delete('/notifications/:id', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
+  try {
+    await query('DELETE FROM notifications WHERE id = $1', [req.params.id]);
+    res.json({ success: true, message: 'Notification dismissed' });
   } catch (e) { next(e); }
 });
 
@@ -134,7 +151,7 @@ router.put('/tickets/:id', adminOrJwtAuth, async (req: AuthRequest, res, next) =
   try {
     const { id } = req.params;
     const { priority, status, assigned_to, resolution_notes, update_note } = req.body;
-    
+
     const result = await query(
       `UPDATE support_tickets 
        SET priority = COALESCE($1, priority), 
@@ -150,19 +167,19 @@ router.put('/tickets/:id', adminOrJwtAuth, async (req: AuthRequest, res, next) =
     let action = 'note';
     let user_name = 'Admin';
     if (assigned_to) {
-        action = 'assigned';
-        user_name = assigned_to;
+      action = 'assigned';
+      user_name = assigned_to;
     } else if (status === 'resolved') {
-        action = 'resolved';
+      action = 'resolved';
     } else if (status === 'escalated') {
-        action = 'escalated';
+      action = 'escalated';
     } else if (status) {
-        action = 'status_change';
+      action = 'status_change';
     }
-    
+
     const note = update_note || resolution_notes || (assigned_to ? `Assigned to ${assigned_to}` : `Status changed to ${status}`);
     await query(`INSERT INTO support_ticket_updates (ticket_id, user_name, action, note) VALUES ($1, $2, $3, $4)`, [id, user_name, action, note]);
-    
+
     res.json({ success: true, data: result.rows[0] });
   } catch (e) { next(e); }
 });

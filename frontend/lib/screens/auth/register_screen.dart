@@ -321,6 +321,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             return;
                           }
 
+                          // Capture the mode before submit
+                          final wasLogin = state.isLogin;
                           final success = await notif.submit();
                           if (!context.mounted) return;
 
@@ -328,7 +330,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           final freshState = ref.read(registerProvider);
 
                           if (success) {
-                            if (freshState.isLogin) {
+                            if (wasLogin) {
                               // Route user to role-specific home
                               if (freshState.selectedRole == 'landlord') {
                                 Navigator.pushNamedAndRemoveUntil(
@@ -341,17 +343,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                     context, '/home', (r) => false);
                               }
                             } else {
-                              // Registration succeeded -> auto-login succeeded -> go to home
-                              if (freshState.selectedRole == 'landlord') {
-                                Navigator.pushNamedAndRemoveUntil(
-                                    context, '/landlord_home', (r) => false);
-                              } else if (freshState.selectedRole == 'vendor') {
-                                Navigator.pushNamedAndRemoveUntil(
-                                    context, '/vendor_home', (r) => false);
-                              } else {
-                                Navigator.pushNamedAndRemoveUntil(
-                                    context, '/home', (r) => false);
-                              }
+                              // Registration succeeded -> go to OTP verification
+                              Navigator.pushNamedAndRemoveUntil(
+                                  context, '/otp', (r) => false);
                             }
                           } else {
                             ScaffoldMessenger.of(context).clearSnackBars();

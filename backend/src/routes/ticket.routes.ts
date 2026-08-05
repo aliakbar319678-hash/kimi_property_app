@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { TicketService } from '../services/ticket.service';
 import { NotificationService } from '../services/notification.service';
+import { AuditService } from '../services/audit.service';
 import { authenticate, AuthRequest, requireRole } from '../middleware/auth';
 import { requirePermission, requireStaffOrAdmin } from '../middleware/rolePermission';
 
@@ -39,6 +40,7 @@ router.post(
         priority: priority ? priority.toLowerCase() : 'low',
         createdByUserId: req.user!.id,
       });
+      await AuditService.logAction(req.user!.id, req.user!.roles?.[0], 'created_ticket', 'ticket', ticket.id, { title }, req);
       res.status(201).json({ success: true, data: ticket });
     } catch (e) { next(e); }
   }
@@ -111,6 +113,7 @@ router.put(
       const { status, resolution_notes } = req.body;
       if (!status) return res.status(400).json({ success: false, error: 'status is required' });
       const ticket = await TicketService.updateStatus(req.params.id, status, resolution_notes);
+      await AuditService.logAction(req.user!.id, req.user!.roles?.[0], 'updated_ticket_status', 'ticket', ticket.id, { status }, req);
       res.json({ success: true, data: ticket });
     } catch (e) { next(e); }
   }

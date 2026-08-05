@@ -593,7 +593,7 @@ class PortfolioDashboardScreen extends ConsumerWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: alerts.length,
-                  separatorBuilder: (_, ___) => SizedBox(height: h * 0.012),
+                  separatorBuilder: (_, _) => SizedBox(height: h * 0.012),
                   itemBuilder: (context, index) {
                     final alert = alerts[index];
                     final isLease = alert.type == 'lease';

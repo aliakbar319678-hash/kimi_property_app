@@ -83,7 +83,7 @@ class _ChargeLateFeeDialogState extends State<ChargeLateFeeDialog> {
               value: _extendDueDate,
               onChanged: (val) => setState(() => _extendDueDate = val),
               contentPadding: EdgeInsets.zero,
-              activeColor: AppColors.primary,
+              activeThumbColor: AppColors.primary,
             ),
             const SizedBox(height: 24),
             ElevatedButton(

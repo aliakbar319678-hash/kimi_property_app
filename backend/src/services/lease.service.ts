@@ -28,6 +28,15 @@ export class LeaseService {
     return res.rows[0];
   }
 
+  static async updateStatus(id: string, status: string) {
+    const res = await query(
+      'UPDATE leases SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [status, id]
+    );
+    if (res.rows.length === 0) throw new AppError('Lease not found', 404);
+    return res.rows[0];
+  }
+
   static async getDashboard(userId: string, role: string) {
     let sql = '';
     let params: any[] = [userId];
@@ -45,7 +54,10 @@ export class LeaseService {
              WHERE l.landlord_id = $1`;
     }
     const res = await query(sql, params);
-    return res.rows;
+    return res.rows.map(row => ({
+      ...row,
+      tenant: { id: row.tenant_id }
+    }));
   }
 
   static async getExpiringSoon(landlordId: string) {

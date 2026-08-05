@@ -1075,6 +1075,7 @@ class _LandlordPropertyDetailsScreenState
     );
   }
   void _showChangeStatusModal(BuildContext context, LandlordNotifier notifier, Property property) {
+    final messenger = ScaffoldMessenger.of(context);
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -1093,9 +1094,14 @@ class _LandlordPropertyDetailsScreenState
                   trailing: property.status == status ? const Icon(Icons.check_circle, color: AppColors.primary) : null,
                   onTap: () async {
                     Navigator.pop(ctx);
-                    await notifier.updateProperty(property.id, {'status': status});
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Status updated to $status'), backgroundColor: Colors.green));
+                    try {
+                      await notifier.updateProperty(property.id, {'status': status});
+                      messenger.showSnackBar(SnackBar(content: Text('Status updated to $status'), backgroundColor: Colors.green));
+                    } catch (e) {
+                      messenger.showSnackBar(const SnackBar(
+                        content: Text('Status update not supported yet. Please contact support.'),
+                        backgroundColor: AppColors.error,
+                      ));
                     }
                   },
                 );

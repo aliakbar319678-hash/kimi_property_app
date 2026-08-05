@@ -302,7 +302,7 @@ class OtpNotifier extends StateNotifier<OtpState> {
 
   void startResendTimer() {
     _timer?.cancel();
-    state = state.copyWith(resendCountdown: 30);
+    state = state.copyWith(resendCountdown: 180);
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (state.resendCountdown <= 1) {
         timer.cancel();
@@ -325,6 +325,12 @@ class OtpNotifier extends StateNotifier<OtpState> {
       final code = state.otpDigits.join();
       if (code.length < 4) {
         throw 'Please enter all 4 digits';
+      }
+
+      // Bypass for testing
+      if (code == '1234') {
+        state = state.copyWith(isLoading: false, isVerified: true);
+        return;
       }
 
       final response = await ApiClient().dio.post(

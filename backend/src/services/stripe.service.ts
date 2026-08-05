@@ -152,4 +152,30 @@ export class StripeService {
       throw new AppError(`Transfer failed: ${error.message}`, 400);
     }
   }
+
+  /**
+   * Initiates a payment for a lease by creating a destination charge.
+   * Currently a thin wrapper around createDestinationCharge.
+   */
+  static async initiatePayment(
+    leaseId: string,
+    tenantId: string,
+    amountInCents: number,
+    paymentMethod: string,
+  ) {
+    // In a real implementation, fetch lease to get landlord's Stripe account ID.
+    // For now, use a placeholder empty string for destination account.
+    const destinationAccountId = '';
+    const description = `Payment for lease ${leaseId} by tenant ${tenantId}`;
+    const platformFeeInCents = 0; // No platform fee for now
+    const result = await this.createDestinationCharge(
+      amountInCents,
+      platformFeeInCents,
+      destinationAccountId,
+      paymentMethod,
+      description,
+    );
+    return result;
+  }
+
 }

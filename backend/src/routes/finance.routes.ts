@@ -131,10 +131,23 @@ router.get('/vendor/earnings', authenticate, requireRole('vendor', 'landlord'), 
   } catch (e) { next(e); }
 });
 
-router.post('/invoices', authenticate, requireRole('vendor', 'landlord', 'admin'), async (req: AuthRequest, res, next) => {
+router.post('/invoices', authenticate, requireRole('vendor', 'landlord', 'admin', 'property_manager'), async (req: AuthRequest, res, next) => {
   try {
-    const invoice = await FinanceService.generateInvoice(req.user!.id, req.body.workOrderId, req.body.items, req.body.due_date || req.body.dueDate);
+    const { workOrderId, leaseId, tenantId, items, due_date, dueDate } = req.body;
+    // Updated generateInvoice to support leaseId and tenantId
+    const invoice = await FinanceService.generateInvoice(req.user!.id, workOrderId, items, due_date || dueDate, leaseId, tenantId);
     res.status(201).json({ success: true, data: invoice });
+  } catch (e) { next(e); }
+});
+
+router.post('/payments/offline', authenticate, requireRole('landlord', 'property_manager', 'admin'), async (req: AuthRequest, res, next) => {
+  try {
+    const { invoiceId, amount, paymentDate, paymentMethod, reference } = req.body;
+    if (!invoiceId || !amount || !paymentMethod) {
+      return res.status(400).json({ success: false, error: 'invoiceId, amount, and paymentMethod are required' });
+    }
+    const payment = await FinanceService.recordOfflinePayment(req.user!.id, invoiceId, amount, paymentDate, paymentMethod, reference);
+    res.status(201).json({ success: true, data: payment });
   } catch (e) { next(e); }
 });
 

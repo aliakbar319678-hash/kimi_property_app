@@ -49,11 +49,13 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
   Future<void> _navigateAfterVerification(BuildContext context, WidgetRef ref) async {
     String role = ref.read(registerProvider).selectedRole;
+    String kycStatus = 'unverified';
 
     try {
       final response = await ApiClient().dio.get(ApiConstants.me);
       if (response.statusCode == 200) {
         final data = response.data['data'];
+        kycStatus = data['kyc_status'] ?? 'unverified';
         final List roles = data['roles'] ?? [];
         if (roles.isNotEmpty) {
           final primaryRoleObj = roles.firstWhere(
@@ -69,10 +71,26 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
     if (!context.mounted) return;
 
-    if (role == 'landlord') {
-      Navigator.pushReplacementNamed(context, '/landlord_home');
+    if (role == 'landlord' || role == 'property_manager') {
+      if (kycStatus == 'verified' || kycStatus == 'approved') {
+        Navigator.pushReplacementNamed(context, '/verification_success');
+      } else if (kycStatus == 'rejected') {
+        Navigator.pushReplacementNamed(context, '/verification_rejected');
+      } else if (kycStatus == 'reviewing') {
+        Navigator.pushReplacementNamed(context, '/landlord_pending_approval');
+      } else {
+        Navigator.pushReplacementNamed(context, '/landlord_onboarding');
+      }
     } else if (role == 'vendor') {
-      Navigator.pushReplacementNamed(context, '/vendor_onboarding');
+      if (kycStatus == 'verified' || kycStatus == 'approved') {
+        Navigator.pushReplacementNamed(context, '/verification_success');
+      } else if (kycStatus == 'rejected') {
+        Navigator.pushReplacementNamed(context, '/verification_rejected');
+      } else if (kycStatus == 'reviewing') {
+        Navigator.pushReplacementNamed(context, '/landlord_pending_approval');
+      } else {
+        Navigator.pushReplacementNamed(context, '/vendor_onboarding');
+      }
     } else {
       Navigator.pushReplacementNamed(context, '/basic_profile');
     }
@@ -244,7 +262,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                             Icon(Icons.timer_outlined, size: w * 0.045, color: AppColors.textSecondary),
                             SizedBox(width: w * 0.015),
                             Text(
-                              'Resend code in 00:${state.resendCountdown.toString().padLeft(2, '0')}',
+                              'Resend code in ${(state.resendCountdown ~/ 60).toString().padLeft(2, '0')}:${(state.resendCountdown % 60).toString().padLeft(2, '0')}',
                               style: TextStyle(
                                 fontSize: w * 0.035,
                                 color: AppColors.textSecondary,

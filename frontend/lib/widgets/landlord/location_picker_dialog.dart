@@ -186,7 +186,7 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
       } 
 
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
       final newLatLng = LatLng(position.latitude, position.longitude);
       setState(() {

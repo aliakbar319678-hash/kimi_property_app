@@ -502,7 +502,7 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                 const SizedBox(height: 6),
                 if (tenants.isNotEmpty) ...[
                   DropdownButtonFormField<String>(
-                    value: selectedTenantId,
+                    initialValue: selectedTenantId,
                     hint: const Text('Select Tenant'),
                     isExpanded: true,
                     decoration: _sheetFieldDeco(),
@@ -574,7 +574,7 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                       }
                       
                       return DropdownButtonFormField<String>(
-                        value: selectedUnitId,
+                        initialValue: selectedUnitId,
                         hint: const Text('Select Unit'),
                         decoration: _sheetFieldDeco(),
                         items: propertyUnits.map((u) => DropdownMenuItem(value: u.id, child: Text('${u.name} — \$${u.rent.toStringAsFixed(0)}/mo'))).toList(),
@@ -930,18 +930,30 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                         ? null
                         : () async {
                             setSheetState(() => isLoading = true);
+                            final messenger = ScaffoldMessenger.of(context);
                             try {
-                              final nd = fmt(newEndDate!);
-                              await ref.read(landlordProvider.notifier).renewLease(lease.id, nd);
+                              final payload = <String, dynamic>{
+                                'endDate': fmt(newEndDate!),
+                                'end_date': fmt(newEndDate!),
+                                if (newStartDate != null) ...{
+                                  'startDate': fmt(newStartDate!),
+                                  'start_date': fmt(newStartDate!),
+                                },
+                                if (rentCtrl.text.trim().isNotEmpty)
+                                  'rent_amount': double.tryParse(rentCtrl.text.trim()),
+                                if (termsCtrl.text.trim().isNotEmpty)
+                                  'notes': termsCtrl.text.trim(),
+                              };
+                              await ref.read(landlordProvider.notifier).renewLease(lease.id, payload);
                               if (ctx.mounted) {
                                 Navigator.pop(ctx);
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                messenger.showSnackBar(
                                   const SnackBar(content: Text('Lease renewed successfully! ✅'), backgroundColor: Color(0xFF27AE60)),
                                 );
                               }
                             } catch (e) {
                               if (ctx.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                messenger.showSnackBar(
                                   SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: AppColors.error),
                                 );
                               }
@@ -949,6 +961,7 @@ class _LeaseManagementScreenState extends ConsumerState<LeaseManagementScreen> {
                               if (ctx.mounted) setSheetState(() => isLoading = false);
                             }
                           },
+
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

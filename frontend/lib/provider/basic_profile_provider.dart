@@ -135,28 +135,23 @@ class BasicProfileNotifier extends StateNotifier<BasicProfileState> {
   Future<bool> _submit() async {
     state = state.copyWith(isLoading: true, errorMessage: null, fieldErrors: {});
     try {
-      final response = await ApiClient().dio.post(
-        '/users/me/onboarding/1',
+      final response = await ApiClient().dio.put(
+        '/users/me/profile',
         data: {
-          'step': 1,
-          'data': {
-            'legalName': state.fullLegalName.trim(),
-            'dob': () {
-              final parts = state.dateOfBirth.trim().split('/');
-              if (parts.length == 3) {
-                return '${parts[2]}-${parts[1]}-${parts[0]}'; // YYYY-MM-DD
-              }
-              return state.dateOfBirth.trim();
-            }(),
-            'phone': state.phoneNumber.trim(),
-            'address': {
-              'streetAddress': state.residentialAddress.trim(),
-            },
-            'emergencyContact': {
-              'name': state.contactName.trim(),
-              'relationship': state.relationship,
-              'phone': state.emergencyPhone.trim(),
-            },
+          'legal_first_name': state.fullLegalName.trim(),
+          'date_of_birth': () {
+            final parts = state.dateOfBirth.trim().split('/');
+            if (parts.length == 3) {
+              return '${parts[2]}-${parts[1]}-${parts[0]}'; // YYYY-MM-DD
+            }
+            return state.dateOfBirth.trim();
+          }(),
+          'phone': state.phoneNumber.trim(),
+          'current_address': state.residentialAddress.trim(),
+          'emergency_contact': {
+            'name': state.contactName.trim(),
+            'relationship': state.relationship,
+            'phone': state.emergencyPhone.trim(),
           },
         },
       );

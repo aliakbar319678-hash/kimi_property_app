@@ -1,6 +1,7 @@
 import { query, withTransaction } from '../db';
 import { AppError } from '../middleware/errorHandler';
 import { v4 as uuidv4 } from 'uuid';
+import { NotificationService } from './notification.service';
 
 export class LMSService {
   static async getCourses(filters: any) {
@@ -90,9 +91,9 @@ export class LMSService {
         let sortOrder = 1;
         for (const mod of modulesList) {
           await client.query(
-            `INSERT INTO modules (course_id, title, description, content_type, content_url, sort_order, duration_minutes) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [course.id, mod.title, mod.description || '', mod.content_type || 'video', mod.content_url || '', sortOrder++, mod.duration_minutes ? parseInt(mod.duration_minutes, 10) : null]
+            `INSERT INTO modules (course_id, title, description, content_type, content_url, audio_url, sort_order, duration_minutes) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [course.id, mod.title, mod.description || '', mod.content_type || 'video', mod.content_url || '', mod.audio_url || null, sortOrder++, mod.duration_minutes ? parseInt(mod.duration_minutes, 10) : null]
           );
         }
       }
@@ -175,9 +176,9 @@ export class LMSService {
         let sortOrder = 1;
         for (const mod of modulesList) {
           await client.query(
-              `INSERT INTO modules (course_id, title, description, content_type, content_url, sort_order, duration_minutes) 
-               VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-              [id, mod.title, mod.description || '', mod.content_type || 'video', mod.content_url || '', sortOrder++, mod.duration_minutes ? parseInt(mod.duration_minutes, 10) : null]
+            `INSERT INTO modules (course_id, title, description, content_type, content_url, audio_url, sort_order, duration_minutes) 
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [id, mod.title, mod.description || '', mod.content_type || 'video', mod.content_url || '', mod.audio_url || null, sortOrder++, mod.duration_minutes ? parseInt(mod.duration_minutes, 10) : null]
           );
         }
       }
@@ -211,19 +212,19 @@ export class LMSService {
       // First, get enrollment IDs for this course
       const enrolls = await client.query('SELECT id FROM enrollments WHERE course_id = $1', [id]);
       const enrollIds = enrolls.rows.map((r: any) => r.id);
-      
+
       // Delete quiz_attempts that reference these enrollments
       if (enrollIds.length > 0) {
         await client.query('DELETE FROM quiz_attempts WHERE enrollment_id = ANY($1)', [enrollIds]);
       }
-      
+
       // Delete other related records
       await client.query('DELETE FROM certificates WHERE course_id = $1', [id]);
       await client.query('DELETE FROM enrollments WHERE course_id = $1', [id]);
-      
+
       await client.query('DELETE FROM quizzes WHERE course_id = $1', [id]);
       await client.query('DELETE FROM modules WHERE course_id = $1', [id]);
-      
+
       const res = await client.query('DELETE FROM courses WHERE id = $1 RETURNING *', [id]);
       if (res.rows.length === 0) throw new AppError('Course not found', 404);
       return res.rows[0];
@@ -232,12 +233,65 @@ export class LMSService {
 
   static async enroll(userId: string, courseId: string) {
     const existing = await query('SELECT * FROM enrollments WHERE user_id = $1 AND course_id = $2', [userId, courseId]);
-    if (existing.rows.length > 0) return existing.rows[0];
+    if (existing.rows.length > 0) {
+      if (existing.rows[0].status === 'completed') {
+        throw new AppError('you have already learnd a course', 400);
+      }
+      return existing.rows[0];
+    }
     const res = await query(
       'INSERT INTO enrollments (user_id, course_id) VALUES ($1, $2) RETURNING *',
       [userId, courseId]
     );
+
+    // Fetch course name to send notification
+    const courseRes = await query('SELECT title FROM courses WHERE id = $1', [courseId]);
+    const courseName = courseRes.rows[0]?.title || 'Course';
+    await NotificationService.createCourseEnrolled(userId, courseId, courseName);
+
     return res.rows[0];
+  }
+
+  static async getMyEnrollments(userId: string) {
+    // If admin proxy without specific user, return all
+    if (userId === 'admin-system') {
+      const res = await query(`
+        SELECT e.id as enrollment_id, e.status, e.progress_percent, 
+               e.started_at as enrolled_at, e.completed_at,
+               c.id as course_id, c.title as course_title, c.category, c.difficulty, 
+               c.thumbnail_url,
+               (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id) as modules_count,
+               cert.id as certificate_id
+        FROM enrollments e
+        JOIN courses c ON c.id = e.course_id
+        LEFT JOIN (
+            SELECT DISTINCT ON (course_id, user_id) id, course_id, user_id 
+            FROM certificates 
+            ORDER BY course_id, user_id, issued_date DESC
+        ) cert ON cert.course_id = c.id AND cert.user_id = e.user_id
+        ORDER BY e.started_at DESC
+      `);
+      return res.rows;
+    }
+    
+    const res = await query(`
+      SELECT e.id as enrollment_id, e.status, e.progress_percent, 
+             e.started_at as enrolled_at, e.completed_at,
+             c.id as course_id, c.title as course_title, c.category, c.difficulty, 
+             c.thumbnail_url,
+             (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id) as modules_count,
+             cert.id as certificate_id
+      FROM enrollments e
+      JOIN courses c ON c.id = e.course_id
+      LEFT JOIN (
+          SELECT DISTINCT ON (course_id, user_id) id, course_id, user_id 
+          FROM certificates 
+          ORDER BY course_id, user_id, issued_date DESC
+      ) cert ON cert.course_id = c.id AND cert.user_id = e.user_id
+      WHERE e.user_id = $1
+      ORDER BY e.started_at DESC
+    `, [userId]);
+    return res.rows;
   }
 
   static async updateProgress(enrollmentId: string, userId: string, progressPercent: number) {
@@ -321,6 +375,10 @@ export class LMSService {
          VALUES ($1, $2, $3, $4, $5, $6, CURRENT_DATE, CURRENT_DATE + INTERVAL '2 years', $7, 'active') RETURNING *`,
         [userId, enrollment.course_id, enrollmentId, certNumber, displayName, course.title, hash]
       );
+
+      // Send notification
+      await NotificationService.createCertificateIssued(userId, course.title);
+
       return certRes.rows[0];
     });
   }
@@ -421,6 +479,19 @@ export class LMSService {
   }
 
   static async getDashboard(userId: string) {
+    if (userId === 'admin-system') {
+      const completedRes = await query('SELECT COUNT(*) FROM enrollments WHERE status = $1', ['completed']);
+      const activeRes = await query('SELECT COUNT(*) FROM enrollments WHERE status = $1', ['in_progress']);
+      const avgRes = await query('SELECT AVG(score_percent) FROM quiz_attempts');
+      const recentCertsRes = await query('SELECT * FROM certificates ORDER BY issued_date DESC LIMIT 5');
+      return {
+        coursesCompleted: parseInt(completedRes.rows[0].count, 10),
+        activeCourses: parseInt(activeRes.rows[0].count, 10),
+        averageScore: Math.round(avgRes.rows[0].avg || 0),
+        recentCertificates: recentCertsRes.rows,
+      };
+    }
+    
     const completedRes = await query('SELECT COUNT(*) FROM enrollments WHERE user_id = $1 AND status = $2', [userId, 'completed']);
     const activeRes = await query('SELECT COUNT(*) FROM enrollments WHERE user_id = $1 AND status = $2', [userId, 'in_progress']);
     const avgRes = await query('SELECT AVG(score_percent) FROM quiz_attempts WHERE enrollment_id IN (SELECT id FROM enrollments WHERE user_id = $1)', [userId]);
@@ -533,6 +604,28 @@ export class LMSService {
       ORDER BY enrolled_count DESC
     `);
 
+    // Engagement: Daily for last 7 days
+    const engagementDaily = await query(`
+      SELECT 
+        TO_CHAR(DATE_TRUNC('day', started_at), 'Dy') as label,
+        COUNT(*) * 10 as value
+      FROM enrollments
+      WHERE started_at >= NOW() - INTERVAL '7 days'
+      GROUP BY DATE_TRUNC('day', started_at)
+      ORDER BY DATE_TRUNC('day', started_at) ASC
+    `);
+
+    // Engagement: Weekly for last 5 weeks
+    const engagementWeekly = await query(`
+      SELECT 
+        'Wk ' || TO_CHAR(DATE_TRUNC('week', started_at), 'WW') as label,
+        COUNT(*) * 30 as value
+      FROM enrollments
+      WHERE started_at >= NOW() - INTERVAL '5 weeks'
+      GROUP BY DATE_TRUNC('week', started_at)
+      ORDER BY DATE_TRUNC('week', started_at) ASC
+    `);
+
     return {
       categories: categoryStats.rows,
       top_course: topCourse.rows[0] || null,
@@ -541,7 +634,9 @@ export class LMSService {
       trends_30days: trends30Days.rows,
       trends_thisyear: trendsThisYear.rows,
       trends_alltime: trendsAllTime.rows,
-      course_stats: courseStats.rows
+      course_stats: courseStats.rows,
+      engagement_daily: engagementDaily.rows,
+      engagement_weekly: engagementWeekly.rows
     };
   }
 
@@ -616,10 +711,10 @@ export class LMSService {
   static async submitQuizForCertification(quizId: string, data: any, userId: string) {
     const quizRes = await query('SELECT questions FROM quizzes WHERE id = $1', [quizId]);
     if (quizRes.rows.length === 0) throw new AppError('Quiz not found', 404);
-    
+
     let questions = quizRes.rows[0].questions;
     if (typeof questions === 'string') {
-      try { questions = JSON.parse(questions); } catch(e) {}
+      try { questions = JSON.parse(questions); } catch (e) { }
     }
 
     let correct = 0;
@@ -649,7 +744,7 @@ export class LMSService {
          VALUES ($1, $2, $3, $4, $5)`,
         [userId, quizId, passed, score, certUrl]
       );
-    } catch(e: any) {
+    } catch (e: any) {
       // Ignored if table doesn't exist
       console.warn("Could not insert into lms_quiz_results: ", e.message);
     }
@@ -660,12 +755,65 @@ export class LMSService {
       if (qzRes.rows.length > 0 && passed) {
         await this.issueCertificateAdmin(userId, qzRes.rows[0].course_id);
       }
-    } catch(e) {}
+    } catch (e) { }
 
     return {
       passed,
       score_percentage: score,
       certificate_url: certUrl
+    };
+  }
+
+  static async getLmsCustomReport(startDate: string, endDate: string) {
+    const dateFilter = `AND e.started_at BETWEEN $1 AND $2`;
+    const params = [startDate, endDate];
+    const createdFilter = `AND created_at BETWEEN $1 AND $2`;
+
+    const categoryStats = await query(`
+      SELECT c.category, COUNT(e.id) as enrollments 
+      FROM courses c 
+      LEFT JOIN enrollments e ON c.id = e.course_id 
+      WHERE 1=1 ${dateFilter}
+      GROUP BY c.category
+    `, params);
+
+    const topCourse = await query(`
+      SELECT c.title, COUNT(e.id) as students, ROUND(AVG(e.progress_percent)) as completion
+      FROM courses c
+      LEFT JOIN enrollments e ON c.id = e.course_id
+      WHERE 1=1 ${dateFilter}
+      GROUP BY c.id, c.title
+      ORDER BY students DESC
+      LIMIT 10
+    `, params);
+
+    const funnel = await query(`
+      SELECT 
+        COUNT(id) as enrolled,
+        COUNT(CASE WHEN progress_percent > 0 THEN 1 END) as started,
+        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed
+      FROM enrollments e
+      WHERE 1=1 ${dateFilter}
+    `, params);
+
+    const courseStats = await query(`
+      SELECT 
+        c.title,
+        COUNT(e.id) as enrolled_count,
+        AVG(e.progress_percent) as avg_progress,
+        COUNT(CASE WHEN e.status = 'completed' THEN 1 END) as completed_count
+      FROM courses c
+      LEFT JOIN enrollments e ON c.id = e.course_id
+      WHERE 1=1 ${dateFilter}
+      GROUP BY c.id, c.title
+      ORDER BY enrolled_count DESC
+    `, params);
+
+    return {
+      categories: categoryStats.rows,
+      top_courses: topCourse.rows,
+      funnel: funnel.rows[0],
+      course_stats: courseStats.rows,
     };
   }
 }

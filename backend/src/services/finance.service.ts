@@ -126,7 +126,7 @@ export class FinanceService {
     return { summary: totalRes.rows[0], history: historyRes.rows };
   }
 
-  static async generateInvoice(vendorId: string, workOrderId: string, items: any[], dueDate?: string) {
+  static async generateInvoice(vendorId: string, workOrderId: string | null, items: any[], dueDate?: string, leaseId?: string, tenantId?: string) {
     const total = (items || []).reduce((sum: number, item: any) => {
       const q = parseFloat(item.quantity) || 1;
       const r = parseFloat(item.rate) || parseFloat(item.price) || parseFloat(item.amount) || 0;
@@ -134,9 +134,9 @@ export class FinanceService {
     }, 0);
     const invoiceNumber = `INV-${Date.now()}-${vendorId.slice(0, 4)}`;
     const res = await query(
-      `INSERT INTO invoices (vendor_id, work_order_id, invoice_number, amount, items, status, due_date)
-       VALUES ($1, $2, $3, $4, $5, 'draft', $6) RETURNING *`,
-      [vendorId, workOrderId, invoiceNumber, total, JSON.stringify(items), dueDate || null]
+      `INSERT INTO invoices (vendor_id, work_order_id, lease_id, tenant_id, invoice_number, amount, items, status, due_date)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8) RETURNING *`,
+      [vendorId, workOrderId || null, leaseId || null, tenantId || null, invoiceNumber, total, JSON.stringify(items), dueDate || null]
     );
     return res.rows[0];
   }
@@ -368,6 +368,44 @@ export class FinanceService {
       wallet: balanceRes.rows[0] || { available_balance: 0, held_balance: 0 },
       held_transactions: res.rows,
     };
+  }
+
+  static async recordOfflinePayment(userId: string, invoiceId: string, amount: number, paymentDate: string, paymentMethod: string, reference: string) {
+    return withTransaction(async (client) => {
+      // Get the invoice to ensure it exists and we can link it
+      const invoiceRes = await client.query('SELECT * FROM invoices WHERE id = $1', [invoiceId]);
+      if (invoiceRes.rows.length === 0) {
+        throw new AppError('Invoice not found', 404);
+      }
+      const invoice = invoiceRes.rows[0];
+
+      // Update invoice status based on amount paid (this assumes full payment for simplicity, could be enhanced)
+      // To properly handle partial payments, we'd need a field for amount_paid on the invoice.
+      // For now, assuming full payment offline:
+      await client.query('UPDATE invoices SET status = $1, paid_date = $2 WHERE id = $3', ['paid', paymentDate || new Date().toISOString().split('T')[0], invoiceId]);
+
+      // Record in transactions
+      const txRes = await client.query(
+        `INSERT INTO transactions (payer_id, payee_id, type, amount, currency, status, gateway, gateway_transaction_id, metadata)
+         VALUES ($1, $2, 'offline_payment', $3, 'USD', 'completed', $4, $5, $6) RETURNING *`,
+        [invoice.tenant_id || invoice.payer_id || userId, userId, amount, paymentMethod, reference || `offline_${Date.now()}`, JSON.stringify({ invoice_id: invoiceId, offline: true, reference })]
+      );
+
+      // If it's a rent invoice linked to a lease, record in rent_payments
+      if (invoice.lease_id && invoice.tenant_id) {
+        const leaseRes = await client.query('SELECT * FROM leases WHERE id = $1', [invoice.lease_id]);
+        if (leaseRes.rows.length > 0) {
+          const lease = leaseRes.rows[0];
+          await client.query(
+            `INSERT INTO rent_payments (lease_id, tenant_id, property_id, unit_id, amount_due, amount_paid, due_date, status, gateway_transaction_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, 'paid', $8)`,
+            [lease.id, invoice.tenant_id, lease.property_id, lease.unit_id, amount, amount, invoice.due_date, txRes.rows[0].id]
+          );
+        }
+      }
+
+      return txRes.rows[0];
+    });
   }
 }
 

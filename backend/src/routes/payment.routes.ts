@@ -291,4 +291,24 @@ router.post('/charge', authenticate, async (req: AuthRequest, res, next) => {
   }
 });
 
+// GET /payments/history - Tenant and Landlord view payment history
+router.get('/history', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const userId = req.user!.id;
+    const role = req.user!.activeRole;
+    let sql: string;
+    let params: any[];
+    if (role === 'tenant') {
+      sql = `SELECT * FROM payments WHERE tenant_id = $1 ORDER BY created_at DESC`;
+      params = [userId];
+    } else {
+      // Assume landlord or other role receives payments where they are payee
+      sql = `SELECT * FROM payments WHERE payee_id = $1 ORDER BY created_at DESC`;
+      params = [userId];
+    }
+    const result = await query(sql, params);
+    res.json({ success: true, data: result.rows });
+  } catch (e) { next(e); }
+});
+
 export { router as paymentRouter };

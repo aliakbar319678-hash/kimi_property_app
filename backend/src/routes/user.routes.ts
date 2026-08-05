@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { UserService } from '../services/user.service';
+import { AuditService } from '../services/audit.service';
 import { authenticate, AuthRequest, requireRole } from '../middleware/auth';
 import { adminOrJwtAuth } from '../middleware/adminKey';
 import { validate, schemas } from '../utils/validation';
@@ -143,6 +144,24 @@ router.delete('/:id', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
 });
 
 // ─── Existing routes ─────────────────────────────────────────────
+
+router.get('/me/history', authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+    const history = await AuditService.getUserHistory(req.user!.id, limit, offset);
+    res.json({ success: true, data: history });
+  } catch (e) { next(e); }
+});
+
+router.get('/:id/history', authenticate, requireRole('admin', 'super_admin'), async (req: AuthRequest, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+    const history = await AuditService.getUserHistory(req.params.id, limit, offset);
+    res.json({ success: true, data: history });
+  } catch (e) { next(e); }
+});
 
 router.put('/me/profile', authenticate, async (req: AuthRequest, res, next) => {
   try {

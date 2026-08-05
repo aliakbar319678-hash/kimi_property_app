@@ -16,44 +16,7 @@ class _LandlordInvoicesScreenState extends ConsumerState<LandlordInvoicesScreen>
   String _selectedFilter = 'All';
   bool _isLoading = false;
 
-  List<Map<String, dynamic>> _invoices = [
-    {
-      'id': 'INV-2026-001',
-      'tenantName': 'Michael Scott',
-      'unitName': 'Unit 2A',
-      'amount': 1500.00,
-      'dueDate': '2026-08-01',
-      'status': 'Paid',
-      'category': 'Monthly Rent',
-    },
-    {
-      'id': 'INV-2026-002',
-      'tenantName': 'Sarah Connor',
-      'unitName': 'Unit 8B',
-      'amount': 2200.00,
-      'dueDate': '2026-07-25',
-      'status': 'Overdue',
-      'category': 'Monthly Rent',
-    },
-    {
-      'id': 'INV-2026-003',
-      'tenantName': 'Robert Vance',
-      'unitName': 'Unit 4C',
-      'amount': 180.00,
-      'dueDate': '2026-08-05',
-      'status': 'Pending',
-      'category': 'Water & Utility Fee',
-    },
-    {
-      'id': 'INV-2026-004',
-      'tenantName': 'Jim Halpert',
-      'unitName': 'Unit 12',
-      'amount': 1350.00,
-      'dueDate': '2026-08-10',
-      'status': 'Pending',
-      'category': 'Monthly Rent',
-    },
-  ];
+  List<Map<String, dynamic>> _invoices = [];
 
   @override
   void initState() {
@@ -122,11 +85,16 @@ class _LandlordInvoicesScreenState extends ConsumerState<LandlordInvoicesScreen>
   }
 
   void _showCreateInvoiceSheet() {
-    final state = ref.read(landlordProvider);
-    final tenants = state.tenants;
+    final leases = ref.read(landlordProvider).leases;
+    final activeLeases = leases.where((l) =>
+      l.status.toLowerCase() == 'active' || l.status.isEmpty
+    ).toList();
+    final dropdownLeases = activeLeases.isNotEmpty ? activeLeases : leases;
 
-    String selectedTenant = tenants.isNotEmpty ? tenants.first.name : 'Michael Scott';
-    final amountCtrl = TextEditingController();
+    String? selectedLeaseId = dropdownLeases.isNotEmpty ? dropdownLeases.first.id : null;
+    final amountCtrl = TextEditingController(
+      text: dropdownLeases.isNotEmpty ? dropdownLeases.first.rentAmount.toStringAsFixed(0) : '',
+    );
     final notesCtrl = TextEditingController();
     String category = 'Monthly Rent';
     DateTime dueDate = DateTime.now().add(const Duration(days: 7));
@@ -180,21 +148,41 @@ class _LandlordInvoicesScreenState extends ConsumerState<LandlordInvoicesScreen>
                 ),
                 const SizedBox(height: 20),
 
-                // Select Tenant
-                const Text('Tenant', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                // Select Lease (auto-fills tenant, unit, amount)
+                const Text('Select Lease', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
-                DropdownButtonFormField<String>(
-                  initialValue: selectedTenant,
-                  decoration: _inputDeco('Select Tenant'),
-                  items: (tenants.isNotEmpty
-                          ? tenants.map((t) => t.name).toList()
-                          : ['Michael Scott', 'Sarah Connor', 'Robert Vance', 'Jim Halpert'])
-                      .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v != null) setSheetState(() => selectedTenant = v);
-                  },
-                ),
+                dropdownLeases.isEmpty
+                  ? Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        'No active leases found. Create a lease first.',
+                        style: TextStyle(color: AppColors.error, fontSize: 12),
+                      ),
+                    )
+                  : DropdownButtonFormField<String>(
+                      initialValue: selectedLeaseId,
+                      decoration: _inputDeco('Choose lease'),
+                      items: dropdownLeases.map((l) => DropdownMenuItem(
+                        value: l.id,
+                        child: Text(
+                          '${l.tenantName.isNotEmpty ? l.tenantName : "Tenant"} — ${l.unitName.isNotEmpty ? l.unitName : "Unit"}',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )).toList(),
+                      onChanged: (v) {
+                        if (v != null) {
+                          final picked = dropdownLeases.firstWhere((l) => l.id == v);
+                          setSheetState(() {
+                            selectedLeaseId = v;
+                            amountCtrl.text = picked.rentAmount.toStringAsFixed(0);
+                          });
+                        }
+                      },
+                    ),
                 const SizedBox(height: 14),
 
                 // Amount & Category
@@ -294,7 +282,7 @@ class _LandlordInvoicesScreenState extends ConsumerState<LandlordInvoicesScreen>
                       backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    onPressed: isSaving
+                    onPressed: (isSaving || selectedLeaseId == null)
                         ? null
                         : () async {
                             final amt = double.tryParse(amountCtrl.text) ?? 0.0;
@@ -306,41 +294,42 @@ class _LandlordInvoicesScreenState extends ConsumerState<LandlordInvoicesScreen>
                             }
                             setSheetState(() => isSaving = true);
                             final messenger = ScaffoldMessenger.of(context);
-
-                            final newInv = {
-                              'id': 'INV-2026-00${_invoices.length + 1}',
-                              'tenantName': selectedTenant,
-                              'unitName': 'Unit 1A',
-                              'amount': amt,
-                              'dueDate': '${dueDate.year}-${dueDate.month.toString().padLeft(2, '0')}-${dueDate.day.toString().padLeft(2, '0')}',
-                              'status': 'Pending',
-                              'category': category,
-                            };
+                            final dueDateStr = '${dueDate.year}-${dueDate.month.toString().padLeft(2, '0')}-${dueDate.day.toString().padLeft(2, '0')}';
 
                             try {
                               await ApiClient().dio.post(
                                 '/finance/invoices',
                                 data: {
-                                  'tenantName': selectedTenant,
+                                  'leaseId': selectedLeaseId,
                                   'amount': amt,
                                   'category': category,
-                                  'dueDate': newInv['dueDate'],
+                                  'dueDate': dueDateStr,
+                                  'notes': notesCtrl.text.trim(),
                                 },
                               );
-                            } catch (_) {}
-
-                            setState(() {
-                              _invoices.insert(0, newInv);
-                            });
-
-                            if (ctx.mounted) Navigator.pop(ctx);
-                            if (context.mounted) {
-                              messenger.showSnackBar(
-                                SnackBar(
-                                  content: Text('Invoice #${newInv['id']} issued for \$${amt.toStringAsFixed(2)}!'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              if (mounted) {
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text('Invoice issued for \$${amt.toStringAsFixed(2)}!'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                              // Re-fetch to show real data
+                              _fetchInvoices();
+                            } catch (e) {
+                              debugPrint('[InvoicesScreen] create invoice error: $e');
+                              if (mounted) {
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Failed to create invoice. Please try again.'),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                              }
+                            } finally {
+                              if (ctx.mounted) setSheetState(() => isSaving = false);
                             }
                           },
                     child: isSaving
@@ -509,9 +498,9 @@ class _LandlordInvoicesScreenState extends ConsumerState<LandlordInvoicesScreen>
                                           ),
                                         ),
                                       );
-                                      if (res == 'record' && mounted) {
+                                      if (res == 'record' && context.mounted) {
                                         final payment = await RecordManualPaymentDialog.show(context);
-                                        if (payment != null && mounted) {
+                                        if (payment != null && context.mounted) {
                                           messenger2.showSnackBar(const SnackBar(content: Text('Payment recorded successfully!'), backgroundColor: Colors.green));
                                           _fetchInvoices(); // Refresh
                                         }

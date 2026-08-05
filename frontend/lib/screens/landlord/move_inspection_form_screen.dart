@@ -16,21 +16,24 @@ class MoveInspectionFormScreen extends StatefulWidget {
 
 class _MoveInspectionFormScreenState extends State<MoveInspectionFormScreen> {
   final List<Map<String, dynamic>> _rooms = [
-    {'name': 'Living Room', 'condition': 'Good', 'notes': '', 'images': []},
-    {'name': 'Kitchen', 'condition': 'Fair', 'notes': '', 'images': []},
-    {'name': 'Bedroom 1', 'condition': 'Good', 'notes': '', 'images': []},
-    {'name': 'Bathroom', 'condition': 'Good', 'notes': '', 'images': []},
+    {'name': 'Living Room', 'condition': 'Good', 'notes': '', 'images': <String>[]},
+    {'name': 'Kitchen', 'condition': 'Good', 'notes': '', 'images': <String>[]},
+    {'name': 'Bedroom 1', 'condition': 'Good', 'notes': '', 'images': <String>[]},
+    {'name': 'Bathroom', 'condition': 'Good', 'notes': '', 'images': <String>[]},
   ];
 
   bool _isSubmitting = false;
 
   Future<void> _submitInspection() async {
     setState(() => _isSubmitting = true);
+    final messenger = ScaffoldMessenger.of(context);
     try {
-      final checklistData = _rooms.map((r) => {
-        'item': r['name']?.toString() ?? '',
-        'condition': (r['condition']?.toString() ?? 'GOOD').toUpperCase(),
-        'notes': r['notes']?.toString() ?? '',
+      final checklistData = _rooms.map((r) {
+        return <String, dynamic>{
+          'item': r['name']?.toString() ?? '',
+          'condition': (r['condition']?.toString() ?? 'GOOD').toUpperCase().replaceAll(' ', '_'),
+          'notes': r['notes']?.toString() ?? '',
+        };
       }).toList();
 
       await ApiClient().dio.post('/leases/${widget.leaseId}/inspections', data: {
@@ -41,14 +44,14 @@ class _MoveInspectionFormScreenState extends State<MoveInspectionFormScreen> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(content: Text('${widget.type} inspection submitted successfully!'), backgroundColor: AppColors.success),
         );
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(content: Text('Failed to submit inspection. Please try again.'), backgroundColor: AppColors.error),
         );
       }

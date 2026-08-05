@@ -149,10 +149,10 @@ abstract class Lease with _$Lease {
     required String endDate,
     required String status, // 'active', 'expired', 'pending'
     @Default(0) int daysLeft,
-    @Default('') String tenantId,
-    @Default(0.0) double depositAmount,
+    @Default('') String tenantId, // tenant user UUID for cross-referencing
   }) = _Lease;
 }
+
 
 /// Represents an urgent alert item shown on the dashboard home page.
 @freezed

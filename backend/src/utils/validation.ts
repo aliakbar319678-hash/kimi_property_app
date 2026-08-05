@@ -24,9 +24,40 @@ export const schemas = {
     avatar_url: Joi.string().optional(),
   }),
 
+  usAddress: Joi.object({
+    addressLine1: Joi.string().required(),
+    addressLine2: Joi.string().optional(),
+    city: Joi.string().required(),
+    stateProvince: Joi.string().length(2).uppercase().required(), // CA, NY, etc.
+    postalCode: Joi.string().pattern(/^\d{5}(-\d{4})?$/).required(), // 12345 or 12345-6789
+    countryCode: Joi.string().valid('US').required()
+  }),
+
+  caAddress: Joi.object({
+    addressLine1: Joi.string().required(),
+    addressLine2: Joi.string().optional(),
+    city: Joi.string().required(),
+    stateProvince: Joi.string().length(2).uppercase().required(), // ON, BC, etc.
+    postalCode: Joi.string().pattern(/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/).required(), // A1A 1A1
+    countryCode: Joi.string().valid('CA').required()
+  }),
+
   onboardingStep: Joi.object({
     step: Joi.number().integer().min(1).max(5).required(),
-    data: Joi.object().required(),
+    data: Joi.object({
+      legalName: Joi.string().optional(),
+      dob: Joi.date().iso().optional(),
+      phone: Joi.string().pattern(/^\+1\d{10}$/).message('Phone must be in E.164 format for US/CA (+1...)').optional(),
+      employment: Joi.object().optional(),
+      documents: Joi.array().items(Joi.object({
+        type: Joi.string().valid('passport', 'drivers_license', 'state_id', 'proof_of_income').required(),
+        url: Joi.string().uri().required()
+      })).optional(),
+      preferences: Joi.object().optional(),
+      ssn_sin_last4: Joi.string().pattern(/^\d{4}$/).optional(),
+      tax_identifier: Joi.string().optional(), // In real scenario, encrypted by frontend or handled via 3rd party
+      current_address: Joi.alternatives().try(Joi.link('#usAddress'), Joi.link('#caAddress')).optional()
+    }).required(),
   }),
 
   propertyCreate: Joi.object({

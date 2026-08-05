@@ -76,7 +76,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: state.notifications.length,
-                        separatorBuilder: (_, ___) => SizedBox(height: h * 0.02),
+                        separatorBuilder: (_, _) => SizedBox(height: h * 0.02),
                         itemBuilder: (context, index) {
                           final notif = state.notifications[index];
                           final isUnread = !notif.isRead;

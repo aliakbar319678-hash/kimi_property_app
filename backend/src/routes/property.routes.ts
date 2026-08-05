@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { PropertyService } from '../services/property.service';
+import { AuditService } from '../services/audit.service';
 import { authenticate, AuthRequest, requireRole } from '../middleware/auth';
 import { adminOrJwtAuth } from '../middleware/adminKey';
 import { validate, schemas } from '../utils/validation';
@@ -114,6 +115,7 @@ router.get('/', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
 router.post('/', authenticate, requireRole('landlord', 'property_manager', 'admin'), validate(schemas.propertyCreate), async (req: AuthRequest, res, next) => {
   try {
     const property = await PropertyService.create(req.body, req.user!.id);
+    await AuditService.logAction(req.user!.id, req.user!.roles?.[0], 'created_property', 'property', property.id, { name: property.name }, req);
     res.status(201).json({ success: true, data: property });
   } catch (e) { next(e); }
 });
@@ -129,7 +131,10 @@ router.get('/search', optionalAuth, validate(schemas.propertySearch), async (req
 // Guest + Authenticated: view a single property detail (no auth required)
 router.get('/:id', optionalAuth, async (req: AuthRequest, res, next) => {
   try {
-    const property = await PropertyService.getById(req.params.id);
+    const roles = req.user?.roles || [];
+    const isLandlordOrAdmin = roles.includes('admin') || roles.includes('super_admin') || roles.includes('landlord') || roles.includes('property_manager');
+    const filterVacantOnly = !isLandlordOrAdmin;
+    const property = await PropertyService.getById(req.params.id, filterVacantOnly);
     res.json({ success: true, data: property });
   } catch (e) { next(e); }
 });
@@ -137,7 +142,62 @@ router.get('/:id', optionalAuth, async (req: AuthRequest, res, next) => {
 router.post('/:id/units', authenticate, requireRole('landlord', 'property_manager'), async (req: AuthRequest, res, next) => {
   try {
     const unit = await PropertyService.createUnit(req.params.id, req.body);
+    await AuditService.logAction(req.user!.id, req.user!.roles?.[0], 'created_unit', 'unit', unit.id, { propertyId: req.params.id, unitNumber: req.body.unitNumber }, req);
     res.status(201).json({ success: true, data: unit });
+  } catch (e) { next(e); }
+});
+
+// Edit Property
+router.put('/:id', authenticate, requireRole('landlord', 'property_manager', 'admin'), async (req: AuthRequest, res, next) => {
+  try {
+    const property = await PropertyService.getById(req.params.id);
+    const isAdmin = req.user?.roles?.includes('admin') || req.user?.roles?.includes('super_admin');
+    if (!isAdmin && property.landlord_id !== req.user!.id) {
+      return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+    const updated = await PropertyService.updateProperty(req.params.id, req.body);
+    await AuditService.logAction(req.user!.id, req.user!.roles?.[0], 'updated_property', 'property', req.params.id, {}, req);
+    res.json({ success: true, data: updated });
+  } catch (e) { next(e); }
+});
+
+// Delete Property
+router.delete('/:id', authenticate, requireRole('landlord', 'property_manager', 'admin'), async (req: AuthRequest, res, next) => {
+  try {
+    const property = await PropertyService.getById(req.params.id);
+    const isAdmin = req.user?.roles?.includes('admin') || req.user?.roles?.includes('super_admin');
+    if (!isAdmin && property.landlord_id !== req.user!.id) {
+      return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+    await PropertyService.deleteProperty(req.params.id);
+    await AuditService.logAction(req.user!.id, req.user!.roles?.[0], 'deleted_property', 'property', req.params.id, {}, req);
+    res.json({ success: true, message: 'Property deleted' });
+  } catch (e) { next(e); }
+});
+
+// Edit Unit
+router.put('/:propertyId/units/:unitId', authenticate, requireRole('landlord', 'property_manager', 'admin'), async (req: AuthRequest, res, next) => {
+  try {
+    const property = await PropertyService.getById(req.params.propertyId);
+    const isAdmin = req.user?.roles?.includes('admin') || req.user?.roles?.includes('super_admin');
+    if (!isAdmin && property.landlord_id !== req.user!.id) {
+      return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+    const updatedUnit = await PropertyService.updateUnit(req.params.propertyId, req.params.unitId, req.body);
+    res.json({ success: true, data: updatedUnit });
+  } catch (e) { next(e); }
+});
+
+// Delete Unit
+router.delete('/:propertyId/units/:unitId', authenticate, requireRole('landlord', 'property_manager', 'admin'), async (req: AuthRequest, res, next) => {
+  try {
+    const property = await PropertyService.getById(req.params.propertyId);
+    const isAdmin = req.user?.roles?.includes('admin') || req.user?.roles?.includes('super_admin');
+    if (!isAdmin && property.landlord_id !== req.user!.id) {
+      return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+    await PropertyService.deleteUnit(req.params.propertyId, req.params.unitId);
+    res.json({ success: true, data: { deleted: true } });
   } catch (e) { next(e); }
 });
 

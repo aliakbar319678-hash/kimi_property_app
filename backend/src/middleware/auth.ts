@@ -24,10 +24,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       'SELECT id, email, region_id FROM users WHERE id = $1 AND is_active = true',
       [decoded.userId]
     );
-    if (userResult.rows.length === 0) {
-      console.error('[Auth Error] User not found or inactive:', decoded.userId);
-      return res.status(401).json({ error: 'User not found' });
-    }
+    if (userResult.rows.length === 0) return res.status(401).json({ error: 'User not found' });
 
     const user = userResult.rows[0];
     const rolesResult = await query('SELECT role, permissions FROM user_roles WHERE user_id = $1', [user.id]);
@@ -49,8 +46,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       regionId: user.region_id,
     };
     next();
-  } catch (err: any) {
-    console.error('[Auth Error] Token validation failed:', err.message, err.stack);
+  } catch (err) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 };

@@ -5,6 +5,8 @@ import 'package:tenant_and_landlord_application/widgets/common/tl_primary_button
 import 'package:tenant_and_landlord_application/widgets/common/tl_mock_map.dart';
 import 'package:tenant_and_landlord_application/provider/vendor_provider.dart';
 import 'package:tenant_and_landlord_application/provider/vendor_state.dart';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
+import 'package:tenant_and_landlord_application/core/api_constants.dart';
 
 class VendorOnboardingScreen extends ConsumerStatefulWidget {
   const VendorOnboardingScreen({super.key});
@@ -42,6 +44,8 @@ class _VendorOnboardingScreenState
   String _tradeLicenseStatus = 'Verified';
   String _insuranceStatus = 'Verified';
   String _w9Status = 'Signed';
+
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -422,35 +426,80 @@ class _VendorOnboardingScreenState
                 // Action Buttons
                 TLPrimaryButton(
                   label: 'Submit Application',
+                  isLoading: _isLoading,
                   onTap: _agreeToTerms
-                      ? () {
+                      ? () async {
                           if (_formKey.currentState!.validate()) {
-                            final newProfile = VendorProfile(
-                              businessName: _businessNameController.text,
-                              taxId: _taxIdController.text,
-                              serviceCategory: _serviceCategory,
-                              phone: _phoneController.text,
-                              email: _emailController.text,
-                              address: _addressController.text,
-                              city: _cityController.text,
-                              state: _stateController.text,
-                              zip: _zipController.text,
-                              tradeLicenseStatus: _tradeLicenseStatus,
-                              proofOfInsuranceStatus: _insuranceStatus,
-                              w9FormStatus: _w9Status,
-                              bankName: _bankNameController.text,
-                              routingNumber: _routingController.text,
-                              accountNumber: _accountController.text,
-                              isOnboarded: true,
-                            );
+                            setState(() => _isLoading = true);
+                            try {
+                              // 1. Update Profile (User Service)
+                              final profilePayload = {
+                                'display_name': _businessNameController.text.trim(),
+                                'phone': _phoneController.text.trim(),
+                                'current_address': {
+                                  'address_line1': _addressController.text.trim(),
+                                  'city': _cityController.text.trim(),
+                                  'state': _stateController.text.trim(),
+                                  'zip': _zipController.text.trim(),
+                                },
+                              };
 
-                            ref
-                                .read(vendorProvider.notifier)
-                                .submitOnboarding(newProfile);
-                            Navigator.pushReplacementNamed(
-                              context,
-                              '/vendor_home',
-                            );
+                              await ApiClient().dio.put(
+                                ApiConstants.updateProfile,
+                                data: profilePayload,
+                              );
+
+                              // 2. Change KYC Status to Pending (using PUT /users/me logic, wait we don't have user id here easily, so let's get it first)
+                              final meRes = await ApiClient().dio.get(ApiConstants.me);
+                              if (meRes.statusCode == 200) {
+                                final userId = meRes.data['data']['id'];
+                                await ApiClient().dio.put(
+                                  '/users/$userId',
+                                  data: {
+                                    'kyc_status': 'pending',
+                                  },
+                                );
+                              }
+
+                              final newProfile = VendorProfile(
+                                businessName: _businessNameController.text,
+                                taxId: _taxIdController.text,
+                                serviceCategory: _serviceCategory,
+                                phone: _phoneController.text,
+                                email: _emailController.text,
+                                address: _addressController.text,
+                                city: _cityController.text,
+                                state: _stateController.text,
+                                zip: _zipController.text,
+                                tradeLicenseStatus: _tradeLicenseStatus,
+                                proofOfInsuranceStatus: _insuranceStatus,
+                                w9FormStatus: _w9Status,
+                                bankName: _bankNameController.text,
+                                routingNumber: _routingController.text,
+                                accountNumber: _accountController.text,
+                                isOnboarded: true,
+                              );
+
+                              ref
+                                  .read(vendorProvider.notifier)
+                                  .submitOnboarding(newProfile);
+                              
+                              if (!context.mounted) return;
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/vendor_home',
+                              );
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to submit onboarding: $e'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            } finally {
+                              if (mounted) setState(() => _isLoading = false);
+                            }
                           }
                         }
                       : null,

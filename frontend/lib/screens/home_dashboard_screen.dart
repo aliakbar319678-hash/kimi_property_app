@@ -23,7 +23,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
 
   Future<void> _loadProfile() async {
     try {
-      final resp = await ApiClient().dio.get('/users/profile');
+      final resp = await ApiClient().dio.get('/auth/me');
       final data = resp.data['data'] as Map<String, dynamic>? ?? {};
       if (mounted) {
         setState(() {

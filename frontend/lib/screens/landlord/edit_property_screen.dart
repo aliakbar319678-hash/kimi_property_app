@@ -28,7 +28,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
   final _priceCtrl = TextEditingController();
 
   String _selectedType = 'apartment';
-  String _countryCode = 'US';
+  final String _countryCode = 'US';
   final Set<String> _selectedAmenities = {};
   bool _isSubmitting = false;
 

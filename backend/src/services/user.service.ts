@@ -41,6 +41,9 @@ export class UserService {
         if (data.legalName) { updateFields.push(`legal_first_name = $${idx++}`); values.push(data.legalName); }
         if (data.dob) { updateFields.push(`date_of_birth = $${idx++}`); values.push(data.dob); }
         if (data.phone) { updateFields.push(`phone = $${idx++}`); values.push(data.phone); }
+        if (data.current_address) { updateFields.push(`current_address = $${idx++}`); values.push(JSON.stringify(data.current_address)); }
+        if (data.ssn_sin_last4) { updateFields.push(`ssn_sin_last4 = $${idx++}`); values.push(data.ssn_sin_last4); }
+        if (data.tax_identifier) { updateFields.push(`tax_identifier = $${idx++}`); values.push(data.tax_identifier); }
       }
       if (step === 2) {
         if (data.employment) { updateFields.push(`employment_data = $${idx++}`); values.push(JSON.stringify(data.employment)); }

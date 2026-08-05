@@ -207,10 +207,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Property Dropdown
-              _SectionLabel('Property', w),
+              _sectionLabel('Property', w),
               SizedBox(height: h * 0.008),
               DropdownButtonFormField<String>(
-                value: _selectedPropertyId ?? (properties.isNotEmpty ? properties.first.id : null),
+                initialValue: _selectedPropertyId ?? (properties.isNotEmpty ? properties.first.id : null),
                 decoration: InputDecoration(
                   fillColor: AppColors.white,
                   filled: true,
@@ -229,7 +229,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               SizedBox(height: h * 0.02),
 
               // Title
-              _SectionLabel('Job Title', w),
+              _sectionLabel('Job Title', w),
               SizedBox(height: h * 0.008),
               TextFormField(
                 controller: _titleCtrl,
@@ -245,10 +245,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               SizedBox(height: h * 0.02),
 
               // Category & Sub-Category
-              _SectionLabel('Main Category', w),
+              _sectionLabel('Main Category', w),
               SizedBox(height: h * 0.008),
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 decoration: InputDecoration(
                   fillColor: AppColors.white,
                   filled: true,
@@ -269,10 +269,10 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
 
               SizedBox(height: h * 0.015),
 
-              _SectionLabel('Sub-Service', w),
+              _sectionLabel('Sub-Service', w),
               SizedBox(height: h * 0.008),
               DropdownButtonFormField<String>(
-                value: _selectedSubCategory,
+                initialValue: _selectedSubCategory,
                 decoration: InputDecoration(
                   fillColor: AppColors.white,
                   filled: true,
@@ -287,20 +287,20 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               SizedBox(height: h * 0.02),
 
               // Urgency Level
-              _SectionLabel('Urgency Level', w),
+              _sectionLabel('Urgency Level', w),
               SizedBox(height: h * 0.008),
               Row(
                 children: [
-                  _UrgencyChip('Standard', 'standard', Colors.blue),
-                  _UrgencyChip('Urgent', 'urgent', Colors.orange),
-                  _UrgencyChip('Emergency', 'emergency', Colors.red),
+                  _urgencyChip('Standard', 'standard', Colors.blue),
+                  _urgencyChip('Urgent', 'urgent', Colors.orange),
+                  _urgencyChip('Emergency', 'emergency', Colors.red),
                 ],
               ),
 
               SizedBox(height: h * 0.02),
 
               // Description
-              _SectionLabel('Description', w),
+              _sectionLabel('Description', w),
               SizedBox(height: h * 0.008),
               TextFormField(
                 controller: _descCtrl,
@@ -323,7 +323,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _SectionLabel('Min Budget (\$)', w),
+                        _sectionLabel('Min Budget (\$)', w),
                         SizedBox(height: h * 0.008),
                         TextFormField(
                           controller: _budgetMinCtrl,
@@ -342,7 +342,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _SectionLabel('Max Budget (\$)', w),
+                        _sectionLabel('Max Budget (\$)', w),
                         SizedBox(height: h * 0.008),
                         TextFormField(
                           controller: _budgetMaxCtrl,
@@ -362,7 +362,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               SizedBox(height: h * 0.02),
 
               // Bid Deadline
-              _SectionLabel('Bid Deadline', w),
+              _sectionLabel('Bid Deadline', w),
               SizedBox(height: h * 0.008),
               InkWell(
                 onTap: () async {
@@ -401,7 +401,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
               SizedBox(height: h * 0.02),
 
               // Special Notes
-              _SectionLabel('Special Notes (Optional)', w),
+              _sectionLabel('Special Notes (Optional)', w),
               SizedBox(height: h * 0.008),
               TextFormField(
                 controller: _notesCtrl,
@@ -441,14 +441,14 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
     );
   }
 
-  Widget _SectionLabel(String text, double w) {
+  Widget _sectionLabel(String text, double w) {
     return Text(
       text,
       style: TextStyle(fontWeight: FontWeight.w700, fontSize: w * 0.035, color: AppColors.textPrimary),
     );
   }
 
-  Widget _UrgencyChip(String label, String value, Color color) {
+  Widget _urgencyChip(String label, String value, Color color) {
     final isSelected = _selectedUrgency == value;
     return Expanded(
       child: GestureDetector(

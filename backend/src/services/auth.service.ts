@@ -11,11 +11,6 @@ export class AuthService {
       const existing = await client.query('SELECT id FROM users WHERE email = $1', [data.email]);
       if (existing.rows.length > 0) throw new AppError('Email already registered', 409);
 
-      if (data.phone) {
-        const existingPhone = await client.query('SELECT id FROM users WHERE phone = $1', [data.phone]);
-        if (existingPhone.rows.length > 0) throw new AppError('Phone number already registered', 409);
-      }
-
       if (data.username) {
         if (data.role !== 'tenant') throw new AppError('Only tenants can have a username', 400);
         const existingUsername = await client.query('SELECT id FROM users WHERE username = $1', [data.username]);
@@ -111,7 +106,6 @@ export class AuthService {
     const prof = profileRes.rows[0] || {};
     return {
       ...user,
-      onboarding_step: prof.onboarding_step,
       first_name: prof.legal_first_name || '',
       last_name: prof.legal_last_name || '',
       avatar_url: prof.avatar_url || null,

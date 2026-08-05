@@ -40,7 +40,7 @@ class _BoostListingDialogState extends State<BoostListingDialog> {
           const Text('Select Tier', style: AppTextStyles.labelMedium),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _selectedTier,
+            initialValue: _selectedTier,
             decoration: InputDecoration(
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -56,7 +56,7 @@ class _BoostListingDialogState extends State<BoostListingDialog> {
           const Text('Target Audience', style: AppTextStyles.labelMedium),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _targetAudience,
+            initialValue: _targetAudience,
             decoration: InputDecoration(
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),

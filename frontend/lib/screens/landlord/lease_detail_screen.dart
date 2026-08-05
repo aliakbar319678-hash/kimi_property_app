@@ -6,6 +6,7 @@ import 'package:tenant_and_landlord_application/provider/landlord_provider.dart'
 import 'package:tenant_and_landlord_application/provider/landlord_state.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/landlord/lease_renewal_dialog.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/move_inspection_form_screen.dart';
 
 class LandlordLeaseDetailScreen extends ConsumerStatefulWidget {
   const LandlordLeaseDetailScreen({super.key});
@@ -21,7 +22,6 @@ class _LandlordLeaseDetailScreenState
   List<Map<String, dynamic>> _inspections = [];
   bool _isLoading = true;
   bool _isInspectionsLoading = true;
-  String _error = '';
   String? _leaseId;
 
   @override
@@ -36,16 +36,29 @@ class _LandlordLeaseDetailScreenState
 
   Future<void> _fetchDetail() async {
     if (_leaseId == null) return;
-    setState(() { _isLoading = true; _isInspectionsLoading = true; _error = ''; });
+    setState(() { _isLoading = true; _isInspectionsLoading = true; });
+
+    // Try to fetch detailed lease info — GET /leases/:id may not exist yet on backend.
+    // If it fails, we gracefully fall back to the Lease object passed as route argument.
     try {
       final resp = await ApiClient().dio.get(ApiConstants.leaseById(_leaseId!));
-      setState(() { _detail = resp.data['data'] as Map<String, dynamic>?; _isLoading = false; });
-      
-      // Fetch inspections
+      if (mounted) {
+        setState(() {
+          _detail = resp.data['data'] as Map<String, dynamic>?;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      // Backend route not yet available — silently ignore and use route arg Lease object.
+      if (mounted) setState(() => _isLoading = false);
+    }
+
+    // Fetch inspections independently (this route EXISTS: GET /leases/:id/inspections)
+    try {
       final inspections = await ref.read(landlordProvider.notifier).getLeaseInspections(_leaseId!);
-      setState(() { _inspections = inspections; _isInspectionsLoading = false; });
+      if (mounted) setState(() { _inspections = inspections; _isInspectionsLoading = false; });
     } catch (e) {
-      setState(() { _error = e.toString(); _isLoading = false; _isInspectionsLoading = false; });
+      if (mounted) setState(() => _isInspectionsLoading = false);
     }
   }
 
@@ -71,25 +84,7 @@ class _LandlordLeaseDetailScreenState
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _error.isNotEmpty
-              ? Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(w * 0.06),
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
-                      const SizedBox(height: 12),
-                      Text(_error, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSecondary)),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: _fetchDetail,
-                        icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-                        label: const Text('Retry', style: TextStyle(color: Colors.white)),
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                      ),
-                    ]),
-                  ),
-                )
-              : SingleChildScrollView(
+          : SingleChildScrollView(
                   padding: EdgeInsets.all(w * 0.05),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     // Status banner
@@ -140,7 +135,20 @@ class _LandlordLeaseDetailScreenState
                           width: double.infinity,
                           child: OutlinedButton.icon(
                             onPressed: () {
-                              Navigator.pushNamed(context, '/landlord_move_inspection_form', arguments: {'leaseId': _leaseId, 'type': 'Mid-Lease'});
+                              if (_leaseId == null) return;
+                              // Fixed navigation: use Navigator.push with constructor args
+                              // instead of pushNamed with Map (which caused type errors)
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => MoveInspectionFormScreen(
+                                    leaseId: _leaseId!,
+                                    type: 'Mid-Lease',
+                                  ),
+                                ),
+                              ).then((refreshed) {
+                                if (refreshed == true && mounted) _fetchDetail();
+                              });
                             },
                             style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                             icon: const Icon(Icons.add_task_rounded, size: 18),

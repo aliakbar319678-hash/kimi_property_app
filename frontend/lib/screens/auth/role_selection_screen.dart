@@ -16,6 +16,7 @@ class RoleSelectionScreen extends ConsumerStatefulWidget {
 
 class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
   String? _selectedRole; // 'tenant', 'landlord', or 'vendor'
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
           final data = response.data['data'];
           final List roles = data['roles'] ?? [];
           String role = 'tenant';
+          String kycStatus = 'unverified';
           if (roles.isNotEmpty) {
             final primaryRoleObj = roles.firstWhere(
               (r) => r['is_primary'] == true,
@@ -39,9 +41,19 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
             );
             role = primaryRoleObj['role'] ?? 'tenant';
           }
+          kycStatus = data['kyc_status'] ?? 'unverified';
+
           if (mounted) {
-            if (role == 'landlord') {
-              Navigator.pushReplacementNamed(context, '/landlord_home');
+            if (role == 'landlord' || role == 'property_manager') {
+              if (kycStatus == 'verified' || kycStatus == 'approved') {
+                Navigator.pushReplacementNamed(context, '/verification_success');
+              } else if (kycStatus == 'rejected') {
+                Navigator.pushReplacementNamed(context, '/verification_rejected');
+              } else if (kycStatus == 'reviewing') {
+                Navigator.pushReplacementNamed(context, '/landlord_pending_approval');
+              } else {
+                Navigator.pushReplacementNamed(context, '/landlord_onboarding');
+              }
             } else if (role == 'vendor') {
               Navigator.pushReplacementNamed(context, '/vendor_home');
             } else {
@@ -50,13 +62,25 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
           }
         }
       } catch (e) {
-        await ApiClient().clearToken();
+        // Token invalid or network error, stop loading
+        if (mounted) setState(() => _isLoading = false);
       }
+    } else {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.scaffoldBg,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
     final size = MediaQuery.of(context).size;
     final w = size.width;
     final h = size.height;

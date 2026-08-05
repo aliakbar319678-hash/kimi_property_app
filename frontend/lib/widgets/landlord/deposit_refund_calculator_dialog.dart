@@ -115,7 +115,7 @@ class _DepositRefundCalculatorDialogState extends State<DepositRefundCalculatorD
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _FieldLabel('Held Security Deposit (\$)'),
+            _fieldLabel('Held Security Deposit (\$)'),
             const SizedBox(height: 6),
             TextFormField(
               controller: _depositCtrl,
@@ -133,7 +133,7 @@ class _DepositRefundCalculatorDialogState extends State<DepositRefundCalculatorD
             const Text('Deductions:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.error)),
             const SizedBox(height: 8),
 
-            _FieldLabel('Deep Cleaning Charges (\$)'),
+            _fieldLabel('Deep Cleaning Charges (\$)'),
             const SizedBox(height: 6),
             TextFormField(
               controller: _cleaningCtrl,
@@ -148,7 +148,7 @@ class _DepositRefundCalculatorDialogState extends State<DepositRefundCalculatorD
 
             const SizedBox(height: 10),
 
-            _FieldLabel('Damage & Repair Costs (\$)'),
+            _fieldLabel('Damage & Repair Costs (\$)'),
             const SizedBox(height: 6),
             TextFormField(
               controller: _damageCtrl,
@@ -163,7 +163,7 @@ class _DepositRefundCalculatorDialogState extends State<DepositRefundCalculatorD
 
             const SizedBox(height: 10),
 
-            _FieldLabel('Unpaid Rent / Utility Dues (\$)'),
+            _fieldLabel('Unpaid Rent / Utility Dues (\$)'),
             const SizedBox(height: 6),
             TextFormField(
               controller: _unpaidRentCtrl,
@@ -210,7 +210,7 @@ class _DepositRefundCalculatorDialogState extends State<DepositRefundCalculatorD
 
             const SizedBox(height: 14),
 
-            _FieldLabel('Itemized Deduction Notes'),
+            _fieldLabel('Itemized Deduction Notes'),
             const SizedBox(height: 6),
             TextFormField(
               controller: _notesCtrl,
@@ -254,7 +254,7 @@ class _DepositRefundCalculatorDialogState extends State<DepositRefundCalculatorD
     );
   }
 
-  Widget _FieldLabel(String label) {
+  Widget _fieldLabel(String label) {
     return Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12));
   }
 }

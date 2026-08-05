@@ -546,7 +546,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
               ),
               _label('Country'),
               DropdownButtonFormField<String>(
-                value: _countryCode,
+                initialValue: _countryCode,
                 isExpanded: true,
                 decoration: InputDecoration(
                   filled: true,

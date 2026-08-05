@@ -20,8 +20,8 @@ export class PropertyService {
   static async search(filters: any) {
     let sql = `SELECT p.*, u.id as unit_id, u.unit_number, u.bedrooms, u.bathrooms, u.square_feet, u.rent_amount, u.status as unit_status
                FROM properties p
-               LEFT JOIN units u ON u.property_id = p.id
-               WHERE p.status = 'active' AND p.verification_status = 'approved'`;
+               JOIN units u ON u.property_id = p.id
+               WHERE p.status = 'active' AND p.verification_status = 'approved' AND u.status = 'vacant'`;
     const params: any[] = [];
     let idx = 1;
 
@@ -73,7 +73,7 @@ export class PropertyService {
     return { data: res.rows, meta: { total, page: filters.page, limit: filters.limit, pages: Math.ceil(total / filters.limit) } };
   }
 
-  static async getById(id: string) {
+  static async getById(id: string, filterVacantOnly: boolean = false) {
     const propRes = await query(`
       SELECT 
         p.*,
@@ -92,22 +92,19 @@ export class PropertyService {
       WHERE p.id = $1
     `, [id]);
     if (propRes.rows.length === 0) throw new AppError('Property not found', 404);
-    const unitsRes = await query('SELECT * FROM units WHERE property_id = $1', [id]);
+    
+    let unitsQuery = 'SELECT * FROM units WHERE property_id = $1';
+    if (filterVacantOnly) {
+      unitsQuery += " AND status = 'vacant'";
+    }
+    const unitsRes = await query(unitsQuery, [id]);
+    
     const prop = propRes.rows[0];
     return { 
       ...prop, 
       units: unitsRes.rows,
       units_count: unitsRes.rows.length,
     };
-  }
-
-  static async createUnit(propertyId: string, data: any) {
-    const res = await query(
-      `INSERT INTO units (property_id, unit_number, bedrooms, bathrooms, square_feet, rent_amount, deposit_amount, status, available_date)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [propertyId, data.unitNumber, data.bedrooms, data.bathrooms, data.squareFeet, data.rentAmount, data.depositAmount, data.status || 'vacant', data.availableDate]
-    );
-    return res.rows[0];
   }
 
   static async saveProperty(userId: string, propertyId: string) {
@@ -124,4 +121,130 @@ export class PropertyService {
     );
     return res.rows;
   }
+  // Create a new unit for a property
+  static async createUnit(propertyId: string, data: any) {
+    return withTransaction(async (client) => {
+      const res = await client.query(
+        `INSERT INTO units (property_id, unit_number, bedrooms, bathrooms, square_feet, rent_amount, deposit_amount, status, available_date)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING *`,
+        [
+          propertyId,
+          data.unitNumber,
+          data.bedrooms,
+          data.bathrooms,
+          data.squareFeet,
+          data.rentAmount,
+          data.depositAmount,
+          data.status || 'available',
+          data.availableDate || null,
+        ]
+      );
+      return res.rows[0];
+    });
+  }
+
+  // Update an existing property
+  static async updateProperty(id: string, data: any) {
+    return withTransaction(async (client) => {
+      const fields: string[] = [];
+      const values: any[] = [];
+      let idx = 1;
+      if (data.name !== undefined) {
+        fields.push(`name = $${idx++}`);
+        values.push(data.name);
+      }
+      if (data.description !== undefined) {
+        fields.push(`description = $${idx++}`);
+        values.push(data.description);
+      }
+      if (data.amenities !== undefined) {
+        fields.push(`amenities = $${idx++}`);
+        values.push(JSON.stringify(data.amenities));
+      }
+      if (data.status !== undefined) {
+        fields.push(`status = $${idx++}`);
+        values.push(data.status);
+      }
+      if (fields.length === 0) {
+        throw new AppError('No fields to update', 400);
+      }
+      const setClause = fields.join(', ');
+      values.push(id);
+      const sql = `UPDATE properties SET ${setClause}, updated_at = NOW() WHERE id = $${idx} RETURNING *`;
+      const res = await client.query(sql, values);
+      if (res.rows.length === 0) throw new AppError('Property not found', 404);
+      return res.rows[0];
+    });
+  }
+
+  // Delete a property and its units
+  static async deleteProperty(id: string) {
+    return withTransaction(async (client) => {
+      await client.query('DELETE FROM units WHERE property_id = $1', [id]);
+      const res = await client.query('DELETE FROM properties WHERE id = $1 RETURNING *', [id]);
+      if (res.rows.length === 0) throw new AppError('Property not found', 404);
+      return res.rows[0];
+    });
+  }
+
+  // Update an existing unit
+  static async updateUnit(propertyId: string, unitId: string, data: any) {
+    return withTransaction(async (client) => {
+      const fields: string[] = [];
+      const values: any[] = [];
+      let idx = 1;
+      if (data.unitNumber !== undefined) {
+        fields.push(`unit_number = $${idx++}`);
+        values.push(data.unitNumber);
+      }
+      if (data.bedrooms !== undefined) {
+        fields.push(`bedrooms = $${idx++}`);
+        values.push(data.bedrooms);
+      }
+      if (data.bathrooms !== undefined) {
+        fields.push(`bathrooms = $${idx++}`);
+        values.push(data.bathrooms);
+      }
+      if (data.squareFeet !== undefined) {
+        fields.push(`square_feet = $${idx++}`);
+        values.push(data.squareFeet);
+      }
+      if (data.rentAmount !== undefined) {
+        fields.push(`rent_amount = $${idx++}`);
+        values.push(data.rentAmount);
+      }
+      if (data.depositAmount !== undefined) {
+        fields.push(`deposit_amount = $${idx++}`);
+        values.push(data.depositAmount);
+      }
+      if (data.status !== undefined) {
+        fields.push(`status = $${idx++}`);
+        values.push(data.status);
+      }
+      if (data.availableDate !== undefined) {
+        fields.push(`available_date = $${idx++}`);
+        values.push(data.availableDate);
+      }
+      if (fields.length === 0) {
+        throw new AppError('No fields to update', 400);
+      }
+      const setClause = fields.join(', ');
+      values.push(propertyId, unitId);
+      const sql = `UPDATE units SET ${setClause}, updated_at = NOW() WHERE property_id = $${idx} AND id = $${idx + 1} RETURNING *`;
+      const res = await client.query(sql, values);
+      if (res.rows.length === 0) throw new AppError('Unit not found', 404);
+      return res.rows[0];
+    });
+  }
+
+  // Delete a unit
+  static async deleteUnit(propertyId: string, unitId: string) {
+    return withTransaction(async (client) => {
+      const res = await client.query('DELETE FROM units WHERE property_id = $1 AND id = $2 RETURNING *', [propertyId, unitId]);
+      if (res.rows.length === 0) throw new AppError('Unit not found', 404);
+      return res.rows[0];
+    });
+  }
+
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
+import 'package:tenant_and_landlord_application/core/api_constants.dart';
 import 'package:tenant_and_landlord_application/provider/auth_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_input_field.dart';
@@ -197,15 +199,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           final freshState = ref.read(registerProvider);
                           if (success) {
                             final role = freshState.selectedRole.toLowerCase();
-                            if (role == 'landlord') {
-                              Navigator.pushNamedAndRemoveUntil(
-                                  context, '/landlord_home', (r) => false);
-                            } else if (role == 'vendor') {
-                              Navigator.pushNamedAndRemoveUntil(
-                                  context, '/vendor_home', (r) => false);
+                            String kycStatus = 'unverified';
+
+                            try {
+                              final response = await ApiClient().dio.get(ApiConstants.me);
+                              if (response.statusCode == 200) {
+                                kycStatus = response.data['data']['kyc_status'] ?? 'unverified';
+                              }
+                            } catch (_) {}
+
+                            if (!context.mounted) return;
+                            if (kycStatus == 'reviewing') {
+                              Navigator.pushNamedAndRemoveUntil(context, '/landlord_pending_approval', (r) => false);
+                            } else if (kycStatus == 'rejected') {
+                              Navigator.pushNamedAndRemoveUntil(context, '/verification_rejected', (r) => false);
+                            } else if (kycStatus == 'verified' || kycStatus == 'approved') {
+                              if (role == 'vendor') {
+                                Navigator.pushNamedAndRemoveUntil(context, '/vendor_home', (r) => false);
+                              } else {
+                                Navigator.pushNamedAndRemoveUntil(context, '/home', (r) => false);
+                              }
                             } else {
-                              Navigator.pushNamedAndRemoveUntil(
-                                  context, '/home', (r) => false);
+                              if (role == 'landlord' || role == 'property_manager') {
+                                Navigator.pushNamedAndRemoveUntil(context, '/landlord_onboarding', (r) => false);
+                              } else if (role == 'vendor') {
+                                Navigator.pushNamedAndRemoveUntil(context, '/vendor_onboarding', (r) => false);
+                              } else {
+                                Navigator.pushNamedAndRemoveUntil(context, '/home', (r) => false);
+                              }
                             }
                           } else {
                             ScaffoldMessenger.of(context).clearSnackBars();

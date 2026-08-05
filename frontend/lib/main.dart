@@ -4,6 +4,8 @@ import 'package:tenant_and_landlord_application/core/api_constants.dart';
 
 // ── Auth ────────────────────────────────────────────
 import 'package:tenant_and_landlord_application/screens/auth/welcome_screen.dart';
+import 'package:tenant_and_landlord_application/screens/auth/verification_success_screen.dart';
+import 'package:tenant_and_landlord_application/screens/auth/verification_rejected_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/register_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/login_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/otp_screen.dart';
@@ -58,6 +60,9 @@ import 'package:tenant_and_landlord_application/screens/landlord/confirm_assignm
 import 'package:tenant_and_landlord_application/screens/landlord/job_chat_room_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/lease_management_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/financial_overview_screen.dart';
+
+import 'package:tenant_and_landlord_application/screens/landlord/landlord_onboarding_screen.dart';
+import 'package:tenant_and_landlord_application/screens/landlord/landlord_pending_approval_screen.dart';
 
 import 'package:tenant_and_landlord_application/screens/landlord/ai_smart_assistant_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/add_property_screen.dart';
@@ -136,6 +141,10 @@ class TLApp extends StatelessWidget {
         '/tenant_saved_properties': (_) => const TenantSavedPropertiesScreen(),
 
         // ── Landlord Portal Routes ────────────────
+        '/landlord_onboarding': (_) => const LandlordOnboardingScreen(),
+        '/verification_success': (_) => const VerificationSuccessScreen(),
+        '/verification_rejected': (_) => const VerificationRejectedScreen(),
+        '/landlord_pending_approval': (_) => const LandlordPendingApprovalScreen(),
         '/landlord_home': (_) => const LandlordShell(initialIndex: 0),
         '/landlord_properties': (_) => const LandlordShell(initialIndex: 1),
         '/landlord_tenants': (_) => const LandlordShell(initialIndex: 2),

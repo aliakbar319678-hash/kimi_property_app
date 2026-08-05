@@ -92,7 +92,7 @@ class _AddUnitDialogState extends State<AddUnitDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _FieldLabel('Unit Number / Designation'),
+              _fieldLabel('Unit Number / Designation'),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _unitNumCtrl,
@@ -113,7 +113,7 @@ class _AddUnitDialogState extends State<AddUnitDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _FieldLabel('Rent (\$)'),
+                        _fieldLabel('Rent (\$)'),
                         const SizedBox(height: 6),
                         TextFormField(
                           controller: _rentCtrl,
@@ -133,7 +133,7 @@ class _AddUnitDialogState extends State<AddUnitDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _FieldLabel('Deposit (\$)'),
+                        _fieldLabel('Deposit (\$)'),
                         const SizedBox(height: 6),
                         TextFormField(
                           controller: _depositCtrl,
@@ -158,10 +158,10 @@ class _AddUnitDialogState extends State<AddUnitDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _FieldLabel('Bedrooms'),
+                        _fieldLabel('Bedrooms'),
                         const SizedBox(height: 6),
                         DropdownButtonFormField<int>(
-                          value: _bedrooms,
+                          initialValue: _bedrooms,
                           decoration: InputDecoration(
                             fillColor: AppColors.inputBg,
                             filled: true,
@@ -178,10 +178,10 @@ class _AddUnitDialogState extends State<AddUnitDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _FieldLabel('Bathrooms'),
+                        _fieldLabel('Bathrooms'),
                         const SizedBox(height: 6),
                         DropdownButtonFormField<double>(
-                          value: _bathrooms,
+                          initialValue: _bathrooms,
                           decoration: InputDecoration(
                             fillColor: AppColors.inputBg,
                             filled: true,
@@ -204,7 +204,7 @@ class _AddUnitDialogState extends State<AddUnitDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _FieldLabel('Area (Sq Ft)'),
+                        _fieldLabel('Area (Sq Ft)'),
                         const SizedBox(height: 6),
                         TextFormField(
                           controller: _sqftCtrl,
@@ -223,10 +223,10 @@ class _AddUnitDialogState extends State<AddUnitDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _FieldLabel('Initial Status'),
+                        _fieldLabel('Initial Status'),
                         const SizedBox(height: 6),
                         DropdownButtonFormField<String>(
-                          value: _status,
+                          initialValue: _status,
                           decoration: InputDecoration(
                             fillColor: AppColors.inputBg,
                             filled: true,
@@ -280,7 +280,7 @@ class _AddUnitDialogState extends State<AddUnitDialog> {
     );
   }
 
-  Widget _FieldLabel(String label) {
+  Widget _fieldLabel(String label) {
     return Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12));
   }
 }

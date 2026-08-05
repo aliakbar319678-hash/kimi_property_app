@@ -19,7 +19,8 @@ router.get('/courses', adminOrJwtAuth, denyRole('vendor'), async (req: AuthReque
     let sql = `
       SELECT c.*, 
         COUNT(e.id) as real_enrolled_count,
-        COALESCE(ROUND(AVG(NULLIF(e.progress_percent, 0))), 0) as real_completion_rate
+        COALESCE(ROUND(AVG(NULLIF(e.progress_percent, 0))), 0) as real_completion_rate,
+        (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id) as modules_count
       FROM courses c
       LEFT JOIN enrollments e ON c.id = e.course_id
       WHERE 1=1
@@ -64,6 +65,17 @@ router.get('/stats/summary', adminOrJwtAuth, denyRole('vendor'), async (req: Aut
 router.get('/analytics', adminOrJwtAuth, denyRole('vendor'), async (req: AuthRequest, res, next) => {
   try {
     const analytics = await LMSService.getLmsAnalytics();
+    res.json({ success: true, data: analytics });
+  } catch (e) { next(e); }
+});
+
+router.get('/analytics/custom-report', adminOrJwtAuth, denyRole('vendor'), async (req: AuthRequest, res, next) => {
+  try {
+    const { start, end } = req.query;
+    if (!start || !end) {
+      return res.status(400).json({ success: false, error: 'start and end dates are required' });
+    }
+    const analytics = await LMSService.getLmsCustomReport(start as string, end as string);
     res.json({ success: true, data: analytics });
   } catch (e) { next(e); }
 });
@@ -133,11 +145,12 @@ router.post('/enrollments/:id/quiz', authenticate, denyRole('vendor'), validate(
 
 router.get('/certificates', adminOrJwtAuth, denyRole('vendor'), async (req: AuthRequest, res, next) => {
   try {
-    // Admin: return all certificates
     const isAdmin = req.user?.roles?.includes('admin') || req.user?.roles?.includes('super_admin');
-    if (isAdmin) {
+    
+    // If admin and no specific userId is requested, return all certificates
+    if (isAdmin && !req.query.userId) {
       const result = await query(
-        `SELECT c.*, co.title as course_title, co.category, u.display_name as user_name
+        `SELECT c.*, co.title as course_title, co.category, co.thumbnail_url, u.display_name as user_name
          FROM certificates c
          JOIN courses co ON co.id = c.course_id
          JOIN users u ON u.id = c.user_id
@@ -145,8 +158,66 @@ router.get('/certificates', adminOrJwtAuth, denyRole('vendor'), async (req: Auth
       );
       return res.json({ success: true, data: result.rows });
     }
-    const certs = await LMSService.getCertificates(req.user!.id);
+    
+    // Otherwise return for specific user
+    const targetUserId = req.query.userId || req.user!.id;
+    const certs = await LMSService.getCertificates(targetUserId as string);
     res.json({ success: true, data: certs });
+  } catch (e) { next(e); }
+});
+
+// LMS Notifications — returns all LMS-type notifications
+router.get('/notifications', adminOrJwtAuth, denyRole('vendor'), async (req: AuthRequest, res, next) => {
+  try {
+    const isAdmin = req.user?.roles?.includes('admin') || req.user?.roles?.includes('super_admin');
+    const lmsTypes = ['lms_enrollment', 'lms_certificate', 'lms_discussion_reply'];
+    
+    let result;
+    if (isAdmin) {
+      // Admin: return all LMS notifications across all users
+      result = await query(
+        `SELECT n.*, u.display_name as user_name 
+         FROM notifications n
+         LEFT JOIN users u ON u.id = n.user_id
+         WHERE n.type = ANY($1)
+         ORDER BY n.created_at DESC`,
+        [lmsTypes]
+      );
+    } else {
+      // Student: return only their LMS notifications
+      result = await query(
+        `SELECT * FROM notifications 
+         WHERE user_id = $1 AND type = ANY($2)
+         ORDER BY created_at DESC`,
+        [req.user!.id, lmsTypes]
+      );
+    }
+    
+    res.json({ success: true, data: result.rows });
+  } catch (e) { next(e); }
+});
+
+router.put('/notifications/read-all', adminOrJwtAuth, denyRole('vendor'), async (req: AuthRequest, res, next) => {
+  try {
+    const lmsTypes = ['lms_enrollment', 'lms_certificate', 'lms_discussion_reply'];
+    const isAdmin = req.user?.roles?.includes('admin') || req.user?.roles?.includes('super_admin');
+    const targetUserId = req.body.userId || req.user!.id;
+    
+    if (isAdmin && !req.body.userId) {
+      // Admin proxy hitting read-all without specifying user: mark all LMS notifications as read
+      await query(
+        `UPDATE notifications SET is_read = true WHERE type = ANY($1)`,
+        [lmsTypes]
+      );
+    } else {
+      // Normal user (or admin specifying a target user)
+      await query(
+        `UPDATE notifications SET is_read = true WHERE type = ANY($1) AND user_id = $2`,
+        [lmsTypes, targetUserId]
+      );
+    }
+    
+    res.json({ success: true });
   } catch (e) { next(e); }
 });
 
@@ -218,10 +289,28 @@ router.get('/certificates/:number/verify', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.get('/dashboard', authenticate, denyRole('vendor'), async (req: AuthRequest, res, next) => {
+router.get('/dashboard', adminOrJwtAuth, denyRole('vendor'), async (req: AuthRequest, res, next) => {
   try {
-    const dashboard = await LMSService.getDashboard(req.user!.id);
+    const isAdmin = req.user?.roles?.includes('admin') || req.user?.roles?.includes('super_admin');
+    
+    // If admin proxy without specific userId, return aggregate stats for all users
+    if (isAdmin && !req.query.userId) {
+      const dashboard = await LMSService.getDashboard('admin-system');
+      return res.json({ success: true, data: dashboard });
+    }
+    
+    const targetUserId = req.query.userId || req.user!.id;
+    const dashboard = await LMSService.getDashboard(targetUserId as string);
     res.json({ success: true, data: dashboard });
+  } catch (e) { next(e); }
+});
+
+router.get('/my-enrollments', adminOrJwtAuth, denyRole('vendor'), async (req: AuthRequest, res, next) => {
+  try {
+    const isAdmin = req.user?.roles?.includes('admin') || req.user?.roles?.includes('super_admin');
+    const targetUserId = (isAdmin && !req.query.userId) ? 'admin-system' : (req.query.userId || req.user!.id);
+    const enrollments = await LMSService.getMyEnrollments(targetUserId as string);
+    res.json({ success: true, data: enrollments });
   } catch (e) { next(e); }
 });
 

@@ -85,7 +85,7 @@ class _RecordManualPaymentDialogState extends State<RecordManualPaymentDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _FieldLabel('Tenant Name / Unit'),
+              _fieldLabel('Tenant Name / Unit'),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _tenantNameCtrl,
@@ -106,7 +106,7 @@ class _RecordManualPaymentDialogState extends State<RecordManualPaymentDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _FieldLabel('Amount Received (\$)'),
+                        _fieldLabel('Amount Received (\$)'),
                         const SizedBox(height: 6),
                         TextFormField(
                           controller: _amountCtrl,
@@ -126,10 +126,10 @@ class _RecordManualPaymentDialogState extends State<RecordManualPaymentDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _FieldLabel('Method'),
+                        _fieldLabel('Method'),
                         const SizedBox(height: 6),
                         DropdownButtonFormField<String>(
-                          value: _paymentMethod,
+                          initialValue: _paymentMethod,
                           decoration: InputDecoration(
                             fillColor: AppColors.inputBg,
                             filled: true,
@@ -151,7 +151,7 @@ class _RecordManualPaymentDialogState extends State<RecordManualPaymentDialog> {
 
               const SizedBox(height: 14),
 
-              _FieldLabel('Check / Wire Reference # (Optional)'),
+              _fieldLabel('Check / Wire Reference # (Optional)'),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _refNumCtrl,
@@ -165,7 +165,7 @@ class _RecordManualPaymentDialogState extends State<RecordManualPaymentDialog> {
 
               const SizedBox(height: 14),
 
-              _FieldLabel('Payment Date'),
+              _fieldLabel('Payment Date'),
               const SizedBox(height: 6),
               InkWell(
                 onTap: () async {
@@ -196,7 +196,7 @@ class _RecordManualPaymentDialogState extends State<RecordManualPaymentDialog> {
 
               const SizedBox(height: 14),
 
-              _FieldLabel('Receipt Notes / Remarks'),
+              _fieldLabel('Receipt Notes / Remarks'),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _notesCtrl,
@@ -243,7 +243,7 @@ class _RecordManualPaymentDialogState extends State<RecordManualPaymentDialog> {
     );
   }
 
-  Widget _FieldLabel(String label) {
+  Widget _fieldLabel(String label) {
     return Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12));
   }
 }

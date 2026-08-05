@@ -161,7 +161,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
           amenities: amenities,
           description: m['description']?.toString() ?? '',
           status: m['status']?.toString() ?? 'active',
-          verificationStatus: m['verification_status']?.toString() ?? 'pending',
+          verificationStatus: _normaliseVerificationStatus(m['verification_status']?.toString() ?? 'pending'),
           rejectionReason: m['rejection_reason']?.toString(),
           resubmissionCount: (m['resubmission_count'] ?? 0) as int,
           isPermanentlyRejected: m['is_permanently_rejected'] == true || m['is_permanently_rejected'] == 'true',
@@ -188,6 +188,15 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
         occupancyRate: calculatedOccupancy,
         isLoading: false,
       );
+
+      // ── Background enrichment: fetch real unit counts for each property ─
+      // Runs silently without blocking the UI. Each loadUnits call updates
+      // the matching property's occupied/vacant counts in state.
+      for (final p in properties) {
+        if (p.id.isNotEmpty) {
+          loadUnits(p.id, backgroundOnly: true).catchError((_) {}); // ignore individual errors
+        }
+      }
     } catch (e) {
       debugPrint('[LandlordProvider] loadProperties error: $e');
       state = state.copyWith(isLoading: false);
@@ -383,84 +392,85 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
   Future<void> loadTenants() async {
     state = state.copyWith(isTenantsLoading: true);
     try {
-      final resp = await ApiClient().dio.get(ApiConstants.usersTenants);
+      // Backend has no /users/tenants endpoint; use GET /users and filter by role
+      final resp = await ApiClient().dio.get('/users');
       final List<dynamic> rawList = (resp.data['data'] ?? []) as List<dynamic>;
 
-      final tenants = rawList.map((item) {
-        final m = item as Map<String, dynamic>;
-        final tenantData = m['tenant'] as Map<String, dynamic>? ?? {};
+      // Build a map of tenantId → lease for quick lookup
+      final leasesByTenantId = <String, Lease>{};
+      for (final l in state.leases) {
+        if (l.tenantId.isNotEmpty) {
+          leasesByTenantId[l.tenantId] = l;
+        }
+      }
 
-        // Determine payment status
-        final status = (m['status'] ?? '').toString().toLowerCase();
+      final tenants = <Tenant>[];
+      for (final item in rawList) {
+        final m = item as Map<String, dynamic>;
+        final role = (m['role'] ?? '').toString().toLowerCase();
+        // Only include users who are tenants
+        if (!role.contains('tenant')) continue;
+
+        final userId = m['id']?.toString() ?? '';
+        final matchedLease = leasesByTenantId[userId];
+
+        final firstName = m['first_name']?.toString() ?? m['legal_first_name']?.toString() ?? '';
+        final lastName = m['last_name']?.toString() ?? m['legal_last_name']?.toString() ?? '';
+        final displayName = m['display_name']?.toString() ?? '';
+        final fullName = [firstName, lastName].where((s) => s.isNotEmpty).join(' ');
+        final name = fullName.isNotEmpty ? fullName
+            : (displayName.isNotEmpty ? displayName
+            : (m['email']?.toString().split('@').first ?? 'Tenant'));
+
+        // Determine payment status from matched lease
         String paymentStatus = 'Active';
-        if (status == 'overdue' || status == 'late') {
+        if (matchedLease != null && matchedLease.status.toLowerCase() == 'overdue') {
           paymentStatus = 'Late Payment';
         }
 
-        // Format join date from start_date
-        String dateJoined = '';
-        try {
-          final raw = m['start_date']?.toString() ?? '';
-          final dt = DateTime.tryParse(raw);
-          if (dt != null) dateJoined = DateFormat('MMM dd, yyyy').format(dt);
-        } catch (_) {}
-
-        // Lease end date
-        String leaseEnd = '';
-        try {
-          final raw = m['end_date']?.toString() ?? '';
-          final dt = DateTime.tryParse(raw);
-          if (dt != null) leaseEnd = DateFormat('MMM dd, yyyy').format(dt);
-        } catch (_) {}
-
-        final rentAmt = _safeDouble(m['rent_amount'] ?? m['rentAmount']);
-        final outstanding = _safeDouble(m['outstanding'] ?? m['balance']);
-
-        final firstName = tenantData['legal_first_name']?.toString() ?? '';
-        final lastName = tenantData['legal_last_name']?.toString() ?? '';
-        final fullName = [firstName, lastName].where((s) => s.isNotEmpty).join(' ');
-
-        return Tenant(
-          id: m['id']?.toString() ?? '',
-          name: fullName.isNotEmpty
-              ? fullName
-              : (tenantData['email']?.toString().split('@').first ?? 'Tenant'),
-          unitName: m['unit_name']?.toString() ?? m['unitName']?.toString() ?? 'N/A',
-          contact: tenantData['phone']?.toString() ?? '',
-          email: tenantData['email']?.toString() ?? '',
+        tenants.add(Tenant(
+          id: userId,
+          name: name,
+          unitName: matchedLease?.unitName ?? 'N/A',
+          contact: m['phone']?.toString() ?? '',
+          email: m['email']?.toString() ?? '',
           emergencyContactName: '',
           emergencyContactPhone: '',
-          memos: [],
-          balance: outstanding,
+          memos: const [],
+          balance: 0.0,
           status: paymentStatus,
-          dateJoined: dateJoined,
-          propertyName: m['property_name']?.toString() ?? m['propertyName']?.toString() ?? '',
-          leaseEndDate: leaseEnd,
-          rentAmount: rentAmt,
-          avatarUrl: tenantData['avatar_url']?.toString() ?? '',
-        );
-      }).toList();
+          dateJoined: matchedLease?.startDate ?? '',
+          propertyName: matchedLease?.propertyName ?? '',
+          leaseEndDate: matchedLease?.endDate ?? '',
+          rentAmount: matchedLease?.rentAmount ?? 0.0,
+          avatarUrl: m['avatar_url']?.toString() ?? '',
+        ));
+      }
 
       state = state.copyWith(tenants: tenants, isTenantsLoading: false);
     } catch (e) {
       debugPrint('[LandlordProvider] loadTenants error: $e. Falling back to active leases.');
-      final derivedTenants = state.leases.map((l) => Tenant(
-        id: l.id,
-        name: l.tenantName.isNotEmpty ? l.tenantName : 'Active Tenant',
-        unitName: l.unitName.isNotEmpty ? l.unitName : 'Unit',
-        contact: 'N/A',
-        email: 'tenant@propadmin.com',
-        emergencyContactName: '',
-        emergencyContactPhone: '',
-        memos: const [],
-        balance: 0.0,
-        status: l.status.toLowerCase() == 'active' ? 'Active' : l.status,
-        dateJoined: l.startDate,
-        propertyName: l.propertyName,
-        leaseEndDate: l.endDate,
-        rentAmount: l.rentAmount,
-        avatarUrl: '',
-      )).toList();
+      // Fallback: derive tenants from loaded leases when /users is unreachable
+      final derivedTenants = state.leases
+          .where((l) => l.tenantName.isNotEmpty)
+          .map((l) => Tenant(
+                id: l.tenantId.isNotEmpty ? l.tenantId : l.id,
+                name: l.tenantName,
+                unitName: l.unitName,
+                contact: 'N/A',
+                email: '',
+                emergencyContactName: '',
+                emergencyContactPhone: '',
+                memos: const [],
+                balance: 0.0,
+                status: l.status.toLowerCase() == 'active' ? 'Active' : l.status,
+                dateJoined: l.startDate,
+                propertyName: l.propertyName,
+                leaseEndDate: l.endDate,
+                rentAmount: l.rentAmount,
+                avatarUrl: '',
+              ))
+          .toList();
       state = state.copyWith(tenants: derivedTenants, isTenantsLoading: false);
     }
   }
@@ -508,7 +518,7 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
 
         return Lease(
           id: m['id']?.toString() ?? '',
-          unitName: m['unit_name']?.toString() ?? m['unitName']?.toString() ?? 'N/A',
+          unitName: m['unit_number']?.toString() ?? m['unit_name']?.toString() ?? m['unitName']?.toString() ?? 'N/A',
           tenantName: fullName.isNotEmpty
               ? fullName
               : (tenantData['email']?.toString().split('@').first ?? 'Tenant'),
@@ -518,6 +528,8 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
           endDate: endDate,
           status: status,
           daysLeft: daysLeft,
+          // tenantId: extracted from nested tenant object — used by Tenant Directory link
+          tenantId: tenantData['id']?.toString() ?? m['tenant_id']?.toString() ?? '',
         );
       }).toList();
 
@@ -534,8 +546,11 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
   }
 
   // ── 9. Load units for a specific property ─────────────────────────────────────
-  Future<void> loadUnits(String propertyId) async {
-    state = state.copyWith(isUnitsLoading: true);
+  /// [backgroundOnly] = true means we only update property stats (occupied/vacant)
+  /// without touching state.units or isUnitsLoading, to avoid races during
+  /// the background enrichment after loadProperties.
+  Future<void> loadUnits(String propertyId, {bool backgroundOnly = false}) async {
+    if (!backgroundOnly) state = state.copyWith(isUnitsLoading: true);
     try {
       final resp =
           await ApiClient().dio.get(ApiConstants.property(propertyId));
@@ -574,11 +589,53 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
         );
       }).toList();
 
-      state = state.copyWith(units: units, isUnitsLoading: false);
+      // ── Sync unit stats back into the matching property ───────────────
+      final totalU = units.length;
+      final occupiedU = units.where((u) => u.status.toLowerCase() == 'occupied').length;
+      final vacantU = units.where((u) => u.status.toLowerCase() == 'vacant').length;
+      final newOccupancyRate = totalU > 0 ? occupiedU.toDouble() / totalU.toDouble() : 0.0;
+
+      final updatedProperties = state.properties.map((p) {
+        if (p.id == propertyId) {
+          return p.copyWith(
+            totalUnits: totalU,
+            occupiedUnits: occupiedU,
+            vacantUnits: vacantU,
+            occupancyRate: newOccupancyRate,
+          );
+        }
+        return p;
+      }).toList();
+
+      // Recompute portfolio-level occupancy rate
+      int portfolioTotal = 0;
+      int portfolioOccupied = 0;
+      for (final p in updatedProperties) {
+        portfolioTotal += p.totalUnits;
+        portfolioOccupied += p.occupiedUnits;
+      }
+      final portfolioOccupancy = portfolioTotal > 0
+          ? portfolioOccupied.toDouble() / portfolioTotal.toDouble()
+          : state.occupancyRate;
+
+      if (backgroundOnly) {
+        // Only update property stats, leave state.units alone
+        state = state.copyWith(
+          properties: updatedProperties,
+          occupancyRate: portfolioOccupancy,
+        );
+      } else {
+        state = state.copyWith(
+          units: units,
+          isUnitsLoading: false,
+          properties: updatedProperties,
+          occupancyRate: portfolioOccupancy,
+        );
+      }
     } catch (e) {
       debugPrint('[LandlordProvider] loadUnits error: $e');
-      state = state.copyWith(isUnitsLoading: false);
-      rethrow;
+      if (!backgroundOnly) state = state.copyWith(isUnitsLoading: false);
+      if (!backgroundOnly) rethrow;
     }
   }
 
@@ -731,14 +788,14 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
     String paymentSchedule = 'monthly',
     bool autoRenew = false,
   }) async {
+    // Backend validation schema uses 'depositAmount' (not 'securityDeposit')
     final payload = <String, dynamic>{
       'tenantId': tenantId,
       'unitId': unitId,
-      'propertyId': propertyId,
       'startDate': startDate,
       'endDate': endDate,
       'rentAmount': rentAmount,
-      'securityDeposit': securityDeposit,
+      'depositAmount': securityDeposit,
       'paymentSchedule': paymentSchedule,
       'autoRenew': autoRenew,
     };
@@ -750,7 +807,21 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
   // ── Renew Lease ──────────────────────────────────────────────────────────────
   Future<void> renewLease(String leaseId, dynamic data) async {
     try {
-      final payload = data is Map<String, dynamic> ? data : {'newEndDate': data.toString()};
+      Map<String, dynamic> payload;
+      if (data is Map<String, dynamic>) {
+        // Ensure correct key names expected by backend schema
+        payload = {
+          if (data['endDate'] != null) 'end_date': data['endDate'],
+          if (data['startDate'] != null) 'start_date': data['startDate'],
+          if (data['rentAmount'] != null) 'rent_amount': data['rentAmount'],
+          if (data['notes'] != null) 'notes': data['notes'],
+        };
+        // Also forward the original keys for safety (backend may accept either)
+        payload.addAll(data);
+      } else {
+        // Simple string end date passed directly (from lease_management_screen)
+        payload = {'end_date': data.toString(), 'endDate': data.toString()};
+      }
       await ApiClient().dio.post(
         ApiConstants.leaseRenew(leaseId),
         data: payload,
@@ -918,8 +989,8 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
         'accessInstructions': order.accessInstructions,
         'notifyTenant': true,
         'notifyVendor': true,
-        if (assignedVendorId != null) 'assignedVendorId': assignedVendorId,
-        if (scheduledDate != null) 'scheduledDate': scheduledDate,
+        'assignedVendorId': ?assignedVendorId,
+        'scheduledDate': ?scheduledDate,
       };
 
       final resp = await ApiClient().dio.post(ApiConstants.workOrders, data: payload);
@@ -1425,6 +1496,28 @@ class LandlordNotifier extends StateNotifier<LandlordState> {
         return 'Cancelled';
       default:
         return _capitalize(raw);
+    }
+  }
+
+  /// Maps backend status values to frontend-normalised verification status strings.
+  /// The backend stores 'pending_verification' for newly-created properties.
+  String _normaliseVerificationStatus(String raw) {
+    switch (raw.toLowerCase()) {
+      case 'pending_verification':
+      case 'pending':
+        return 'pending';
+      case 'approved':
+        return 'approved';
+      case 'rejected':
+        return 'rejected';
+      case 'needs_revision':
+        return 'needs_revision';
+      case 'resubmitted':
+        return 'resubmitted';
+      case 'permanently_rejected':
+        return 'permanently_rejected';
+      default:
+        return raw.toLowerCase();
     }
   }
 }

@@ -93,7 +93,7 @@ class _LeaseRenewalDialogState extends State<LeaseRenewalDialog> {
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
               const SizedBox(height: 12),
 
-              _FieldLabel('New Proposed Rent (\$)'),
+              _fieldLabel('New Proposed Rent (\$)'),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _rentCtrl,
@@ -108,10 +108,10 @@ class _LeaseRenewalDialogState extends State<LeaseRenewalDialog> {
 
               const SizedBox(height: 14),
 
-              _FieldLabel('Renewal Duration'),
+              _fieldLabel('Renewal Duration'),
               const SizedBox(height: 6),
               DropdownButtonFormField<int>(
-                value: _durationMonths,
+                initialValue: _durationMonths,
                 decoration: InputDecoration(
                   fillColor: AppColors.inputBg,
                   filled: true,
@@ -127,7 +127,7 @@ class _LeaseRenewalDialogState extends State<LeaseRenewalDialog> {
 
               const SizedBox(height: 14),
 
-              _FieldLabel('Proposed Start Date'),
+              _fieldLabel('Proposed Start Date'),
               const SizedBox(height: 6),
               InkWell(
                 onTap: () async {
@@ -160,7 +160,7 @@ class _LeaseRenewalDialogState extends State<LeaseRenewalDialog> {
 
               const SizedBox(height: 14),
 
-              _FieldLabel('Notes / Terms for Tenant'),
+              _fieldLabel('Notes / Terms for Tenant'),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _notesCtrl,
@@ -205,7 +205,7 @@ class _LeaseRenewalDialogState extends State<LeaseRenewalDialog> {
     );
   }
 
-  Widget _FieldLabel(String label) {
+  Widget _fieldLabel(String label) {
     return Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12));
   }
 }
