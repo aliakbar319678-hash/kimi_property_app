@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/provider/landlord_provider.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/portfolio_dashboard_screen.dart';
@@ -28,6 +30,8 @@ class _LandlordShellState extends ConsumerState<LandlordShell> {
     LandlordProfileScreen(),
   ];
 
+  Timer? _statusTimer;
+
   @override
   void initState() {
     super.initState();
@@ -37,8 +41,27 @@ class _LandlordShellState extends ConsumerState<LandlordShell> {
         ref.read(landlordProvider.notifier).initialize();
       }
     });
+
+    _statusTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      if (!mounted) return;
+      try {
+        final res = await ApiClient().dio.get('/auth/me');
+        if (res.statusCode == 200 && mounted) {
+          final data = res.data['data'];
+          if (data['kyc_status'] == 'suspended' || data['is_active'] == false) {
+            _statusTimer?.cancel();
+            Navigator.pushNamedAndRemoveUntil(context, '/account_suspended', (r) => false);
+          }
+        }
+      } catch (_) {}
+    });
   }
 
+  @override
+  void dispose() {
+    _statusTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

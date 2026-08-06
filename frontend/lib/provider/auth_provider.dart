@@ -198,6 +198,12 @@ class RegisterNotifier extends StateNotifier<RegisterState> {
         final List<dynamic> roles = userMap['roles'] as List<dynamic>? ?? [];
         final String primaryRole =
             roles.isNotEmpty ? roles.first.toString().toLowerCase() : 'tenant';
+        
+        // Strict role check: If user selected a specific role, ensure they have it.
+        if (state.selectedRole.isNotEmpty && state.selectedRole.toLowerCase() != primaryRole) {
+          state = state.copyWith(isLoading: false, errorMessage: 'You are registered as a ${primaryRole.toUpperCase()}. Please log in as a ${primaryRole.toUpperCase()}.');
+          return false;
+        }
 
         state = state.copyWith(selectedRole: primaryRole, isLoading: false);
         return true;

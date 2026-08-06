@@ -290,13 +290,13 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
                 borderRadius: BorderRadius.circular(12),
                 borderSide: errorText != null
                     ? const BorderSide(color: Colors.redAccent, width: 1.2)
-                    : BorderSide.none,
+                    : const BorderSide(color: Colors.black87, width: 1.0),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: errorText != null
                     ? const BorderSide(color: Colors.redAccent, width: 1.2)
-                    : BorderSide.none,
+                    : const BorderSide(color: Colors.black87, width: 1.0),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),

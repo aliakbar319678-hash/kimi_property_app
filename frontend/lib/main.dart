@@ -6,6 +6,8 @@ import 'package:tenant_and_landlord_application/core/api_constants.dart';
 import 'package:tenant_and_landlord_application/screens/auth/welcome_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/verification_success_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/verification_rejected_screen.dart';
+import 'package:tenant_and_landlord_application/screens/auth/account_status_screen.dart';
+import 'package:tenant_and_landlord_application/screens/auth/account_suspended_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/register_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/login_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/otp_screen.dart';
@@ -147,6 +149,7 @@ class TLApp extends StatelessWidget {
         '/verification_rejected': (_) => const VerificationRejectedScreen(),
         '/landlord_pending_approval': (_) => const AccountStatusScreen(),
         '/account_status': (_) => const AccountStatusScreen(),
+        '/account_suspended': (_) => const AccountSuspendedScreen(),
         '/support_chat': (_) => const SupportChatScreen(),
         '/landlord_home': (_) => const LandlordShell(initialIndex: 0),
         '/landlord_properties': (_) => const LandlordShell(initialIndex: 1),

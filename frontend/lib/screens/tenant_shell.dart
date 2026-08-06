@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
 import 'package:tenant_and_landlord_application/screens/home_dashboard_screen.dart';
 import 'package:tenant_and_landlord_application/screens/profile_screen.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_bottom_navigation_bar.dart';
@@ -27,11 +29,33 @@ class _TenantShellState extends State<TenantShell> {
   bool _isGuest = false;
   bool _isLoading = true;
 
+  Timer? _statusTimer;
+
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
     _checkGuestStatus();
+
+    _statusTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      if (!mounted || _isGuest) return;
+      try {
+        final res = await ApiClient().dio.get('/auth/me');
+        if (res.statusCode == 200 && mounted) {
+          final data = res.data['data'];
+          if (data['kyc_status'] == 'suspended' || data['is_active'] == false) {
+            _statusTimer?.cancel();
+            Navigator.pushNamedAndRemoveUntil(context, '/account_suspended', (r) => false);
+          }
+        }
+      } catch (_) {}
+    });
+  }
+
+  @override
+  void dispose() {
+    _statusTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _checkGuestStatus() async {

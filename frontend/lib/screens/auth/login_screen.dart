@@ -240,14 +240,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             }
                           } else {
                             ScaffoldMessenger.of(context).clearSnackBars();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                    freshState.errorMessage ??
-                                        'Sign in failed'),
-                                backgroundColor: Colors.redAccent,
-                              ),
-                            );
+                            final errMsg = freshState.errorMessage ?? 'Sign in failed';
+                            if (errMsg.toLowerCase().contains('suspended')) {
+                              Navigator.pushNamedAndRemoveUntil(context, '/account_suspended', (r) => false);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(errMsg),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
                           }
                         },
                       ),

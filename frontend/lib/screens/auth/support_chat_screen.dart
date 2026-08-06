@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
@@ -596,6 +598,38 @@ class _TicketChatScreenState extends State<_TicketChatScreen> {
     }
   }
 
+  Future<void> _pickAndUploadImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (pickedFile == null) return;
+    
+    setState(() => _isSending = true);
+    try {
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(pickedFile.path, filename: pickedFile.name),
+      });
+      final res = await ApiClient().dio.post('/uploads/generic', data: formData);
+      if (res.statusCode == 200 && mounted) {
+        final url = res.data['data']['url'];
+        
+        final commentRes = await ApiClient().dio.post(
+          '/tickets/${widget.ticket['id']}/comments',
+          data: {'message': 'Attached Image:\n$url'},
+        );
+        if (commentRes.statusCode == 201 && mounted) {
+          final newComment = commentRes.data['data'] as Map<String, dynamic>;
+          setState(() {
+            _comments.add(newComment);
+            _isSending = false;
+          });
+          _scrollToBottom();
+        }
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isSending = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final status = widget.ticket['status'] ?? 'open';
@@ -693,8 +727,7 @@ class _TicketChatScreenState extends State<_TicketChatScreen> {
 
           // Input bar
           Container(
-            padding: EdgeInsets.fromLTRB(
-                16, 12, 16, 12 + MediaQuery.of(context).viewInsets.bottom),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -707,6 +740,18 @@ class _TicketChatScreenState extends State<_TicketChatScreen> {
             ),
             child: Row(
               children: [
+                GestureDetector(
+                  onTap: _pickAndUploadImage,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.image_rounded, color: AppColors.secondary, size: 22),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _msgCtrl,
