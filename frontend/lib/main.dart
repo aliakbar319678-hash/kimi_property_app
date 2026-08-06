@@ -11,7 +11,6 @@ import 'package:tenant_and_landlord_application/screens/auth/account_suspended_s
 import 'package:tenant_and_landlord_application/screens/auth/register_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/login_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/otp_screen.dart';
-import 'package:tenant_and_landlord_application/screens/auth/account_status_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/support_chat_screen.dart';
 
 // ── Onboarding ──────────────────────────────────────

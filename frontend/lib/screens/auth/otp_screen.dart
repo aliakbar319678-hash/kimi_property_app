@@ -92,7 +92,15 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         Navigator.pushReplacementNamed(context, '/vendor_onboarding');
       }
     } else {
-      Navigator.pushReplacementNamed(context, '/basic_profile');
+      if (kycStatus == 'verified' || kycStatus == 'approved') {
+        Navigator.pushReplacementNamed(context, '/verification_success');
+      } else if (kycStatus == 'rejected') {
+        Navigator.pushReplacementNamed(context, '/verification_rejected');
+      } else if (kycStatus == 'reviewing' || kycStatus == 'pending' || kycStatus == 'in_review') {
+        Navigator.pushReplacementNamed(context, '/account_status');
+      } else {
+        Navigator.pushReplacementNamed(context, '/basic_profile');
+      }
     }
   }
 

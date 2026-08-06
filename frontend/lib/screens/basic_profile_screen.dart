@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:tenant_and_landlord_application/widgets/common/tl_phone_input_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_user_avatar.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
@@ -8,6 +10,7 @@ import 'package:tenant_and_landlord_application/provider/basic_profile_provider.
 
 import '../widgets/common/tl_primary_button.dart';
 import '../widgets/common/onboarding_progress_bar.dart';
+import '../widgets/common/tl_map_picker.dart';
 
 class DateInputFormatter extends TextInputFormatter {
   @override
@@ -56,19 +59,18 @@ class BasicProfileScreen extends ConsumerWidget {
       appBar: TLAppBar(
         trailing: Row(
           children: [
-            TLUserAvatar(radius: w * 0.045),
-            SizedBox(width: w * 0.03),
             Icon(
-              Icons.menu_rounded,
-              size: w * 0.06,
+              Icons.filter_list_rounded,
+              size: w * 0.055,
               color: AppColors.textPrimary,
             ),
+            SizedBox(width: w * 0.03),
+            TLUserAvatar(radius: w * 0.045),
           ],
         ),
       ),
       body: Column(
         children: [
-          // ── Progress bar ─────────────────────────
           Container(
             color: AppColors.white,
             padding: EdgeInsets.fromLTRB(pad, h * 0.015, pad, h * 0.02),
@@ -79,15 +81,18 @@ class BasicProfileScreen extends ConsumerWidget {
               percentLabel: '20% Complete',
             ),
           ),
-
-          // ── Scrollable form ──────────────────────
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(pad),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
+              padding: EdgeInsets.fromLTRB(
+                pad,
+                pad,
+                pad,
+                pad + MediaQuery.viewInsetsOf(context).bottom,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // White card
                   Container(
                     decoration: BoxDecoration(
                       color: AppColors.white,
@@ -104,14 +109,24 @@ class BasicProfileScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Section header
-                        Text(
-                          'Basic Profile',
-                          style: TextStyle(
-                            fontSize: w * 0.042,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline_rounded,
+                              color: AppColors.primary,
+                              size: w * 0.05,
+                            ),
+                            SizedBox(width: w * 0.02),
+                            Text(
+                              'PERSONAL INFORMATION',
+                              style: TextStyle(
+                                fontSize: w * 0.033,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ],
                         ),
                         SizedBox(height: h * 0.006),
                         Text(
@@ -122,78 +137,178 @@ class BasicProfileScreen extends ConsumerWidget {
                             height: 1.5,
                           ),
                         ),
-
                         SizedBox(height: h * 0.025),
-
                         _FieldLabel('Full Legal Name *', w),
                         SizedBox(height: h * 0.008),
                         _InputField(
                           hint: 'Johnathan Doe',
+                          initialValue: state.fullLegalName,
                           onChanged: notif.updateFullLegalName,
                           errorText: errors['fullLegalName'],
                         ),
-
                         SizedBox(height: h * 0.018),
-
                         _FieldLabel('Date of Birth *', w),
                         SizedBox(height: h * 0.008),
                         _InputField(
-                          hint: 'mm/dd/yyyy',
+                          hint: 'Tap to pick date',
+                          initialValue: state.dateOfBirth,
                           onChanged: notif.updateDateOfBirth,
-                          keyboardType: TextInputType.datetime,
-                          maxLength: 10,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'[0-9/]')),
-                            DateInputFormatter(),
-                          ],
+                          readOnly: true,
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
+                              firstDate: DateTime(1900),
+                              lastDate: DateTime.now(),
+                            );
+                            if (date != null) {
+                              final d = date.day.toString().padLeft(2, '0');
+                              final m = date.month.toString().padLeft(2, '0');
+                              final y = date.year.toString();
+                              notif.updateDateOfBirth('$d/$m/$y');
+                            }
+                          },
                           errorText: errors['dateOfBirth'],
                         ),
-
                         SizedBox(height: h * 0.018),
-
                         _FieldLabel('Phone Number *', w),
                         SizedBox(height: h * 0.008),
-                        _InputField(
-                          hint: '+1 (555) 000-0000',
-                          prefixIcon: Icons.phone_outlined,
+                        TLPhoneInputField(
+                          initialValue: state.phoneNumber,
                           onChanged: notif.updatePhoneNumber,
-                          keyboardType: TextInputType.phone,
-                          maxLength: 15,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'[0-9+\-() ]')),
-                          ],
                           errorText: errors['phoneNumber'],
                         ),
-
                         SizedBox(height: h * 0.018),
-
                         _FieldLabel('Email Address', w),
                         SizedBox(height: h * 0.008),
                         _InputField(
+                          initialValue: state.emailAddress,
                           hint: 'alex@example.com',
                           prefixIcon: Icons.mail_outline_rounded,
                           onChanged: notif.updateEmailAddress,
                           keyboardType: TextInputType.emailAddress,
                         ),
+                        SizedBox(height: h * 0.025),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _FieldLabel('Current Residential Address *', w),
+                            TextButton.icon(
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              icon: const Icon(Icons.map_rounded, size: 18, color: AppColors.primary),
+                              label: const Text('Pick on Map', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                              onPressed: () async {
+                                final selectedAddress = await Navigator.push<String>(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const TLMapPicker()),
+                                );
+                                if (selectedAddress != null && selectedAddress.isNotEmpty) {
+                                  final parts = selectedAddress.split(',').map((e) => e.trim()).toList();
+                                  final street = parts.isNotEmpty ? parts[0] : selectedAddress;
+                                  final city = parts.length > 1 ? parts[1] : '';
+                                  final stateProv = parts.length > 2 ? parts[2] : '';
+                                  final country = parts.length > 3 ? parts[3] : 'Pakistan';
 
-                        SizedBox(height: h * 0.018),
-
-                        _FieldLabel('Current Residential Address *', w),
+                                  notif.updateFullAddress(
+                                    street: street,
+                                    city: city,
+                                    stateProv: stateProv,
+                                    postal: '',
+                                    countryName: country,
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                         SizedBox(height: h * 0.008),
                         _InputField(
-                          hint: 'Street address, City, State, ZIP code',
+                          initialValue: state.streetAddress,
+                          hint: 'Street Address (e.g. 123 Main St, Apt 4B)',
                           prefixIcon: Icons.location_on_outlined,
-                          onChanged: notif.updateResidentialAddress,
-                          maxLines: 2,
-                          errorText: errors['residentialAddress'],
+                          onChanged: notif.updateStreetAddress,
+                          errorText: errors['streetAddress'],
+                        ),
+                        SizedBox(height: h * 0.012),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _FieldLabel('City *', w),
+                                  SizedBox(height: 4),
+                                  _InputField(
+                                    initialValue: state.city,
+                                    hint: 'e.g. Lahore',
+                                    onChanged: notif.updateCity,
+                                    errorText: errors['city'],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: w * 0.03),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _FieldLabel('State / Province', w),
+                                  SizedBox(height: 4),
+                                  _InputField(
+                                    initialValue: state.stateProvince,
+                                    hint: 'e.g. Punjab',
+                                    onChanged: notif.updateStateProvince,
+                                    errorText: errors['stateProvince'],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: h * 0.012),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _FieldLabel('Postal / ZIP Code', w),
+                                  SizedBox(height: 4),
+                                  _InputField(
+                                    initialValue: state.postalCode,
+                                    hint: 'e.g. 54000',
+                                    onChanged: notif.updatePostalCode,
+                                    errorText: errors['postalCode'],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: w * 0.03),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _FieldLabel('Country *', w),
+                                  SizedBox(height: 4),
+                                  _InputField(
+                                    initialValue: state.country,
+                                    hint: 'e.g. Pakistan',
+                                    onChanged: notif.updateCountry,
+                                    errorText: errors['country'],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-
                   SizedBox(height: h * 0.02),
-
-                  // Emergency Contact card
                   Container(
                     decoration: BoxDecoration(
                       color: AppColors.white,
@@ -229,19 +344,16 @@ class BasicProfileScreen extends ConsumerWidget {
                             ),
                           ],
                         ),
-
                         SizedBox(height: h * 0.02),
-
                         _FieldLabel('Contact Name *', w),
                         SizedBox(height: h * 0.008),
                         _InputField(
+                          initialValue: state.contactName,
                           hint: 'Full Name',
                           onChanged: notif.updateContactName,
                           errorText: errors['contactName'],
                         ),
-
                         SizedBox(height: h * 0.018),
-
                         _FieldLabel('Relationship *', w),
                         SizedBox(height: h * 0.008),
                         _DropdownField(
@@ -260,25 +372,15 @@ class BasicProfileScreen extends ConsumerWidget {
                           w: w,
                           errorText: errors['relationship'],
                         ),
-
                         SizedBox(height: h * 0.018),
-
                         _FieldLabel('Emergency Phone *', w),
                         SizedBox(height: h * 0.008),
-                        _InputField(
-                          hint: '+1 (555) 000-0000',
+                        TLPhoneInputField(
+                          initialValue: state.emergencyPhone,
                           onChanged: notif.updateEmergencyPhone,
-                          keyboardType: TextInputType.phone,
-                          maxLength: 15,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'[0-9+\-() ]')),
-                          ],
                           errorText: errors['emergencyPhone'],
                         ),
-
                         SizedBox(height: h * 0.025),
-
-                        // Show backend error if any
                         if (state.errorMessage != null && state.errorMessage!.isNotEmpty) ...[
                           Container(
                             padding: EdgeInsets.all(pad * 0.8),
@@ -289,7 +391,7 @@ class BasicProfileScreen extends ConsumerWidget {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                                const Icon(Icons.error_outline_rounded, color: Colors.red, size: 20),
                                 SizedBox(width: w * 0.02),
                                 Expanded(
                                   child: Text(
@@ -300,59 +402,58 @@ class BasicProfileScreen extends ConsumerWidget {
                               ],
                             ),
                           ),
-                          SizedBox(height: h * 0.015),
+                          SizedBox(height: h * 0.02),
                         ],
-
-                        // Save as Draft + Next row
                         Row(
                           children: [
                             Expanded(
-                              child: TextButton(
+                              child: OutlinedButton(
                                 onPressed: state.isLoading
                                     ? null
                                     : () async {
-                                        final success = await notif.saveAsDraft();
-                                        if (!context.mounted) return;
-                                        ScaffoldMessenger.of(context).clearSnackBars();
-                                        if (success) {
+                                        final ok = await notif.saveAsDraft();
+                                        if (context.mounted && ok) {
                                           ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('Draft saved successfully!'),
-                                              backgroundColor: Colors.green,
-                                            ),
+                                            const SnackBar(content: Text('Draft saved successfully!')),
                                           );
                                         }
                                       },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.primary,
+                                  side: BorderSide(
+                                    color: AppColors.primary.withValues(alpha: 0.3),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: h * 0.016,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
                                 child: Text(
                                   'Save as Draft',
                                   style: TextStyle(
                                     fontSize: w * 0.038,
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                             ),
                             SizedBox(width: w * 0.03),
                             Expanded(
-                              flex: 2,
                               child: TLPrimaryButton(
                                 label: 'Next',
+                                trailing: Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
                                 isLoading: state.isLoading,
-                                trailing: const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  color: AppColors.white,
-                                  size: 16,
-                                ),
-                                onTap: state.isLoading
-                                    ? null
-                                    : () async {
-                                        final success = await notif.next();
-                                        if (!context.mounted) return;
-                                        if (success) {
-                                          Navigator.pushNamed(context, '/employment');
-                                        }
-                                      },
+                                onTap: () async {
+                                  final ok = await notif.next();
+                                  if (context.mounted && ok) {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/employment',
+                                    );
+                                  }
+                                },
                               ),
                             ),
                           ],
@@ -360,24 +461,24 @@ class BasicProfileScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-
                   SizedBox(height: h * 0.02),
-
-                  // Info banner
                   Container(
-                    padding: EdgeInsets.all(pad * 0.9),
+                    padding: EdgeInsets.all(pad * 0.8),
                     decoration: BoxDecoration(
-                      color: AppColors.secondary.withValues(alpha: 0.08),
+                      color: AppColors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.secondary.withValues(alpha: 0.25),
-                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                        ),
+                      ],
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
-                          Icons.info_outline_rounded,
+                          Icons.lock_outline_rounded,
                           size: w * 0.045,
                           color: AppColors.secondary,
                         ),
@@ -395,7 +496,6 @@ class BasicProfileScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-
                   SizedBox(height: h * 0.03),
                 ],
               ),
@@ -406,8 +506,6 @@ class BasicProfileScreen extends ConsumerWidget {
     );
   }
 }
-
-// ── Shared local widgets ──────────────────────
 
 class _FieldLabel extends StatelessWidget {
   final String text;
@@ -425,7 +523,7 @@ class _FieldLabel extends StatelessWidget {
   );
 }
 
-class _InputField extends StatelessWidget {
+class _InputField extends StatefulWidget {
   final String hint;
   final IconData? prefixIcon;
   final ValueChanged<String>? onChanged;
@@ -434,8 +532,12 @@ class _InputField extends StatelessWidget {
   final int? maxLength;
   final List<TextInputFormatter>? inputFormatters;
   final String? errorText;
+  final String? initialValue;
+  final bool readOnly;
+  final VoidCallback? onTap;
 
   const _InputField({
+    super.key,
     required this.hint,
     this.prefixIcon,
     this.onChanged,
@@ -444,23 +546,58 @@ class _InputField extends StatelessWidget {
     this.maxLength,
     this.inputFormatters,
     this.errorText,
+    this.initialValue,
+    this.readOnly = false,
+    this.onTap,
   });
 
   @override
+  State<_InputField> createState() => _InputFieldState();
+}
+
+class _InputFieldState extends State<_InputField> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _InputField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialValue != null &&
+        widget.initialValue != oldWidget.initialValue &&
+        widget.initialValue != _controller.text) {
+      _controller.text = widget.initialValue!;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return TextField(
-      onChanged: onChanged,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      maxLength: maxLength,
-      inputFormatters: inputFormatters,
+    return TextFormField(
+      controller: _controller,
+      readOnly: widget.readOnly,
+      onTap: widget.onTap,
+      onChanged: widget.onChanged,
+      keyboardType: widget.keyboardType,
+      maxLines: widget.maxLines,
+      maxLength: widget.maxLength,
+      inputFormatters: widget.inputFormatters,
       buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
       style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
       decoration: InputDecoration(
-        hintText: hint,
-        errorText: errorText,
-        prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, size: 17, color: AppColors.textHint)
+        hintText: widget.hint,
+        errorText: widget.errorText,
+        prefixIcon: widget.prefixIcon != null
+            ? Icon(widget.prefixIcon, size: 17, color: AppColors.textHint)
             : null,
       ),
     );
@@ -519,14 +656,16 @@ class _DropdownField extends StatelessWidget {
             ),
           ),
         ),
-        if (errorText != null)
+        if (errorText != null) ...[
+          const SizedBox(height: 4),
           Padding(
-            padding: const EdgeInsets.only(left: 12, top: 4),
+            padding: const EdgeInsets.only(left: 4),
             child: Text(
               errorText!,
               style: const TextStyle(color: Colors.red, fontSize: 12),
             ),
           ),
+        ],
       ],
     );
   }

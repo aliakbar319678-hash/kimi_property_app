@@ -62,8 +62,25 @@ class _AccountStatusScreenState extends State<AccountStatusScreen>
         if (status == 'verified' || status == 'approved') {
           await Future.delayed(const Duration(milliseconds: 1500));
           if (mounted) {
-            Navigator.pushNamedAndRemoveUntil(
-                context, '/landlord_home', (r) => false);
+            final List roles = data['roles'] ?? [];
+            String role = 'tenant';
+            if (roles.isNotEmpty) {
+              final primaryRoleObj = roles.firstWhere(
+                (r) => r['is_primary'] == true,
+                orElse: () => roles.first,
+              );
+              role = primaryRoleObj['role'] ?? 'tenant';
+            }
+            if (role == 'landlord' || role == 'property_manager') {
+              Navigator.pushNamedAndRemoveUntil(
+                  context, '/landlord_home', (r) => false);
+            } else if (role == 'vendor') {
+              Navigator.pushNamedAndRemoveUntil(
+                  context, '/vendor_home', (r) => false);
+            } else {
+              Navigator.pushNamedAndRemoveUntil(
+                  context, '/home', (r) => false);
+            }
           }
         }
       }
@@ -234,8 +251,37 @@ class _AccountStatusScreenState extends State<AccountStatusScreen>
                             label: 'Resubmit Documents',
                             icon: Icons.upload_file_rounded,
                             color: AppColors.primary,
-                            onTap: () => Navigator.pushNamedAndRemoveUntil(
-                                context, '/landlord_onboarding', (r) => false),
+                            onTap: () async {
+                              try {
+                                final res = await ApiClient().dio.get(ApiConstants.me);
+                                final data = res.data['data'];
+                                final List roles = data['roles'] ?? [];
+                                String role = 'tenant';
+                                if (roles.isNotEmpty) {
+                                  final primaryRoleObj = roles.firstWhere(
+                                    (r) => r['is_primary'] == true,
+                                    orElse: () => roles.first,
+                                  );
+                                  role = primaryRoleObj['role'] ?? 'tenant';
+                                }
+                                if (!context.mounted) return;
+                                if (role == 'landlord' || role == 'property_manager') {
+                                  Navigator.pushNamedAndRemoveUntil(
+                                      context, '/landlord_onboarding', (r) => false);
+                                } else if (role == 'vendor') {
+                                  Navigator.pushNamedAndRemoveUntil(
+                                      context, '/vendor_onboarding', (r) => false);
+                                } else {
+                                  Navigator.pushNamedAndRemoveUntil(
+                                      context, '/basic_profile', (r) => false);
+                                }
+                              } catch (_) {
+                                if (context.mounted) {
+                                  Navigator.pushNamedAndRemoveUntil(
+                                      context, '/basic_profile', (r) => false);
+                                }
+                              }
+                            },
                           ),
                           SizedBox(height: h * 0.015),
                         ],

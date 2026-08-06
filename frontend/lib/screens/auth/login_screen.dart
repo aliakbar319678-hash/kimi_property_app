@@ -207,11 +207,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           if (success) {
                             final role = freshState.selectedRole.toLowerCase();
                             String kycStatus = 'unverified';
+                            int onboardingStep = 0;
+                            bool onboardingCompleted = false;
 
                             try {
                               final response = await ApiClient().dio.get(ApiConstants.me);
                               if (response.statusCode == 200) {
-                                kycStatus = response.data['data']['kyc_status'] ?? 'unverified';
+                                final meData = response.data['data'];
+                                kycStatus = meData['kyc_status'] ?? 'unverified';
+                                final profile = meData['profile'];
+                                if (profile != null) {
+                                  onboardingStep = (profile['onboarding_step'] as num?)?.toInt() ?? 0;
+                                  onboardingCompleted = profile['onboarding_completed'] == true;
+                                }
                               }
                             } catch (_) {}
 
@@ -219,13 +227,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             
                             ScaffoldMessenger.of(context).clearSnackBars();
 
-                            if (kycStatus == 'reviewing') {
-                              Navigator.pushNamedAndRemoveUntil(context, '/landlord_pending_approval', (r) => false);
+                            if (kycStatus == 'reviewing' || kycStatus == 'pending' || kycStatus == 'in_review') {
+                              Navigator.pushNamedAndRemoveUntil(context, '/account_status', (r) => false);
                             } else if (kycStatus == 'rejected') {
                               Navigator.pushNamedAndRemoveUntil(context, '/verification_rejected', (r) => false);
+                            } else if (kycStatus == 'suspended') {
+                              Navigator.pushNamedAndRemoveUntil(context, '/account_suspended', (r) => false);
                             } else if (kycStatus == 'verified' || kycStatus == 'approved') {
                               if (role == 'vendor') {
                                 Navigator.pushNamedAndRemoveUntil(context, '/vendor_home', (r) => false);
+                              } else if (role == 'landlord' || role == 'property_manager') {
+                                Navigator.pushNamedAndRemoveUntil(context, '/landlord_home', (r) => false);
                               } else {
                                 Navigator.pushNamedAndRemoveUntil(context, '/home', (r) => false);
                               }
@@ -234,6 +246,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 Navigator.pushNamedAndRemoveUntil(context, '/landlord_onboarding', (r) => false);
                               } else if (role == 'vendor') {
                                 Navigator.pushNamedAndRemoveUntil(context, '/vendor_onboarding', (r) => false);
+                              } else if (role == 'tenant') {
+                                // Tenant: check if onboarding is complete
+                                if (!onboardingCompleted && onboardingStep < 5) {
+                                  // Resume onboarding from where they left off
+                                  Navigator.pushNamedAndRemoveUntil(context, '/basic_profile', (r) => false);
+                                } else {
+                                  Navigator.pushNamedAndRemoveUntil(context, '/account_status', (r) => false);
+                                }
                               } else {
                                 Navigator.pushNamedAndRemoveUntil(context, '/home', (r) => false);
                               }

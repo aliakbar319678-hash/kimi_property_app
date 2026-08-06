@@ -16,6 +16,14 @@ class WelcomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/role_selection', (r) => false),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(

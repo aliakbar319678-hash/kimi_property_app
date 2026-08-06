@@ -175,7 +175,7 @@ class PreferencesScreen extends ConsumerWidget {
                             if (success) {
                               Navigator.pushNamedAndRemoveUntil(
                                 context,
-                                '/home',
+                                '/account_status',
                                 (r) => false,
                               );
                             } else {

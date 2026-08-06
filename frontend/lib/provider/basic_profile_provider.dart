@@ -7,13 +7,16 @@ class BasicProfileState {
   final String dateOfBirth;
   final String phoneNumber;
   final String emailAddress;
-  final String residentialAddress;
+  final String streetAddress;
+  final String city;
+  final String stateProvince;
+  final String postalCode;
+  final String country;
   final String contactName;
   final String relationship;
   final String emergencyPhone;
   final bool isLoading;
   final String? errorMessage;
-  // Field-level validation errors
   final Map<String, String> fieldErrors;
 
   const BasicProfileState({
@@ -21,7 +24,11 @@ class BasicProfileState {
     this.dateOfBirth = '',
     this.phoneNumber = '',
     this.emailAddress = '',
-    this.residentialAddress = '',
+    this.streetAddress = '',
+    this.city = '',
+    this.stateProvince = '',
+    this.postalCode = '',
+    this.country = 'Pakistan',
     this.contactName = '',
     this.relationship = '',
     this.emergencyPhone = '',
@@ -30,12 +37,26 @@ class BasicProfileState {
     this.fieldErrors = const <String, String>{},
   });
 
+  String get fullAddress {
+    final parts = [streetAddress, city, stateProvince, postalCode, country]
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    return parts.join(', ');
+  }
+
+  String get residentialAddress => fullAddress;
+
   BasicProfileState copyWith({
     String? fullLegalName,
     String? dateOfBirth,
     String? phoneNumber,
     String? emailAddress,
-    String? residentialAddress,
+    String? streetAddress,
+    String? city,
+    String? stateProvince,
+    String? postalCode,
+    String? country,
     String? contactName,
     String? relationship,
     String? emergencyPhone,
@@ -48,7 +69,11 @@ class BasicProfileState {
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       emailAddress: emailAddress ?? this.emailAddress,
-      residentialAddress: residentialAddress ?? this.residentialAddress,
+      streetAddress: streetAddress ?? this.streetAddress,
+      city: city ?? this.city,
+      stateProvince: stateProvince ?? this.stateProvince,
+      postalCode: postalCode ?? this.postalCode,
+      country: country ?? this.country,
       contactName: contactName ?? this.contactName,
       relationship: relationship ?? this.relationship,
       emergencyPhone: emergencyPhone ?? this.emergencyPhone,
@@ -60,7 +85,29 @@ class BasicProfileState {
 }
 
 class BasicProfileNotifier extends StateNotifier<BasicProfileState> {
-  BasicProfileNotifier() : super(const BasicProfileState());
+  BasicProfileNotifier() : super(const BasicProfileState()) {
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    try {
+      final res = await ApiClient().dio.get('/auth/me');
+      if (res.statusCode == 200) {
+        final data = res.data['data'];
+        if (data != null) {
+          final String first = data['first_name']?.toString() ?? '';
+          final String last = data['last_name']?.toString() ?? '';
+          final String fullName = '$first $last'.trim();
+          
+          state = state.copyWith(
+            fullLegalName: state.fullLegalName.isEmpty ? fullName : state.fullLegalName,
+            phoneNumber: state.phoneNumber.isEmpty ? (data['phone']?.toString() ?? '') : state.phoneNumber,
+            emailAddress: state.emailAddress.isEmpty ? (data['email']?.toString() ?? '') : state.emailAddress,
+          );
+        }
+      }
+    } catch (_) {}
+  }
 
   void updateFullLegalName(String v) =>
       state = state.copyWith(fullLegalName: v, fieldErrors: _clearError('fullLegalName'));
@@ -71,13 +118,45 @@ class BasicProfileNotifier extends StateNotifier<BasicProfileState> {
   void updateEmailAddress(String v) =>
       state = state.copyWith(emailAddress: v, fieldErrors: _clearError('emailAddress'));
   void updateResidentialAddress(String v) =>
-      state = state.copyWith(residentialAddress: v, fieldErrors: _clearError('residentialAddress'));
+      state = state.copyWith(streetAddress: v, fieldErrors: _clearError('streetAddress'));
+  void updateStreetAddress(String v) =>
+      state = state.copyWith(streetAddress: v, fieldErrors: _clearError('streetAddress'));
+  void updateCity(String v) =>
+      state = state.copyWith(city: v, fieldErrors: _clearError('city'));
+  void updateStateProvince(String v) =>
+      state = state.copyWith(stateProvince: v, fieldErrors: _clearError('stateProvince'));
+  void updatePostalCode(String v) =>
+      state = state.copyWith(postalCode: v, fieldErrors: _clearError('postalCode'));
+  void updateCountry(String v) =>
+      state = state.copyWith(country: v, fieldErrors: _clearError('country'));
   void updateContactName(String v) =>
       state = state.copyWith(contactName: v, fieldErrors: _clearError('contactName'));
   void updateRelationship(String v) =>
       state = state.copyWith(relationship: v, fieldErrors: _clearError('relationship'));
   void updateEmergencyPhone(String v) =>
       state = state.copyWith(emergencyPhone: v, fieldErrors: _clearError('emergencyPhone'));
+
+  void updateFullAddress({
+    required String street,
+    required String city,
+    required String stateProv,
+    required String postal,
+    required String countryName,
+  }) {
+    state = state.copyWith(
+      streetAddress: street,
+      city: city,
+      stateProvince: stateProv,
+      postalCode: postal,
+      country: countryName,
+      fieldErrors: Map<String, String>.from(state.fieldErrors)
+        ..remove('streetAddress')
+        ..remove('city')
+        ..remove('stateProvince')
+        ..remove('postalCode')
+        ..remove('country'),
+    );
+  }
 
   Map<String, String> _clearError(String field) {
     final errors = Map<String, String>.from(state.fieldErrors);
@@ -98,19 +177,30 @@ class BasicProfileNotifier extends StateNotifier<BasicProfileState> {
     }
     if (state.phoneNumber.trim().isEmpty) {
       errors['phoneNumber'] = 'Phone Number is required';
+    } else if (state.phoneNumber.replaceAll(RegExp(r'\D'), '').length < 10) {
+      errors['phoneNumber'] = 'Please enter a valid complete phone number';
     }
-    if (state.residentialAddress.trim().isEmpty) {
-      errors['residentialAddress'] = 'Residential Address is required';
+    
+    if (state.streetAddress.trim().isEmpty) {
+      errors['streetAddress'] = 'Street Address is required';
     }
+    if (state.city.trim().isEmpty) {
+      errors['city'] = 'City is required';
+    }
+
     if (state.contactName.trim().isEmpty) {
       errors['contactName'] = 'Emergency Contact Name is required';
     }
     if (state.relationship.trim().isEmpty) {
       errors['relationship'] = 'Relationship is required';
     }
+    
     if (state.emergencyPhone.trim().isEmpty) {
       errors['emergencyPhone'] = 'Emergency Phone is required';
+    } else if (state.emergencyPhone.replaceAll(RegExp(r'\D'), '').length < 10) {
+      errors['emergencyPhone'] = 'Please enter a valid complete phone number';
     }
+    
     return errors;
   }
 
@@ -147,7 +237,14 @@ class BasicProfileNotifier extends StateNotifier<BasicProfileState> {
             return state.dateOfBirth.trim();
           }(),
           'phone': state.phoneNumber.trim(),
-          'current_address': state.residentialAddress.trim(),
+          'current_address': {
+            'street': state.streetAddress.trim(),
+            'city': state.city.trim(),
+            'state': state.stateProvince.trim(),
+            'postal_code': state.postalCode.trim(),
+            'country': state.country.trim(),
+            'full_address': state.fullAddress,
+          },
           'emergency_contact': {
             'name': state.contactName.trim(),
             'relationship': state.relationship,
@@ -161,9 +258,18 @@ class BasicProfileNotifier extends StateNotifier<BasicProfileState> {
       String msg = 'An unexpected error occurred';
       if (e is DioException) {
         final data = e.response?.data;
-        msg = (data is Map ? data['message'] ?? data['error'] : null) ??
-            e.message ??
-            msg;
+        if (data is Map) {
+          final err = data['message'] ?? data['error'];
+          if (err is List) {
+            msg = err.map((e) => e.toString()).join(', ');
+          } else if (err != null) {
+            msg = err.toString();
+          }
+        } else if (data is String && data.isNotEmpty) {
+          msg = data;
+        } else {
+          msg = e.message ?? msg;
+        }
       }
       state = state.copyWith(isLoading: false, errorMessage: msg);
       return false;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_appbar.dart';
@@ -114,6 +115,7 @@ class EmploymentScreen extends ConsumerWidget {
                     prefixIcon: Icons.account_balance_wallet_outlined,
                     onChanged: notif.updateAnnualSalary,
                     keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     errorText: state.fieldErrors['annualSalary'],
                   ),
 
@@ -418,6 +420,7 @@ class _InputField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final TextInputType keyboardType;
   final String? errorText;
+  final List<TextInputFormatter>? inputFormatters;
 
   const _InputField({
     required this.hint,
@@ -425,6 +428,7 @@ class _InputField extends StatelessWidget {
     this.onChanged,
     this.keyboardType = TextInputType.text,
     this.errorText,
+    this.inputFormatters,
   });
 
   @override
@@ -432,6 +436,7 @@ class _InputField extends StatelessWidget {
     return TextField(
       onChanged: onChanged,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
       decoration: InputDecoration(
         hintText: hint,

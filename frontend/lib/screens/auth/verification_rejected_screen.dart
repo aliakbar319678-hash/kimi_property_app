@@ -59,6 +59,8 @@ class _VerificationRejectedScreenState extends State<VerificationRejectedScreen>
         if (!mounted) return;
         if (role == 'vendor') {
           Navigator.pushReplacementNamed(context, '/vendor_onboarding');
+        } else if (role == 'tenant') {
+          Navigator.pushReplacementNamed(context, '/basic_profile');
         } else {
           Navigator.pushReplacementNamed(context, '/landlord_onboarding');
         }

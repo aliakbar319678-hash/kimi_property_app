@@ -57,7 +57,23 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
             } else if (role == 'vendor') {
               Navigator.pushReplacementNamed(context, '/vendor_home');
             } else {
-              Navigator.pushReplacementNamed(context, '/home');
+              final profile = data['profile'] ?? {};
+              final bool onboardingCompleted = profile['onboarding_completed'] ?? false;
+              final int onboardingStep = profile['onboarding_step'] ?? 1;
+
+              if (!onboardingCompleted && onboardingStep < 5) {
+                Navigator.pushReplacementNamed(context, '/basic_profile');
+              } else {
+                if (kycStatus == 'verified' || kycStatus == 'approved') {
+                  Navigator.pushReplacementNamed(context, '/home');
+                } else if (kycStatus == 'rejected') {
+                  Navigator.pushReplacementNamed(context, '/verification_rejected');
+                } else if (kycStatus == 'reviewing' || kycStatus == 'pending' || kycStatus == 'in_review') {
+                  Navigator.pushReplacementNamed(context, '/account_status');
+                } else {
+                  Navigator.pushReplacementNamed(context, '/account_status');
+                }
+              }
             }
           }
         }

@@ -149,11 +149,16 @@ class EmploymentNotifier extends StateNotifier<EmploymentState> {
 
       // Only submit step 3 if not already submitted
       if (state.lastSubmittedStep < 3) {
-        final docs = state.uploadedFileName != null && state.uploadedFileName!.isNotEmpty
+        final String rawFileName = state.uploadedFileName ?? '';
+        final String validUrl = rawFileName.startsWith('http')
+            ? rawFileName
+            : 'https://storage.app/uploads/$rawFileName';
+
+        final docs = rawFileName.isNotEmpty
             ? [
                 {
-                  'docType': 'proof_of_income',
-                  'fileUrl': state.uploadedFileName,
+                  'type': 'proof_of_income',
+                  'url': validUrl,
                 }
               ]
             : [];
@@ -176,9 +181,18 @@ class EmploymentNotifier extends StateNotifier<EmploymentState> {
       String msg = 'An unexpected error occurred';
       if (e is DioException) {
         final data = e.response?.data;
-        msg = (data is Map ? data['message'] ?? data['error'] : null) ??
-            e.message ??
-            msg;
+        if (data is Map) {
+          final err = data['message'] ?? data['error'];
+          if (err is List) {
+            msg = err.map((e) => e.toString()).join(', ');
+          } else if (err != null) {
+            msg = err.toString();
+          }
+        } else if (data is String && data.isNotEmpty) {
+          msg = data;
+        } else {
+          msg = e.message ?? msg;
+        }
       }
       state = state.copyWith(isLoading: false, errorMessage: msg);
       return false;
