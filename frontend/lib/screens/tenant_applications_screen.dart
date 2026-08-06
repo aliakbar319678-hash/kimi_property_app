@@ -34,7 +34,10 @@ class _TenantApplicationsScreenState extends State<TenantApplicationsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(
+          () =>
+          _isLoading = 
+          false);
       }
     }
   }

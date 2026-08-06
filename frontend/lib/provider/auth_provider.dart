@@ -418,9 +418,16 @@ String _parseDioError(DioException e) {
     if (data['error'] != null &&
         data['error'].toString().isNotEmpty &&
         data['error'] != 'Validation failed') {
-      return data['error'].toString();
+      final err = data['error'].toString();
+      if (err == 'Internal server error') {
+        return 'Registration/Login failed. This email or phone number may already be registered, or an unexpected server error occurred.';
+      }
+      return err;
     }
   } else if (data is String && data.isNotEmpty) {
+    if (data == 'Internal server error') {
+      return 'Registration/Login failed. This email or phone number may already be registered, or an unexpected server error occurred.';
+    }
     return data;
   }
   if (e.type == DioExceptionType.connectionTimeout ||

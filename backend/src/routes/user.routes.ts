@@ -41,6 +41,12 @@ router.get('/:id', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
     const user = userRes.rows[0];
+    // Also fetch latest rejection_reason from verification_cases
+    const vcRes = await query(
+      `SELECT rejection_reason FROM verification_cases WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      [id]
+    );
+    const rejectionReason = vcRes.rows[0]?.rejection_reason || user.rejection_reason || null;
     // Map fields for frontend
     res.json({
       success: true,
@@ -57,6 +63,7 @@ router.get('/:id', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
         avatar_url: user.avatar_url,
         address: user.current_address || '',
         created_at: user.created_at,
+        rejection_reason: rejectionReason,
       }
     });
   } catch (e) { next(e); }
@@ -78,6 +85,8 @@ router.put('/:id', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
     if (data.phone !== undefined) { userUpdates.push(`phone = $${idx++}`); userValues.push(data.phone); }
     if (data.kyc_status !== undefined) { userUpdates.push(`kyc_status = $${idx++}`); userValues.push(data.kyc_status); }
     if (data.is_active !== undefined) { userUpdates.push(`is_active = $${idx++}`); userValues.push(data.is_active); }
+    // Save rejection_reason if provided
+    if (data.rejection_reason !== undefined) { userUpdates.push(`rejection_reason = $${idx++}`); userValues.push(data.rejection_reason); }
     
     if (data.password && data.password.trim() !== '') {
       userUpdates.push(`password_hash = $${idx++}`); 
@@ -87,6 +96,21 @@ router.put('/:id', adminOrJwtAuth, async (req: AuthRequest, res, next) => {
     if (userUpdates.length > 0) {
       userValues.push(id);
       await query(`UPDATE users SET ${userUpdates.join(', ')}, updated_at = NOW() WHERE id = $${idx}`, userValues);
+    }
+
+    // If rejecting, also update verification_cases with reason
+    if (data.kyc_status === 'rejected') {
+      await query(
+        `UPDATE verification_cases SET status = 'rejected', rejection_reason = $1, reviewed_at = NOW()
+         WHERE user_id = $2 AND status = 'pending_review'`,
+        [data.rejection_reason || null, id]
+      );
+    } else if (data.kyc_status === 'approved') {
+      await query(
+        `UPDATE verification_cases SET status = 'approved', reviewed_at = NOW()
+         WHERE user_id = $1 AND status = 'pending_review'`,
+        [id]
+      );
     }
 
     // Update role if provided

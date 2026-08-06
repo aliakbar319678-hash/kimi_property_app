@@ -50,7 +50,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Row(
                     children: [
                       GestureDetector(
-                        onTap: () => Navigator.pop(context),
+                        onTap: () {
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          } else {
+                            Navigator.pushReplacementNamed(context, '/welcome');
+                          }
+                        },
                         child: Icon(
                           Icons.arrow_back_ios_new_rounded,
                           color: AppColors.white,
@@ -193,6 +199,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           size: 18,
                         ),
                         onTap: () async {
+                          FocusScope.of(context).unfocus(); // Dismiss keyboard to prevent overflow during transition
                           final success = await notif.submit();
                           if (!context.mounted) return;
 
@@ -209,6 +216,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             } catch (_) {}
 
                             if (!context.mounted) return;
+                            
+                            ScaffoldMessenger.of(context).clearSnackBars();
+
                             if (kycStatus == 'reviewing') {
                               Navigator.pushNamedAndRemoveUntil(context, '/landlord_pending_approval', (r) => false);
                             } else if (kycStatus == 'rejected') {

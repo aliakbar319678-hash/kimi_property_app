@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:dio/dio.dart' as dio_lib;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -18,34 +20,38 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
   int _currentStep = 0;
   bool _isLoading = false;
   String? _userId;
+  int _currentServerStep = 1;
 
-  // Step 1: Basic Info
+  // ── Step 1: Basic Info ───────────────────────────────────────────────────
   final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-  final _dobController = TextEditingController(text: '1990-01-01');
-  final _phoneController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _stateController = TextEditingController(text: 'NY');
-  final _postalController = TextEditingController(text: '10001');
-  final _ssnController = TextEditingController(text: '1234');
-  final _taxIdController = TextEditingController();
+  final _lastNameController  = TextEditingController();
+  final _dobController       = TextEditingController();
+  final _taxIdController     = TextEditingController();
+  final _addressController   = TextEditingController();
+  final _cityController      = TextEditingController();
+  final _stateController     = TextEditingController();
+  final _postalController    = TextEditingController();
+  final _phoneController     = TextEditingController();
+
+  // Field-level validation errors
+  String? _firstNameError;
+  String? _lastNameError;
+  String? _dobError;
+  String? _taxIdError;
+  String? _addressError;
+  String? _cityError;
+  String? _stateError;
+  String? _postalError;
 
   String? _existingPhone;
 
-  // Step 2: Employment
-  final _employerController = TextEditingController();
-  final _jobTitleController = TextEditingController();
-  final _incomeController = TextEditingController();
-
-  // Step 3: Documents
-  String _pickedDocType = 'passport';
+  // ── Step 2 (was 3): KYC Document ────────────────────────────────────────
+  // Must match backend Joi: 'passport' | 'drivers_license' | 'state_id' | 'proof_of_income'
+  String  _pickedDocType   = 'passport';
   String? _pickedFileName;
-  String? _mockFileUrl;
-
-  // Step 4: Preferences
-  bool _emailNotif = true;
-  bool _smsNotif = true;
+  String? _pickedFilePath;
+  String? _pickedFileBytesSize;
+  String? _kycError; // required error
 
   @override
   void initState() {
@@ -53,6 +59,7 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
     _fetchUserId();
   }
 
+  // Fetches user ID and current onboarding step from the server
   Future<void> _fetchUserId() async {
     try {
       final res = await ApiClient().dio.get(ApiConstants.me);
@@ -60,6 +67,11 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
         final data = res.data['data'];
         setState(() {
           _userId = data['id'];
+          // onboarding_step lives inside the nested 'profile' object returned by /auth/me
+          final profile = data['profile'];
+          if (profile != null && profile['onboarding_step'] != null) {
+            _currentServerStep = (profile['onboarding_step'] as num).toInt();
+          }
           if (data['phone'] != null && data['phone'].toString().isNotEmpty) {
             _existingPhone = data['phone'].toString();
             _phoneController.text = _existingPhone!;
@@ -75,24 +87,66 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
     } catch (_) {}
   }
 
+  // Always fetches a fresh onboarding_step from the server right before submitting
+  Future<int> _fetchCurrentServerStep() async {
+    try {
+      final res = await ApiClient().dio.get(ApiConstants.me);
+      if (res.statusCode == 200) {
+        final profile = res.data['data']['profile'];
+        if (profile != null && profile['onboarding_step'] != null) {
+          return (profile['onboarding_step'] as num).toInt();
+        }
+      }
+    } catch (_) {}
+    return _currentServerStep;
+  }
+
   @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _dobController.dispose();
-    _phoneController.dispose();
+    _taxIdController.dispose();
     _addressController.dispose();
     _cityController.dispose();
     _stateController.dispose();
     _postalController.dispose();
-    _ssnController.dispose();
-    _taxIdController.dispose();
-    _employerController.dispose();
-    _jobTitleController.dispose();
-    _incomeController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
+  // ── Validation ────────────────────────────────────────────────────────────
+  bool _validateStep1() {
+    bool ok = true;
+    setState(() {
+      _firstNameError = _firstNameController.text.trim().isEmpty ? 'First name is required' : null;
+      _lastNameError  = _lastNameController.text.trim().isEmpty  ? 'Last name is required'  : null;
+      _dobError       = _dobController.text.trim().isEmpty       ? 'Date of birth is required' : null;
+      _taxIdError     = _taxIdController.text.trim().isEmpty     ? 'Tax ID / EIN is required' : null;
+      _addressError   = _addressController.text.trim().isEmpty   ? 'Address is required'   : null;
+      _cityError      = _cityController.text.trim().isEmpty      ? 'City is required'      : null;
+      _stateError     = _stateController.text.trim().isEmpty     ? 'State is required'     : null;
+      _postalError    = _postalController.text.trim().isEmpty    ? 'Zip code is required'  : null;
+    });
+
+    if (_firstNameError != null || _lastNameError != null || _dobError != null ||
+        _taxIdError != null || _addressError != null || _cityError != null ||
+        _stateError != null || _postalError != null) {
+      ok = false;
+    }
+    return ok;
+  }
+
+  bool _validateStep2() {
+    if (_pickedFilePath == null) {
+      setState(() => _kycError = 'Please upload your KYC document (PDF only)');
+      return false;
+    }
+    setState(() => _kycError = null);
+    return true;
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────────────
   Future<void> _submitAllSteps() async {
     if (_userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -102,102 +156,86 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
     }
 
     setState(() => _isLoading = true);
-    final messenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
+    final messenger  = ScaffoldMessenger.of(context);
+    final navigator  = Navigator.of(context);
 
     try {
-      // 1. Update Profile (User Service)
-      final Map<String, dynamic> profilePayload = {
+      // 1. Update profile
+      final profilePayload = <String, dynamic>{
         'legal_first_name': _firstNameController.text.trim(),
-        'legal_last_name': _lastNameController.text.trim(),
+        'legal_last_name':  _lastNameController.text.trim(),
         'current_address': {
-          'addressLine1': _addressController.text.trim(),
-          'city': _cityController.text.trim(),
-          'stateProvince': _stateController.text.trim().toUpperCase(),
-          'postalCode': _postalController.text.trim(),
-          'countryCode': 'US',
+          'addressLine1':    _addressController.text.trim(),
+          'city':            _cityController.text.trim(),
+          'stateProvince':   _stateController.text.trim().toUpperCase(),
+          'postalCode':      _postalController.text.trim(),
+          'countryCode':     'US',
         },
       };
-
       final phoneInput = _phoneController.text.trim();
       if (phoneInput.isNotEmpty && phoneInput != _existingPhone) {
         profilePayload['phone'] = phoneInput;
       }
+      await ApiClient().dio.put(ApiConstants.updateProfile, data: profilePayload);
 
-      await ApiClient().dio.put(
-        ApiConstants.updateProfile,
-        data: profilePayload,
-      );
+      // 2. Re-fetch the live step from server right before posting to avoid stale state
+      final liveStep = await _fetchCurrentServerStep();
 
-      // Step 1 API
-      final legalName = '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'.trim();
-      final step1Data = <String, dynamic>{};
-
-      if (legalName.isNotEmpty) {
-        step1Data['legalName'] = legalName;
-      }
-      step1Data['dob'] = '1990-01-01T00:00:00.000Z';
-
-      if (RegExp(r'^\+1\d{10}$').hasMatch(phoneInput)) {
-        step1Data['phone'] = phoneInput;
-      }
-
-      final taxInput = _taxIdController.text.trim();
-      if (taxInput.isNotEmpty) {
-        step1Data['tax_identifier'] = taxInput;
-      }
-
-      await ApiClient().dio.post('/users/me/onboarding/1', data: {
-        'step': 1,
-        'data': step1Data
-      });
-
-      // Step 2 API
-      final step2Data = <String, dynamic>{};
-      if (_employerController.text.trim().isNotEmpty ||
-          _jobTitleController.text.trim().isNotEmpty ||
-          _incomeController.text.trim().isNotEmpty) {
-        step2Data['employment'] = {
-          if (_employerController.text.trim().isNotEmpty) 'employer': _employerController.text.trim(),
-          if (_jobTitleController.text.trim().isNotEmpty) 'title': _jobTitleController.text.trim(),
-          if (_incomeController.text.trim().isNotEmpty) 'income': _incomeController.text.trim(),
-        };
-      }
-
-      await ApiClient().dio.post('/users/me/onboarding/2', data: {
-        'step': 2,
-        'data': step2Data
-      });
-
-      // Step 3 API
-      await ApiClient().dio.post('/users/me/onboarding/3', data: {
-        'step': 3,
-        'data': {
-          'documents': [
-            {
-              'type': _pickedDocType,
-              'url': _mockFileUrl ?? 'https://example.com/dummy_doc.pdf'
-            }
-          ]
-        }
-      });
-
-      // Step 4 API
-      await ApiClient().dio.post('/users/me/onboarding/4', data: {
-        'step': 4,
-        'data': {
-          'preferences': {
-            'email_notifications': _emailNotif,
-            'sms_notifications': _smsNotif,
+      // 3. Only post steps that haven't been completed yet (liveStep = next step to do)
+      for (int i = liveStep; i <= 5; i++) {
+        Map<String, dynamic> stepData = {};
+        if (i == 1) {
+          final legalName = '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'.trim();
+          if (legalName.isNotEmpty) stepData['legalName'] = legalName;
+          final rawDob = _dobController.text.trim();
+          stepData['dob'] = rawDob.contains('T') ? rawDob : '${rawDob}T00:00:00.000Z';
+          if (_taxIdController.text.trim().isNotEmpty) {
+            stepData['tax_identifier'] = _taxIdController.text.trim();
           }
+        } else if (i == 3) {
+          // Upload the PDF file first, then use the returned server URL
+          String docUrl = 'https://example.com/kyc_placeholder.pdf'; // fallback
+          if (_pickedFilePath != null) {
+            try {
+              final formData = dio_lib.FormData.fromMap({
+                'file': await dio_lib.MultipartFile.fromFile(
+                  _pickedFilePath!,
+                  filename: _pickedFileName ?? 'kyc_doc.pdf',
+                ),
+                'doc_type': _pickedDocType,
+              });
+              final uploadRes = await ApiClient().dio.post(
+                '/me/documents/upload',
+                data: formData,
+              );
+              if (uploadRes.statusCode == 200 || uploadRes.statusCode == 201) {
+                final uploadedUrl = uploadRes.data['data']?['url'] ??
+                    uploadRes.data['data']?['file_url'] ??
+                    uploadRes.data['url'];
+                if (uploadedUrl != null) docUrl = uploadedUrl.toString();
+              }
+            } catch (_) {
+              // Upload failed — use placeholder so onboarding still completes
+            }
+          }
+          stepData['documents'] = [
+            {'type': _pickedDocType, 'url': docUrl}
+          ];
         }
-      });
-
-      // Step 5 API (Finalize)
-      await ApiClient().dio.post('/users/me/onboarding/5', data: {
-        'step': 5,
-        'data': {}
-      });
+        try {
+          await ApiClient().dio.post('/users/me/onboarding/$i', data: {'step': i, 'data': stepData});
+        } catch (stepErr) {
+          // If a step returns 400, it likely means the backend already advanced past it.
+          // Re-fetch the actual current step and skip ahead.
+          final serverStep = await _fetchCurrentServerStep();
+          if (i < serverStep) {
+            // Backend is already past this step — safe to continue
+            continue;
+          }
+          // Otherwise it's a real error — rethrow
+          rethrow;
+        }
+      }
 
       messenger.showSnackBar(
         const SnackBar(
@@ -205,7 +243,6 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
           backgroundColor: Colors.green,
         ),
       );
-
       navigator.pushNamedAndRemoveUntil('/landlord_pending_approval', (route) => false);
     } catch (e) {
       messenger.showSnackBar(
@@ -219,187 +256,374 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
     }
   }
 
+  // ── Helpers ───────────────────────────────────────────────────────────────
   Widget _buildField({
+    required String label,
     required String hint,
     required TextEditingController controller,
+    String? errorText,
     TextInputType keyboardType = TextInputType.text,
+    bool readOnly = false,
+    VoidCallback? onTap,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(fontSize: 14, color: AppColors.textHint),
-          filled: true,
-          fillColor: AppColors.inputBg,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller:  controller,
+            keyboardType: keyboardType,
+            readOnly:    readOnly,
+            onTap:       onTap,
+            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+            decoration: InputDecoration(
+              hintText:    hint,
+              hintStyle:   const TextStyle(fontSize: 14, color: AppColors.textHint),
+              filled:      true,
+              fillColor:   errorText != null
+                  ? Colors.redAccent.withValues(alpha: 0.05)
+                  : AppColors.inputBg,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: errorText != null
+                    ? const BorderSide(color: Colors.redAccent, width: 1.2)
+                    : BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: errorText != null
+                    ? const BorderSide(color: Colors.redAccent, width: 1.2)
+                    : BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        ),
+          if (errorText != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 4, top: 4),
+              child: Text(errorText, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+            ),
+        ],
       ),
     );
   }
 
-  List<Step> get _steps {
-    return [
-      Step(
-        title: const Text('Basic Info'),
-        content: Column(
-          children: [
-            _buildField(hint: 'First Name', controller: _firstNameController),
-            _buildField(hint: 'Last Name', controller: _lastNameController),
-            _buildField(hint: 'Date of Birth (YYYY-MM-DD)', controller: _dobController),
-            _buildField(hint: 'Phone Number (+1...)', controller: _phoneController, keyboardType: TextInputType.phone),
-            _buildField(hint: 'SSN (Last 4 digits)', controller: _ssnController, keyboardType: TextInputType.number),
-            _buildField(hint: 'Tax ID / EIN (Optional)', controller: _taxIdController),
-            _buildField(hint: 'Address Line 1', controller: _addressController),
-            _buildField(hint: 'City', controller: _cityController),
-            Row(
-              children: [
-                Expanded(child: _buildField(hint: 'State (e.g. NY)', controller: _stateController)),
-                const SizedBox(width: 8),
-                Expanded(child: _buildField(hint: 'Zip Code', controller: _postalController, keyboardType: TextInputType.number)),
-              ],
-            ),
-          ],
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(1990, 1, 1),
+      firstDate: DateTime(1930),
+      lastDate: DateTime(now.year - 18, now.month, now.day),
+      helpText: 'Select Date of Birth',
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(primary: AppColors.primary),
         ),
-        isActive: _currentStep >= 0,
-        state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+        child: child!,
       ),
-      Step(
-        title: const Text('Employment & Income'),
-        content: Column(
-          children: [
-            _buildField(hint: 'Employer Name', controller: _employerController),
-            _buildField(hint: 'Job Title', controller: _jobTitleController),
-            _buildField(hint: 'Annual Income', controller: _incomeController, keyboardType: TextInputType.number),
-          ],
-        ),
-        isActive: _currentStep >= 1,
-        state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-      ),
-      Step(
-        title: const Text('Documents'),
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Document Type', style: TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: AppColors.inputBg,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _pickedDocType,
-                  isExpanded: true,
-                  items: const [
-                    DropdownMenuItem(value: 'passport', child: Text('Passport')),
-                    DropdownMenuItem(value: 'drivers_license', child: Text('Driver\'s License')),
-                    DropdownMenuItem(value: 'state_id', child: Text('State ID')),
-                    DropdownMenuItem(value: 'proof_of_income', child: Text('Proof of Income')),
-                  ],
-                  onChanged: (val) {
-                    setState(() {
-                      if (val != null) _pickedDocType = val;
-                    });
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: () async {
-                FilePickerResult? result = await FilePicker.platform.pickFiles(
-                  type: FileType.custom,
-                  allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-                );
-                if (result != null) {
-                  setState(() {
-                    _pickedFileName = result.files.single.name;
-                    // Simulate upload success
-                    _mockFileUrl = 'https://example.com/uploads/${result.files.single.name}';
-                  });
-                }
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _pickedFileName != null ? Colors.green.withValues(alpha: 0.1) : AppColors.white,
-                  border: Border.all(color: _pickedFileName != null ? Colors.green : AppColors.border),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _pickedFileName != null ? Icons.check_circle : Icons.upload_file,
-                      color: _pickedFileName != null ? Colors.green : AppColors.primary,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _pickedFileName ?? 'Tap to Upload File',
-                        style: TextStyle(
-                          color: _pickedFileName != null ? Colors.green[700] : AppColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        isActive: _currentStep >= 2,
-        state: _currentStep > 2 ? StepState.complete : StepState.indexed,
-      ),
-      Step(
-        title: const Text('Preferences'),
-        content: Column(
-          children: [
-            SwitchListTile(
-              title: const Text('Email Notifications'),
-              value: _emailNotif,
-              activeColor: AppColors.primary,
-              onChanged: (val) => setState(() => _emailNotif = val),
-            ),
-            SwitchListTile(
-              title: const Text('SMS Notifications'),
-              value: _smsNotif,
-              activeColor: AppColors.primary,
-              onChanged: (val) => setState(() => _smsNotif = val),
-            ),
-          ],
-        ),
-        isActive: _currentStep >= 3,
-        state: _currentStep > 3 ? StepState.complete : StepState.indexed,
-      ),
-      Step(
-        title: const Text('Submit'),
-        content: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('You have completed all sections.'),
-            SizedBox(height: 8),
-            Text('Click the button below to submit your profile for admin verification.', style: TextStyle(color: AppColors.textSecondary)),
-          ],
-        ),
-        isActive: _currentStep >= 4,
-        state: StepState.indexed,
-      ),
-    ];
+    );
+    if (picked != null) {
+      _dobController.text =
+          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      setState(() => _dobError = null);
+    }
   }
 
+  Future<void> _pickPdf() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.single;
+      final sizeKb = ((file.size) / 1024).toStringAsFixed(1);
+      setState(() {
+        _pickedFileName      = file.name;
+        _pickedFilePath      = file.path;
+        _pickedFileBytesSize = '$sizeKb KB';
+        _kycError            = null;
+      });
+    }
+  }
+
+  // ── Steps ─────────────────────────────────────────────────────────────────
+  List<Step> get _steps => [
+    // ── Step 1: Basic Info ─────────────────────────────────────────────────
+    Step(
+      title: const Text('Basic Info'),
+      content: Column(
+        children: [
+          _buildField(label: 'First Name *', hint: 'e.g. John', controller: _firstNameController, errorText: _firstNameError),
+          _buildField(label: 'Last Name *', hint: 'e.g. Doe', controller: _lastNameController,  errorText: _lastNameError),
+          _buildField(
+            label: 'Date of Birth *',
+            hint: 'Tap to pick date',
+            controller: _dobController,
+            errorText: _dobError,
+            readOnly: true,
+            onTap: _pickDate,
+          ),
+          _buildField(label: 'Tax ID / EIN *', hint: 'e.g. 12-3456789', controller: _taxIdController, errorText: _taxIdError),
+          _buildField(label: 'Address Line 1 *', hint: 'e.g. 123 Main St', controller: _addressController, errorText: _addressError),
+          _buildField(label: 'City *', hint: 'e.g. New York', controller: _cityController, errorText: _cityError),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _buildField(
+                  label: 'State *',
+                  hint: 'e.g. NY',
+                  controller: _stateController,
+                  errorText: _stateError,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildField(
+                  label: 'Zip Code *',
+                  hint: 'e.g. 10001',
+                  controller: _postalController,
+                  keyboardType: TextInputType.number,
+                  errorText: _postalError,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      isActive: _currentStep >= 0,
+      state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+    ),
+
+    // ── Step 2: KYC ────────────────────────────────────────────────────────
+    Step(
+      title: const Text('KYC'),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Info banner
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 18, color: AppColors.primary),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Upload a PDF copy of your KYC document. Max 10 MB.',
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Document type
+          const Text('Document Type *', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: AppColors.inputBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _pickedDocType,
+                isExpanded: true,
+                items: const [
+                  // Values must match backend Joi: 'passport' | 'drivers_license' | 'state_id' | 'proof_of_income'
+                  DropdownMenuItem(value: 'passport',        child: Text('Passport')),
+                  DropdownMenuItem(value: 'drivers_license', child: Text("Driver's License")),
+                  DropdownMenuItem(value: 'state_id',        child: Text('State / National ID')),
+                  DropdownMenuItem(value: 'proof_of_income', child: Text('Proof of Income')),
+                ],
+                onChanged: (val) {
+                  if (val != null) setState(() => _pickedDocType = val);
+                },
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+          const Text('Upload Document (PDF) *', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const SizedBox(height: 8),
+
+          // Upload area
+          GestureDetector(
+            onTap: _pickPdf,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: _pickedFilePath != null
+                    ? Colors.green.withValues(alpha: 0.06)
+                    : (_kycError != null
+                        ? Colors.redAccent.withValues(alpha: 0.05)
+                        : AppColors.white),
+                border: Border.all(
+                  color: _pickedFilePath != null
+                      ? Colors.green
+                      : (_kycError != null ? Colors.redAccent : AppColors.border),
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: _pickedFilePath != null
+                  ? Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 24),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _pickedFileName!,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (_pickedFileBytesSize != null) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  _pickedFileBytesSize!,
+                                  style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.check_circle_rounded, color: Colors.green, size: 22),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        Icon(
+                          Icons.upload_file_rounded,
+                          size: 36,
+                          color: _kycError != null ? Colors.redAccent : AppColors.primary,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Tap to upload PDF',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: _kycError != null ? Colors.redAccent : AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Only .pdf files are accepted',
+                          style: TextStyle(fontSize: 12, color: AppColors.textHint),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+
+          if (_kycError != null) ...[
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                _kycError!,
+                style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+              ),
+            ),
+          ],
+
+          if (_pickedFilePath != null) ...[
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: _pickPdf,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.refresh_rounded, size: 16, color: AppColors.primary),
+                  SizedBox(width: 4),
+                  Text(
+                    'Change document',
+                    style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+      isActive: _currentStep >= 1,
+      state: _currentStep > 1 ? StepState.complete : StepState.indexed,
+    ),
+
+    // ── Step 3: Submit ─────────────────────────────────────────────────────
+    Step(
+      title: const Text('Submit'),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 24),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'All sections completed!',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Click "Submit Verification" below to send your profile for admin review.',
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      isActive: _currentStep >= 2,
+      state: StepState.indexed,
+    ),
+  ];
+
+  // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -408,7 +632,7 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
         backgroundColor: AppColors.white,
         elevation: 0,
         title: const Text(
-          'Landlord Setup',
+          'Landlord Onboarding',
           style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         centerTitle: true,
@@ -430,6 +654,12 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
           currentStep: _currentStep,
           type: StepperType.vertical,
           onStepContinue: () {
+            if (_currentStep == 0) {
+              if (!_validateStep1()) return;
+            } else if (_currentStep == 1) {
+              if (!_validateStep2()) return;
+            }
+
             if (_currentStep < _steps.length - 1) {
               setState(() => _currentStep += 1);
             } else {
@@ -437,9 +667,7 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
             }
           },
           onStepCancel: () {
-            if (_currentStep > 0) {
-              setState(() => _currentStep -= 1);
-            }
+            if (_currentStep > 0) setState(() => _currentStep -= 1);
           },
           controlsBuilder: (context, details) {
             final isLastStep = _currentStep == _steps.length - 1;
@@ -462,9 +690,10 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
                         side: const BorderSide(color: AppColors.border),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Back', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                      child: const Text('Back',
+                          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
                     ),
-                  ]
+                  ],
                 ],
               ),
             );

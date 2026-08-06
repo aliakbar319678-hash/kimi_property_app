@@ -52,12 +52,12 @@ export class AuthService {
        WHERE u.email = $1 OR u.username = $1`,
       [identifier]
     );
-    if (userRes.rows.length === 0) throw new AppError('Invalid credentials', 401);
+    if (userRes.rows.length === 0) throw new AppError('No account found with this email', 404);
     const user = userRes.rows[0];
     if (!user.is_active) throw new AppError('Account suspended', 403);
 
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) throw new AppError('Invalid credentials', 401);
+    if (!valid) throw new AppError('Incorrect password. Please try again.', 401);
 
     const rolesRes = await query('SELECT role FROM user_roles WHERE user_id = $1', [user.id]);
     const roles = rolesRes.rows.map((r: any) => r.role);
@@ -98,12 +98,21 @@ export class AuthService {
   }
 
   static async me(userId: string) {
-    const userRes = await query('SELECT id, email, phone, display_name, username, kyc_status, region_id FROM users WHERE id = $1', [userId]);
+    const userRes = await query('SELECT id, email, phone, display_name, username, kyc_status, rejection_reason, region_id FROM users WHERE id = $1', [userId]);
     if (userRes.rows.length === 0) throw new AppError('User not found', 404);
     const rolesRes = await query('SELECT role, entity_id, is_primary FROM user_roles WHERE user_id = $1', [userId]);
     const profileRes = await query('SELECT * FROM user_profiles WHERE user_id = $1', [userId]);
     const user = userRes.rows[0];
     const prof = profileRes.rows[0] || {};
+    // Also fetch latest rejection_reason from verification_cases if not already on user
+    let rejectionReason = user.rejection_reason || null;
+    if (!rejectionReason) {
+      const vcRes = await query(
+        `SELECT rejection_reason FROM verification_cases WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
+        [userId]
+      );
+      rejectionReason = vcRes.rows[0]?.rejection_reason || null;
+    }
     return {
       ...user,
       first_name: prof.legal_first_name || '',
@@ -112,6 +121,7 @@ export class AuthService {
       phone: user.phone || prof.phone || '',
       roles: rolesRes.rows,
       profile: prof,
+      rejection_reason: rejectionReason,
     };
   }
   static async forgotPassword(email: string) {

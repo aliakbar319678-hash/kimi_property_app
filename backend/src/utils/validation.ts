@@ -159,6 +159,8 @@ export const validate = (schema: Joi.ObjectSchema) => {
   return (req: any, res: any, next: any) => {
     const { error, value } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
     if (error) {
+      console.error('[Joi Validation Failed]', JSON.stringify(error.details, null, 2));
+      console.error('[Request Body]', JSON.stringify(req.body, null, 2));
       return res.status(400).json({
         error: 'Validation failed',
         details: error.details.map((d) => ({ field: d.path.join('.'), message: d.message })),

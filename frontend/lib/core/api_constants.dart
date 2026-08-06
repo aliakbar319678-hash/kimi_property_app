@@ -1,6 +1,7 @@
 class ApiConstants {
   // ── Base URL ────────────────────────────────────────────────────────────────
-  static const String baseUrl = 'http://192.168.1.94:5000/api/v1';
+  static const String baseUrl = 'http://192.168.6.106:5000/api/v1';
+  static const String socketUrl = 'http://192.168.6.106:5000';
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   static const String login = '/auth/login';
@@ -109,5 +110,9 @@ class ApiConstants {
   static String leaseStatus(String id) => '/leases/$id/status';
   static String leaseInspections(String id) => '/leases/$id/inspections';
 
+  // ── Support Tickets ───────────────────────────────────────────────────────────
+  static const String supportTickets = '/tickets';
+  static String supportTicketById(String id) => '/tickets/$id';
+  static String supportTicketComments(String id) => '/tickets/$id/comments';
 
 }

@@ -9,6 +9,8 @@ import 'package:tenant_and_landlord_application/screens/auth/verification_reject
 import 'package:tenant_and_landlord_application/screens/auth/register_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/login_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/otp_screen.dart';
+import 'package:tenant_and_landlord_application/screens/auth/account_status_screen.dart';
+import 'package:tenant_and_landlord_application/screens/auth/support_chat_screen.dart';
 
 // ── Onboarding ──────────────────────────────────────
 import 'package:tenant_and_landlord_application/screens/basic_profile_screen.dart';
@@ -62,7 +64,6 @@ import 'package:tenant_and_landlord_application/screens/landlord/lease_managemen
 import 'package:tenant_and_landlord_application/screens/landlord/financial_overview_screen.dart';
 
 import 'package:tenant_and_landlord_application/screens/landlord/landlord_onboarding_screen.dart';
-import 'package:tenant_and_landlord_application/screens/landlord/landlord_pending_approval_screen.dart';
 
 import 'package:tenant_and_landlord_application/screens/landlord/ai_smart_assistant_screen.dart';
 import 'package:tenant_and_landlord_application/screens/landlord/add_property_screen.dart';
@@ -144,7 +145,9 @@ class TLApp extends StatelessWidget {
         '/landlord_onboarding': (_) => const LandlordOnboardingScreen(),
         '/verification_success': (_) => const VerificationSuccessScreen(),
         '/verification_rejected': (_) => const VerificationRejectedScreen(),
-        '/landlord_pending_approval': (_) => const LandlordPendingApprovalScreen(),
+        '/landlord_pending_approval': (_) => const AccountStatusScreen(),
+        '/account_status': (_) => const AccountStatusScreen(),
+        '/support_chat': (_) => const SupportChatScreen(),
         '/landlord_home': (_) => const LandlordShell(initialIndex: 0),
         '/landlord_properties': (_) => const LandlordShell(initialIndex: 1),
         '/landlord_tenants': (_) => const LandlordShell(initialIndex: 2),

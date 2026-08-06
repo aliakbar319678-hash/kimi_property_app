@@ -12,6 +12,33 @@ class VerificationRejectedScreen extends StatefulWidget {
 
 class _VerificationRejectedScreenState extends State<VerificationRejectedScreen> {
   bool _isLoading = false;
+  bool _isFetchingReason = true;
+  String? _rejectionReason;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRejectionReason();
+  }
+
+  /// Fetch the real admin-provided rejection reason from the server
+  Future<void> _fetchRejectionReason() async {
+    try {
+      final res = await ApiClient().dio.get(ApiConstants.me);
+      if (res.statusCode == 200) {
+        final data = res.data['data'];
+        final reason = data['rejection_reason'] as String?;
+        if (mounted) {
+          setState(() {
+            _rejectionReason = (reason != null && reason.isNotEmpty) ? reason : null;
+            _isFetchingReason = false;
+          });
+        }
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isFetchingReason = false);
+    }
+  }
 
   Future<void> _handleResubmit() async {
     setState(() => _isLoading = true);
@@ -45,6 +72,13 @@ class _VerificationRejectedScreenState extends State<VerificationRejectedScreen>
     }
   }
 
+  /// Properly clear token and navigate to login
+  Future<void> _handleLogout() async {
+    await ApiClient().clearToken();
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,7 +106,7 @@ class _VerificationRejectedScreenState extends State<VerificationRejectedScreen>
               ),
               const SizedBox(height: 16),
               const Text(
-                'Your account verification was rejected by the Admin. Please review your documents and information to ensure they meet the requirements, and then resubmit.',
+                'Your account verification was rejected by the Admin. Please review the reason below, fix the issue, and resubmit.',
                 style: TextStyle(
                   fontSize: 16,
                   color: AppColors.textSecondary,
@@ -81,32 +115,60 @@ class _VerificationRejectedScreenState extends State<VerificationRejectedScreen>
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
+
+              // ── Rejection Reason Box ───────────────────────────────
               Container(
+                width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                  color: AppColors.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
                 ),
-                child: const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.info_outline, color: AppColors.error, size: 20),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Note: Ensure your legal name matches your ID exactly and the uploaded documents are clear and legible.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.error,
-                          height: 1.4,
+                child: _isFetchingReason
+                    ? const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.info_outline, color: AppColors.error, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                _rejectionReason != null
+                                    ? 'Rejection Reason:'
+                                    : 'Note:',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _rejectionReason ??
+                                'Ensure your legal name matches your ID exactly and the uploaded documents are clear and legible.',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.error,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
               ),
+
               const SizedBox(height: 48),
+
+              // ── Resubmit Button ────────────────────────────────────
               SizedBox(
                 width: double.infinity,
                 height: 54,
@@ -137,14 +199,40 @@ class _VerificationRejectedScreenState extends State<VerificationRejectedScreen>
                         ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: OutlinedButton.icon(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, '/support_chat'),
+                  icon: const Icon(Icons.headset_mic_rounded,
+                      size: 20, color: AppColors.secondary),
+                  label: const Text(
+                    'Contact Support',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(
+                        color: AppColors.secondary, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // ── Log Out Button (properly clears tokens) ────────────
               SizedBox(
                 width: double.infinity,
                 height: 54,
                 child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/role_selection');
-                  },
+                  onPressed: _handleLogout,
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.border),
                     shape: RoundedRectangleBorder(

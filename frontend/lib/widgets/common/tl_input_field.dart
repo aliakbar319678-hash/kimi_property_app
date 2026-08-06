@@ -3,7 +3,8 @@ import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
 class TLInputField extends StatelessWidget {
   final String hint;
-  final IconData prefixIcon;
+  final IconData? prefixIcon;
+  final Widget? prefixWidget;
   final Widget? suffixIcon;
   final bool obscure;
   final TextInputType keyboardType;
@@ -14,7 +15,8 @@ class TLInputField extends StatelessWidget {
   const TLInputField({
     super.key,
     required this.hint,
-    required this.prefixIcon,
+    this.prefixIcon,
+    this.prefixWidget,
     this.suffixIcon,
     this.obscure = false,
     this.keyboardType = TextInputType.text,
@@ -39,7 +41,7 @@ class TLInputField extends StatelessWidget {
           ),
           decoration: InputDecoration(
             hintText: hint,
-            prefixIcon: Icon(prefixIcon, size: 18, color: AppColors.textHint),
+            prefixIcon: prefixWidget ?? (prefixIcon != null ? Icon(prefixIcon, size: 18, color: AppColors.textHint) : null),
             suffixIcon: suffixIcon,
             errorText: errorText,
           ),
