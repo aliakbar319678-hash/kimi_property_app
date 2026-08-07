@@ -12,6 +12,9 @@ import 'package:tenant_and_landlord_application/screens/auth/register_screen.dar
 import 'package:tenant_and_landlord_application/screens/auth/login_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/otp_screen.dart';
 import 'package:tenant_and_landlord_application/screens/auth/support_chat_screen.dart';
+import 'package:tenant_and_landlord_application/screens/auth/forgot_password_screen.dart';
+import 'package:tenant_and_landlord_application/screens/auth/verify_otp_screen.dart';
+import 'package:tenant_and_landlord_application/screens/auth/reset_password_screen.dart';
 
 // ── Onboarding ──────────────────────────────────────
 import 'package:tenant_and_landlord_application/screens/basic_profile_screen.dart';
@@ -122,6 +125,9 @@ class TLApp extends StatelessWidget {
         '/login': (_) => const LoginScreen(),
         '/otp': (_) => const OtpScreen(),
         '/role_selection': (_) => const RoleSelectionScreen(),
+        '/forgot_password': (_) => const ForgotPasswordScreen(),
+        '/verify_otp': (_) => const VerifyOtpScreen(),
+        '/reset_password': (_) => const ResetPasswordScreen(),
 
         // ── Onboarding ────────────────────────────
         '/basic_profile': (_) => const BasicProfileScreen(),

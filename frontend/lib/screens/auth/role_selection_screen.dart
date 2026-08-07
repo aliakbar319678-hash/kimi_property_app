@@ -48,14 +48,22 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
               if (kycStatus == 'verified' || kycStatus == 'approved') {
                 Navigator.pushReplacementNamed(context, '/verification_success');
               } else if (kycStatus == 'rejected') {
-                Navigator.pushReplacementNamed(context, '/verification_rejected');
+                Navigator.pushReplacementNamed(context, '/account_status');
               } else if (kycStatus == 'reviewing') {
                 Navigator.pushReplacementNamed(context, '/landlord_pending_approval');
               } else {
                 Navigator.pushReplacementNamed(context, '/landlord_onboarding');
               }
             } else if (role == 'vendor') {
-              Navigator.pushReplacementNamed(context, '/vendor_home');
+              if (kycStatus == 'verified' || kycStatus == 'approved') {
+                Navigator.pushReplacementNamed(context, '/vendor_home');
+              } else if (kycStatus == 'rejected') {
+                Navigator.pushReplacementNamed(context, '/account_status');
+              } else if (kycStatus == 'reviewing' || kycStatus == 'in_review') {
+                Navigator.pushReplacementNamed(context, '/account_status');
+              } else {
+                Navigator.pushReplacementNamed(context, '/vendor_onboarding');
+              }
             } else {
               final profile = data['profile'] ?? {};
               final bool onboardingCompleted = profile['onboarding_completed'] ?? false;
@@ -67,7 +75,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                 if (kycStatus == 'verified' || kycStatus == 'approved') {
                   Navigator.pushReplacementNamed(context, '/home');
                 } else if (kycStatus == 'rejected') {
-                  Navigator.pushReplacementNamed(context, '/verification_rejected');
+                  Navigator.pushReplacementNamed(context, '/account_status');
                 } else if (kycStatus == 'reviewing' || kycStatus == 'pending' || kycStatus == 'in_review') {
                   Navigator.pushReplacementNamed(context, '/account_status');
                 } else {

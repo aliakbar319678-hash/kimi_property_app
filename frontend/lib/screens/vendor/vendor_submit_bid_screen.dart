@@ -4,6 +4,8 @@ import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/provider/vendor_provider.dart';
 import 'package:tenant_and_landlord_application/provider/vendor_state.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_appbar.dart';
+import 'package:tenant_and_landlord_application/core/api_client.dart';
+import 'package:tenant_and_landlord_application/core/api_constants.dart';
 
 class VendorSubmitBidScreen extends ConsumerStatefulWidget {
   const VendorSubmitBidScreen({super.key});
@@ -355,8 +357,85 @@ class _VendorSubmitBidScreenState extends ConsumerState<VendorSubmitBidScreen> {
                   ],
                 ),
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate()) {
+                      try {
+                        final res = await ApiClient().dio.get(ApiConstants.me);
+                        if (res.statusCode == 200) {
+                          final data = res.data['data'];
+                          final kycStatus = data['kyc_status'] ?? 'unverified';
+                          if (kycStatus != 'verified' && kycStatus != 'approved') {
+                            if (!mounted) return;
+                            showModalBottomSheet(
+                              context: context,
+                              backgroundColor: AppColors.white,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                              ),
+                              builder: (ctx) => Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Account Verification Required',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    const Text(
+                                      'Your vendor account is currently undergoing admin verification. You will be able to submit bids on work orders once your profile is approved by the Admin.',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.textSecondary,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () => Navigator.pop(ctx),
+                                            style: OutlinedButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(vertical: 14),
+                                              side: const BorderSide(color: AppColors.border),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                            ),
+                                            child: const Text('Dismiss', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.pop(ctx);
+                                              Navigator.pushNamed(context, '/account_status');
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: AppColors.primary,
+                                              elevation: 0,
+                                              padding: const EdgeInsets.symmetric(vertical: 14),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                            ),
+                                            child: const Text('Check Status', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.w600)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                        }
+                      } catch (_) {}
+
                       final List<String> scope = [];
                       if (_scopeLabor) scope.add('Labor');
                       if (_scopeMaterials) scope.add('Materials');
@@ -369,6 +448,8 @@ class _VendorSubmitBidScreenState extends ConsumerState<VendorSubmitBidScreen> {
                         _messageController.text,
                       );
 
+                      if (!mounted) return;
+                      final nav = Navigator.of(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Bid of \$${_bidAmount.toStringAsFixed(0)} submitted!'),
@@ -377,8 +458,8 @@ class _VendorSubmitBidScreenState extends ConsumerState<VendorSubmitBidScreen> {
                       );
 
                       // Pop details and this bid screen
-                      Navigator.pop(context); // Pops bid screen
-                      Navigator.pop(context); // Pops job details screen, returns to search
+                      nav.pop(); // Pops bid screen
+                      nav.pop(); // Pops job details screen, returns to search
                     }
                   },
                   style: ElevatedButton.styleFrom(

@@ -201,8 +201,23 @@ class VendorNotifier extends StateNotifier<VendorState> {
   }
 
   // Complete Onboarding
-  void submitOnboarding(VendorProfile profileData) {
+  Future<void> submitOnboarding(VendorProfile profileData) async {
     state = state.copyWith(profile: profileData.copyWith(isOnboarded: true));
+    try {
+      await ApiClient().dio.post(
+        ApiConstants.userOnboarding,
+        data: {
+          'step': 5,
+          'business_name': profileData.businessName,
+          'tax_id': profileData.taxId,
+          'service_category': profileData.serviceCategory,
+          'bank_name': profileData.bankName,
+          'account_number': profileData.accountNumber,
+        },
+      );
+    } catch (e) {
+      debugPrint('[VendorNotifier] submitOnboarding API error: $e');
+    }
   }
 
   // Submit Bid on a job

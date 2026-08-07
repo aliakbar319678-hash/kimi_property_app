@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
 import 'package:tenant_and_landlord_application/core/api_constants.dart';
+import 'package:tenant_and_landlord_application/screens/tenant_kyc_upload_screen.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
 /// Displays the user's KYC verification journey in a beautiful timeline UI.
@@ -16,13 +17,13 @@ class AccountStatusScreen extends StatefulWidget {
 class _AccountStatusScreenState extends State<AccountStatusScreen>
     with SingleTickerProviderStateMixin {
   bool _isLoading = true;
-  bool _isRefreshing = false;
   String _kycStatus = 'reviewing';
   String? _rejectionReason;
   String _displayName = '';
   String _email = '';
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  Timer? _pollTimer;
 
   @override
   void initState() {
@@ -35,31 +36,47 @@ class _AccountStatusScreenState extends State<AccountStatusScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
     _loadStatus();
+    // Fast polling (every 4 seconds) to detect admin approval/rejection instantly
+    _pollTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      _loadStatus(silent: true);
+    });
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
+    _pollTimer?.cancel();
     super.dispose();
   }
 
-  Future<void> _loadStatus({bool refresh = false}) async {
-    if (refresh) setState(() => _isRefreshing = true);
+  Future<void> _loadStatus({bool silent = false}) async {
+    if (!silent) setState(() => _isLoading = true);
     try {
       final res = await ApiClient().dio.get(ApiConstants.me);
       if (res.statusCode == 200 && mounted) {
         final data = res.data['data'];
         final status = data['kyc_status'] ?? 'reviewing';
+        final prevStatus = _kycStatus;
         setState(() {
           _kycStatus = status;
           _rejectionReason = data['rejection_reason'];
           _displayName = data['display_name'] ?? data['email'] ?? 'User';
           _email = data['email'] ?? '';
           _isLoading = false;
-          _isRefreshing = false;
         });
+        // Notify user when status changed while waiting
+        if (silent && prevStatus != status && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Your account status updated to: ${status.toUpperCase()}'),
+              backgroundColor: AppColors.primary,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
         // If approved or verified, auto-navigate after 1.5s
         if (status == 'verified' || status == 'approved') {
+          _pollTimer?.cancel();
           await Future.delayed(const Duration(milliseconds: 1500));
           if (mounted) {
             final List roles = data['roles'] ?? [];
@@ -85,7 +102,7 @@ class _AccountStatusScreenState extends State<AccountStatusScreen>
         }
       }
     } catch (_) {
-      if (mounted) setState(() { _isLoading = false; _isRefreshing = false; });
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -170,34 +187,8 @@ class _AccountStatusScreenState extends State<AccountStatusScreen>
                                             fontSize: w * 0.031,
                                           ),
                                         ),
+
                                       ],
-                                    ),
-                                  ),
-                                  // Refresh button
-                                  GestureDetector(
-                                    onTap: () => _loadStatus(refresh: true),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white
-                                            .withValues(alpha: 0.12),
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                      ),
-                                      child: _isRefreshing
-                                          ? const SizedBox(
-                                              width: 18,
-                                              height: 18,
-                                              child: CircularProgressIndicator(
-                                                color: Colors.white,
-                                                strokeWidth: 2,
-                                              ),
-                                            )
-                                          : const Icon(
-                                              Icons.refresh_rounded,
-                                              color: Colors.white,
-                                              size: 20,
-                                            ),
                                     ),
                                   ),
                                 ],
@@ -251,49 +242,31 @@ class _AccountStatusScreenState extends State<AccountStatusScreen>
                             label: 'Resubmit Documents',
                             icon: Icons.upload_file_rounded,
                             color: AppColors.primary,
-                            onTap: () async {
-                              try {
-                                final res = await ApiClient().dio.get(ApiConstants.me);
-                                final data = res.data['data'];
-                                final List roles = data['roles'] ?? [];
-                                String role = 'tenant';
-                                if (roles.isNotEmpty) {
-                                  final primaryRoleObj = roles.firstWhere(
-                                    (r) => r['is_primary'] == true,
-                                    orElse: () => roles.first,
-                                  );
-                                  role = primaryRoleObj['role'] ?? 'tenant';
-                                }
-                                if (!context.mounted) return;
-                                if (role == 'landlord' || role == 'property_manager') {
-                                  Navigator.pushNamedAndRemoveUntil(
-                                      context, '/landlord_onboarding', (r) => false);
-                                } else if (role == 'vendor') {
-                                  Navigator.pushNamedAndRemoveUntil(
-                                      context, '/vendor_onboarding', (r) => false);
-                                } else {
-                                  Navigator.pushNamedAndRemoveUntil(
-                                      context, '/basic_profile', (r) => false);
-                                }
-                              } catch (_) {
-                                if (context.mounted) {
-                                  Navigator.pushNamedAndRemoveUntil(
-                                      context, '/basic_profile', (r) => false);
-                                }
-                              }
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => TenantKycUploadScreen(
+                                    rejectionReason: _rejectionReason,
+                                    isResubmission: true,
+                                  ),
+                                ),
+                              ).then((_) => _loadStatus(silent: false));
                             },
                           ),
                           SizedBox(height: h * 0.015),
                         ],
 
-                        // ── Contact Support Button ───────────────────────
-                        _ActionButton(
-                          label: 'Contact Support',
-                          icon: Icons.headset_mic_rounded,
-                          color: AppColors.secondary,
-                          onTap: () => Navigator.pushNamed(
-                              context, '/support_chat'),
-                        ),
+                        // ── Contact Support — only for rejected/suspended users ──
+                        if (_kycStatus == 'rejected' || _kycStatus == 'suspended') ...[  
+                          _ActionButton(
+                            label: 'Contact Support',
+                            icon: Icons.headset_mic_rounded,
+                            color: AppColors.secondary,
+                            onTap: () => Navigator.pushNamed(
+                                context, '/support_chat'),
+                          ),
+                        ],
 
                         SizedBox(height: h * 0.015),
 

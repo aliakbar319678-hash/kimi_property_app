@@ -34,6 +34,13 @@ class ApiClient {
           return handler.next(options);
         },
         onError: (DioException e, handler) async {
+          // On 429 Too Many Requests, log and suppress catastrophic background crashes
+          if (e.response?.statusCode == 429) {
+            // Throw the 429 error normally so frontend catch blocks can handle it
+            // and terminate their loading states properly.
+            return handler.next(e);
+          }
+
           // On 401, attempt silent token refresh once
           if (e.response?.statusCode == 401) {
             final refreshToken = await _storage.read(key: _refreshTokenKey);

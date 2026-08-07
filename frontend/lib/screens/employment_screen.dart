@@ -140,7 +140,7 @@ class EmploymentScreen extends ConsumerWidget {
 
                   SizedBox(height: h * 0.018),
 
-                  _FieldLabel('Other Income Sources *', w),
+                  _FieldLabel('Other Income Sources (Optional)', w),
                   SizedBox(height: h * 0.008),
                   _InputField(
                     hint: 'e.g. Freelance, Investments (or "None")',

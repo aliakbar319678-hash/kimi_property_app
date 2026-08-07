@@ -33,15 +33,39 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
         final data = res.data['data'] as List? ?? [];
         setState(() {
           _tickets = data.cast<Map<String, dynamic>>();
-          _isLoading = false;
         });
       }
     } catch (_) {
+      // Catch errors silently
+    } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _openNewTicketDialog() {
+    // One-ticket rule: if user already has an open ticket, open it directly
+    final openTicket = _tickets.firstWhere(
+      (t) => t['status'] == 'open' || t['status'] == 'in_progress',
+      orElse: () => {},
+    );
+
+    if (openTicket.isNotEmpty) {
+      // Navigate directly to existing open ticket
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => _TicketChatScreen(ticket: openTicket),
+        ),
+      ).then((_) => _loadTickets());
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You already have an open ticket. Opening it for you.'),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -63,12 +87,7 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
           'Contact Support',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-            onPressed: _loadTickets,
-          ),
-        ],
+        // Refresh button removed — tickets reload automatically on return
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openNewTicketDialog,
@@ -295,7 +314,7 @@ class _NewTicketSheetState extends State<_NewTicketSheet> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   String _category = 'kyc_verification';
-  String _priority = 'high';
+  final String _priority = 'high';
   bool _isSubmitting = false;
 
   final _categories = [
@@ -397,7 +416,7 @@ class _NewTicketSheetState extends State<_NewTicketSheet> {
                     color: AppColors.textPrimary)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _category,
+              initialValue: _category,
               items: _categories
                   .map((c) => DropdownMenuItem(
                       value: c['value'],
@@ -524,15 +543,21 @@ class _TicketChatScreenState extends State<_TicketChatScreen> {
   bool _isLoading = true;
   bool _isSending = false;
   String? _myUserId;
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    // ── Polling Timer (every 8 seconds to stay safely within rate limit) ──
+    _pollTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      _loadCommentsSilent();
+    });
   }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _msgCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
@@ -545,22 +570,33 @@ class _TicketChatScreenState extends State<_TicketChatScreen> {
       if (meRes.statusCode == 200) {
         _myUserId = meRes.data['data']['id'];
       }
-      // Get comments
-      final res = await ApiClient().dio
-          .get('/tickets/${widget.ticket['id']}');
-      if (res.statusCode == 200 && mounted) {
-        final ticketData = res.data['data'];
-        final comments =
-            (ticketData['comments'] ?? []) as List;
-        setState(() {
-          _comments = comments.cast<Map<String, dynamic>>();
-          _isLoading = false;
-        });
-        _scrollToBottom();
-      }
+      await _loadCommentsSilent();
     } catch (_) {
+    } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _loadCommentsSilent() async {
+    try {
+      final res = await ApiClient().dio.get('/tickets/${widget.ticket['id']}');
+      if (res.statusCode == 200 && mounted) {
+        final ticketData = res.data['data'];
+        final comments = (ticketData['comments'] ?? []) as List;
+        final newComments = comments.cast<Map<String, dynamic>>();
+
+        // Check if there are differences
+        if (newComments.length != _comments.length ||
+            (newComments.isNotEmpty && _comments.isNotEmpty &&
+                newComments.last['id'] != _comments.last['id'])) {
+          setState(() {
+            _comments = newComments;
+            _isLoading = false;
+          });
+          _scrollToBottom();
+        }
+      }
+    } catch (_) {}
   }
 
   void _scrollToBottom() {
@@ -579,7 +615,24 @@ class _TicketChatScreenState extends State<_TicketChatScreen> {
     final msg = _msgCtrl.text.trim();
     if (msg.isEmpty || _isSending) return;
     _msgCtrl.clear();
-    setState(() => _isSending = true);
+
+    // Optimistic insert so user sees message immediately in milliseconds
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    final optimisticComment = {
+      'id': tempId,
+      'ticket_id': widget.ticket['id'],
+      'sender_id': _myUserId,
+      'sender_role': 'user',
+      'message': msg,
+      'created_at': DateTime.now().toUtc().toIso8601String(),
+    };
+
+    setState(() {
+      _comments.add(optimisticComment);
+      _isSending = true;
+    });
+    _scrollToBottom();
+
     try {
       final res = await ApiClient().dio.post(
         '/tickets/${widget.ticket['id']}/comments',
@@ -588,13 +641,26 @@ class _TicketChatScreenState extends State<_TicketChatScreen> {
       if (res.statusCode == 201 && mounted) {
         final newComment = res.data['data'] as Map<String, dynamic>;
         setState(() {
-          _comments.add(newComment);
+          final idx = _comments.indexWhere((c) => c['id'] == tempId);
+          if (idx != -1) {
+            _comments[idx] = newComment;
+          }
           _isSending = false;
         });
         _scrollToBottom();
+      } else if (mounted) {
+        setState(() => _isSending = false);
       }
-    } catch (_) {
-      if (mounted) setState(() => _isSending = false);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSending = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Message sending failed. Please check connection.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -614,7 +680,7 @@ class _TicketChatScreenState extends State<_TicketChatScreen> {
         
         final commentRes = await ApiClient().dio.post(
           '/tickets/${widget.ticket['id']}/comments',
-          data: {'message': 'Attached Image:\n$url'},
+          data: {'message': url},
         );
         if (commentRes.statusCode == 201 && mounted) {
           final newComment = commentRes.data['data'] as Map<String, dynamic>;
@@ -633,55 +699,58 @@ class _TicketChatScreenState extends State<_TicketChatScreen> {
   @override
   Widget build(BuildContext context) {
     final status = widget.ticket['status'] ?? 'open';
-    final statusColor = _ticketStatusColor(status);
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.primary, // App primary color (not WhatsApp green)
         foregroundColor: Colors.white,
         titleSpacing: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
-            Text(
-              widget.ticket['title'] ?? 'Support Ticket',
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 15),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            const CircleAvatar(
+              radius: 18,
+              backgroundColor: Colors.white24,
+              child: Icon(Icons.support_agent_rounded, color: Colors.white, size: 20),
             ),
-            const SizedBox(height: 2),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                status.toUpperCase().replaceAll('_', ' '),
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: statusColor == const Color(0xFF2ECC71)
-                      ? Colors.greenAccent
-                      : Colors.white,
-                ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.ticket['title'] ?? 'Support Chat',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: Colors.greenAccent,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Support Team • ${status.replaceAll('_', ' ').toUpperCase()}',
+                        style: const TextStyle(fontSize: 11, color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-            onPressed: _loadData,
-          ),
-        ],
+        // Refresh button removed — auto-polls every 3 seconds
       ),
       body: Column(
         children: [
-          // Chat messages
+          // Chat messages list
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -692,18 +761,19 @@ class _TicketChatScreenState extends State<_TicketChatScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.chat_bubble_outline_rounded,
-                                  size: 56, color: AppColors.textHint),
+                              Icon(Icons.mark_chat_unread_outlined,
+                                  size: 56, color: Color(0xFF8696A0)),
                               SizedBox(height: 16),
                               Text(
                                 'No messages yet',
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary),
+                                    color: AppColors.textPrimary,
+                                    fontSize: 16),
                               ),
                               SizedBox(height: 8),
                               Text(
-                                'Start the conversation by sending a message below.',
+                                'Start chatting with support team by typing a message below.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                     color: AppColors.textSecondary,
@@ -715,40 +785,36 @@ class _TicketChatScreenState extends State<_TicketChatScreen> {
                       )
                     : ListView.builder(
                         controller: _scrollCtrl,
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         itemCount: _comments.length,
-                        itemBuilder: (_, i) => _ChatBubble(
-                          comment: _comments[i],
-                          isMe: _comments[i]['sender_id'] == _myUserId ||
-                              _comments[i]['sender_role'] == 'user',
-                        ),
+                        itemBuilder: (_, i) {
+                          final comment = _comments[i];
+                          final isMe = _myUserId != null
+                              ? (comment['sender_id'] == _myUserId)
+                              : (comment['sender_role'] == 'user');
+                          return _ChatBubble(
+                            comment: comment,
+                            isMe: isMe,
+                          );
+                        },
                       ),
           ),
 
-          // Input bar
+          // WhatsApp Style Input Bar
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 10,
-                  offset: const Offset(0, -3),
-                ),
-              ],
-            ),
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+            color: const Color(0xFFF0F2F5),
             child: Row(
               children: [
                 GestureDetector(
                   onTap: _pickAndUploadImage,
                   child: Container(
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.secondary.withValues(alpha: 0.1),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.image_rounded, color: AppColors.secondary, size: 22),
+                    child: const Icon(Icons.camera_alt_rounded, color: Color(0xFF54656F), size: 22),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -756,30 +822,28 @@ class _TicketChatScreenState extends State<_TicketChatScreen> {
                   child: TextField(
                     controller: _msgCtrl,
                     decoration: InputDecoration(
-                      hintText: 'Type your message...',
-                      hintStyle: const TextStyle(
-                          fontSize: 14, color: AppColors.textHint),
+                      hintText: 'Type a message...',
+                      hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF8696A0)),
                       filled: true,
-                      fillColor: AppColors.inputBg,
+                      fillColor: Colors.white,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                         borderSide: BorderSide.none,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     ),
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => _sendMessage(),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 GestureDetector(
                   onTap: _sendMessage,
                   child: Container(
-                    width: 46,
-                    height: 46,
+                    width: 44,
+                    height: 44,
                     decoration: const BoxDecoration(
-                      color: AppColors.secondary,
+                      color: AppColors.primary, // App primary color for send button
                       shape: BoxShape.circle,
                     ),
                     child: _isSending
@@ -790,8 +854,7 @@ class _TicketChatScreenState extends State<_TicketChatScreen> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Icon(Icons.send_rounded,
-                            color: Colors.white, size: 20),
+                        : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                   ),
                 ),
               ],
@@ -809,97 +872,201 @@ class _ChatBubble extends StatelessWidget {
   final bool isMe;
   const _ChatBubble({required this.comment, required this.isMe});
 
+  bool _isImageUrl(String text) {
+    final lower = text.toLowerCase();
+    return lower.contains('http://') ||
+        lower.contains('https://') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp') ||
+        lower.contains('/uploads/');
+  }
+
+  String _extractUrl(String text) {
+    final lines = text.split('\n');
+    for (final l in lines) {
+      final trimmed = l.trim();
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        return trimmed;
+      }
+    }
+    return text.trim();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final message = comment['message'] ?? '';
-    final createdAt = comment['created_at'] != null
-        ? DateFormat('hh:mm a').format(DateTime.parse(comment['created_at']))
-        : '';
+    final rawMessage = (comment['message'] ?? '').toString();
+    final isImage = _isImageUrl(rawMessage);
+    final imageUrl = isImage ? _extractUrl(rawMessage) : null;
+    
+    // Parse UTC server timestamp and convert to device's local timezone (PKT)
+    String createdAt = '';
+    if (comment['created_at'] != null) {
+      try {
+        final parsedDate = DateTime.parse(comment['created_at'].toString()).toLocal();
+        createdAt = DateFormat('h:mm a').format(parsedDate);
+      } catch (_) {
+        createdAt = '';
+      }
+    }
+
+    // Staff/Admin member name
+    final String staffName = (comment['sender_name'] != null && comment['sender_name'].toString().trim().isNotEmpty)
+        ? comment['sender_name'].toString().trim()
+        : (comment['sender_role'] == 'admin' || comment['sender_role'] == 'super_admin'
+            ? 'Admin'
+            : 'Support Staff');
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
-        mainAxisAlignment:
-            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isMe) ...[
             CircleAvatar(
-              radius: 16,
-              backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-              child: const Icon(Icons.support_agent_rounded,
-                  size: 16, color: AppColors.primary),
+              radius: 14,
+              backgroundColor: const Color(0xFF075E54).withValues(alpha: 0.15),
+              backgroundImage: comment['sender_avatar'] != null && comment['sender_avatar'].toString().isNotEmpty
+                  ? NetworkImage(comment['sender_avatar'])
+                  : null,
+              child: comment['sender_avatar'] == null || comment['sender_avatar'].toString().isEmpty
+                  ? const Icon(Icons.headset_mic_rounded, size: 14, color: Color(0xFF075E54))
+                  : null,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
           ],
-          Flexible(
-            child: Column(
-              crossAxisAlignment:
-                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-              children: [
-                if (!isMe)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 4, bottom: 4),
-                    child: Text(
-                      'Support Team',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary),
-                    ),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.76,
+            ),
+            child: Container(
+              padding: isImage
+                  ? const EdgeInsets.all(4)
+                  : const EdgeInsets.fromLTRB(10, 7, 10, 5),
+              decoration: BoxDecoration(
+                color: isMe ? const Color(0xFFDCF8C6) : Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(12),
+                  topRight: const Radius.circular(12),
+                  bottomLeft: isMe ? const Radius.circular(12) : const Radius.circular(2),
+                  bottomRight: isMe ? const Radius.circular(2) : const Radius.circular(12),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
                   ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color:
-                        isMe ? AppColors.secondary : Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(18),
-                      topRight: const Radius.circular(18),
-                      bottomLeft: isMe
-                          ? const Radius.circular(18)
-                          : const Radius.circular(4),
-                      bottomRight: isMe
-                          ? const Radius.circular(4)
-                          : const Radius.circular(18),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Show Staff / Admin member name for incoming support messages
+                  if (!isMe)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            staffName,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF075E54), // WhatsApp dark teal
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF075E54).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              (comment['sender_role'] ?? 'Staff').toString().toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF075E54),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+
+                  // Message text or Image
+                  if (isImage && imageUrl != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        imageUrl,
+                        width: 220,
+                        height: 160,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Text(
+                            rawMessage,
+                            style: const TextStyle(fontSize: 14, color: Color(0xFF111B21)),
+                          ),
+                        ),
+                        loadingBuilder: (_, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            width: 220,
+                            height: 160,
+                            color: Colors.black12,
+                            child: const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  else
+                    Text(
+                      rawMessage,
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        color: Color(0xFF111B21),
+                        height: 1.3,
+                      ),
+                    ),
+
+                  const SizedBox(height: 2),
+
+                  // Timestamp & Blue check mark for User messages
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        createdAt,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      if (isMe) ...[
+                        const SizedBox(width: 3),
+                        const Icon(
+                          Icons.done_all,
+                          size: 15,
+                          color: Color(0xFF53BDEB), // WhatsApp blue double tick
+                        ),
+                      ],
                     ],
                   ),
-                  child: Text(
-                    message,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isMe ? Colors.white : AppColors.textPrimary,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  createdAt,
-                  style: const TextStyle(
-                      fontSize: 10, color: AppColors.textHint),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          if (isMe) ...[
-            const SizedBox(width: 8),
-            CircleAvatar(
-              radius: 16,
-              backgroundColor:
-                  AppColors.secondary.withValues(alpha: 0.15),
-              child: const Icon(Icons.person_rounded,
-                  size: 16, color: AppColors.secondary),
-            ),
-          ],
         ],
       ),
     );

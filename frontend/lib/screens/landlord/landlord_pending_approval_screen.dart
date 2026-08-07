@@ -30,7 +30,7 @@ class _LandlordPendingApprovalScreenState
           return;
         } else if (kycStatus == 'rejected') {
           navigator.pushNamedAndRemoveUntil(
-              '/verification_rejected', (route) => false);
+              '/account_status', (route) => false);
           return;
         } else {
           messenger.showSnackBar(

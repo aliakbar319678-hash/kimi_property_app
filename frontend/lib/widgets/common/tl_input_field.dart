@@ -11,6 +11,7 @@ class TLInputField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final String? helperText;
   final String? errorText;
+  final TextEditingController? controller;
 
   const TLInputField({
     super.key,
@@ -23,6 +24,7 @@ class TLInputField extends StatelessWidget {
     this.onChanged,
     this.helperText,
     this.errorText,
+    this.controller,
   });
 
   @override
@@ -31,6 +33,7 @@ class TLInputField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
+          controller: controller,
           onChanged: onChanged,
           obscureText: obscure,
           keyboardType: keyboardType,

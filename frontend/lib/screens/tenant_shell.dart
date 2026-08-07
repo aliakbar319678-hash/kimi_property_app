@@ -37,7 +37,7 @@ class _TenantShellState extends State<TenantShell> {
     _currentIndex = widget.initialIndex;
     _checkGuestStatus();
 
-    _statusTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+    _statusTimer = Timer.periodic(const Duration(seconds: 60), (_) async {
       if (!mounted || _isGuest) return;
       try {
         final res = await ApiClient().dio.get('/auth/me');

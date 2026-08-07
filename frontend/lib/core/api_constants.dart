@@ -16,6 +16,7 @@ class ApiConstants {
   static const String usersTenants = '/users/tenants';
   static const String updateProfile = '/users/me/profile';
   static const String onboardingStep = '/users/me/onboarding';
+  static const String userOnboarding = '/users/me/onboarding';
 
   // ── Properties ──────────────────────────────────────────────────────────────
   static const String properties = '/properties';

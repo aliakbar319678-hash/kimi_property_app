@@ -42,7 +42,7 @@ class _LandlordShellState extends ConsumerState<LandlordShell> {
       }
     });
 
-    _statusTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+    _statusTimer = Timer.periodic(const Duration(seconds: 60), (_) async {
       if (!mounted) return;
       try {
         final res = await ApiClient().dio.get('/auth/me');

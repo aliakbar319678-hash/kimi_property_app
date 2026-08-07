@@ -187,6 +187,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
 
+                      SizedBox(height: h * 0.015),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/forgot_password');
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(50, 30),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              fontSize: w * 0.034,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+
                       SizedBox(height: h * 0.025),
 
                       // Submit Login Button
@@ -227,10 +250,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             
                             ScaffoldMessenger.of(context).clearSnackBars();
 
-                            if (kycStatus == 'reviewing' || kycStatus == 'pending' || kycStatus == 'in_review') {
+                            if (kycStatus == 'reviewing' || kycStatus == 'in_review') {
                               Navigator.pushNamedAndRemoveUntil(context, '/account_status', (r) => false);
                             } else if (kycStatus == 'rejected') {
-                              Navigator.pushNamedAndRemoveUntil(context, '/verification_rejected', (r) => false);
+                              Navigator.pushNamedAndRemoveUntil(context, '/account_status', (r) => false);
                             } else if (kycStatus == 'suspended') {
                               Navigator.pushNamedAndRemoveUntil(context, '/account_suspended', (r) => false);
                             } else if (kycStatus == 'verified' || kycStatus == 'approved') {

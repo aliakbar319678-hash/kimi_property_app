@@ -28,7 +28,7 @@ class BasicProfileState {
     this.city = '',
     this.stateProvince = '',
     this.postalCode = '',
-    this.country = 'Pakistan',
+    this.country = '',
     this.contactName = '',
     this.relationship = '',
     this.emergencyPhone = '',
@@ -89,7 +89,7 @@ class BasicProfileNotifier extends StateNotifier<BasicProfileState> {
     _fetchUserData();
   }
 
-  Future<void> _fetchUserData() async {
+  Future<void> _fetchUserData({int retryCount = 0}) async {
     try {
       final res = await ApiClient().dio.get('/auth/me');
       if (res.statusCode == 200) {
@@ -106,7 +106,13 @@ class BasicProfileNotifier extends StateNotifier<BasicProfileState> {
           );
         }
       }
-    } catch (_) {}
+    } catch (_) {
+      // If we fail (e.g. token not yet saved after fast redirect), retry up to 3 times
+      if (retryCount < 3) {
+        await Future.delayed(const Duration(milliseconds: 800));
+        _fetchUserData(retryCount: retryCount + 1);
+      }
+    }
   }
 
   void updateFullLegalName(String v) =>
@@ -205,11 +211,8 @@ class BasicProfileNotifier extends StateNotifier<BasicProfileState> {
   }
 
   Future<bool> saveAsDraft() async {
-    final errors = _validate();
-    if (errors.isNotEmpty) {
-      state = state.copyWith(fieldErrors: errors);
-      return false;
-    }
+    // Bypass strict validation for drafts
+    state = state.copyWith(fieldErrors: {});
     return await _submit();
   }
 

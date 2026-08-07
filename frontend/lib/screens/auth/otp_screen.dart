@@ -50,6 +50,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   Future<void> _navigateAfterVerification(BuildContext context, WidgetRef ref) async {
     String role = ref.read(registerProvider).selectedRole;
     String kycStatus = 'unverified';
+    bool onboardingCompleted = false;
+    int onboardingStep = 1;
 
     try {
       final response = await ApiClient().dio.get(ApiConstants.me);
@@ -64,6 +66,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           );
           role = primaryRoleObj['role'] ?? 'tenant';
         }
+        final profile = data['profile'] ?? {};
+        onboardingCompleted = profile['onboarding_completed'] == true;
+        onboardingStep = (profile['onboarding_step'] as num?)?.toInt() ?? 1;
       }
     } catch (e) {
       // fallback to registerProvider role
@@ -75,7 +80,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       if (kycStatus == 'verified' || kycStatus == 'approved') {
         Navigator.pushReplacementNamed(context, '/verification_success');
       } else if (kycStatus == 'rejected') {
-        Navigator.pushReplacementNamed(context, '/verification_rejected');
+        Navigator.pushReplacementNamed(context, '/account_status');
       } else if (kycStatus == 'reviewing') {
         Navigator.pushReplacementNamed(context, '/landlord_pending_approval');
       } else {
@@ -85,21 +90,23 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       if (kycStatus == 'verified' || kycStatus == 'approved') {
         Navigator.pushReplacementNamed(context, '/verification_success');
       } else if (kycStatus == 'rejected') {
-        Navigator.pushReplacementNamed(context, '/verification_rejected');
-      } else if (kycStatus == 'reviewing') {
-        Navigator.pushReplacementNamed(context, '/landlord_pending_approval');
+        Navigator.pushReplacementNamed(context, '/account_status');
+      } else if (kycStatus == 'reviewing' || kycStatus == 'in_review') {
+        Navigator.pushReplacementNamed(context, '/account_status');
       } else {
         Navigator.pushReplacementNamed(context, '/vendor_onboarding');
       }
     } else {
-      if (kycStatus == 'verified' || kycStatus == 'approved') {
-        Navigator.pushReplacementNamed(context, '/verification_success');
-      } else if (kycStatus == 'rejected') {
-        Navigator.pushReplacementNamed(context, '/verification_rejected');
-      } else if (kycStatus == 'reviewing' || kycStatus == 'pending' || kycStatus == 'in_review') {
+      if (kycStatus == 'rejected') {
         Navigator.pushReplacementNamed(context, '/account_status');
-      } else {
+      } else if (kycStatus == 'verified' || kycStatus == 'approved') {
+        Navigator.pushReplacementNamed(context, '/verification_success');
+      } else if (!onboardingCompleted && onboardingStep < 5) {
+        // Tenant onboarding first
         Navigator.pushReplacementNamed(context, '/basic_profile');
+      } else {
+        // Onboarding completed, waiting for admin approval
+        Navigator.pushReplacementNamed(context, '/account_status');
       }
     }
   }

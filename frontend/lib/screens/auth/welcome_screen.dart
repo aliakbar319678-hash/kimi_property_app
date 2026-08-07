@@ -191,48 +191,7 @@ class WelcomeScreen extends ConsumerWidget {
                   },
                 ),
 
-                SizedBox(height: h * 0.025),
 
-                // ── Continue with ────────────────────────
-                Text(
-                  'Continue with:',
-                  style: TextStyle(
-                    fontSize: w * 0.035,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-
-                SizedBox(height: h * 0.015),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _SocialButton(
-                      icon: Icons.g_mobiledata_rounded,
-                      label: 'G',
-                      color: const Color(0xFFEA4335),
-                      onTap: () async {
-                        final success = await ref.read(registerProvider.notifier).loginWithGoogle();
-                        if (context.mounted && success) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Logged in with Google')),
-                          );
-                          Navigator.pushNamedAndRemoveUntil(context, '/home', (r) => false);
-                        }
-                      },
-                    ),
-                    SizedBox(width: w * 0.04),
-                    _SocialButton(
-                      icon: Icons.apple_rounded,
-                      label: '',
-                      color: AppColors.textPrimary,
-                      onTap: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Apple Login...'))); },
-                      isApple: true,
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: h * 0.03),
 
                 // ── Guest Button ─────────────────────────
                 TextButton.icon(

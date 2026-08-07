@@ -105,9 +105,6 @@ class EmploymentNotifier extends StateNotifier<EmploymentState> {
     if (state.employmentLength.trim().isEmpty) {
       errors['employmentLength'] = 'Employment Length is required';
     }
-    if (state.otherIncome.trim().isEmpty) {
-      errors['otherIncome'] = 'Other Income Sources is required (enter "None" if not applicable)';
-    }
     if (state.uploadedFileName == null || state.uploadedFileName!.trim().isEmpty) {
       errors['uploadedFile'] = 'Please upload Proof of Income';
     }

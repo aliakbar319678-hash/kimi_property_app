@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_phone_input_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_user_avatar.dart';
@@ -202,23 +201,18 @@ class BasicProfileScreen extends ConsumerWidget {
                               icon: const Icon(Icons.map_rounded, size: 18, color: AppColors.primary),
                               label: const Text('Pick on Map', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
                               onPressed: () async {
-                                final selectedAddress = await Navigator.push<String>(
+                                // Returns Map<String, String> with street, city, state, postal, country
+                                final addressData = await Navigator.push<Map<String, String>>(
                                   context,
                                   MaterialPageRoute(builder: (_) => const TLMapPicker()),
                                 );
-                                if (selectedAddress != null && selectedAddress.isNotEmpty) {
-                                  final parts = selectedAddress.split(',').map((e) => e.trim()).toList();
-                                  final street = parts.isNotEmpty ? parts[0] : selectedAddress;
-                                  final city = parts.length > 1 ? parts[1] : '';
-                                  final stateProv = parts.length > 2 ? parts[2] : '';
-                                  final country = parts.length > 3 ? parts[3] : 'Pakistan';
-
+                                if (addressData != null) {
                                   notif.updateFullAddress(
-                                    street: street,
-                                    city: city,
-                                    stateProv: stateProv,
-                                    postal: '',
-                                    countryName: country,
+                                    street: addressData['street'] ?? '',
+                                    city: addressData['city'] ?? '',
+                                    stateProv: addressData['state'] ?? '',
+                                    postal: addressData['postal'] ?? '',
+                                    countryName: addressData['country'] ?? '',
                                   );
                                 }
                               },
@@ -528,23 +522,17 @@ class _InputField extends StatefulWidget {
   final IconData? prefixIcon;
   final ValueChanged<String>? onChanged;
   final TextInputType keyboardType;
-  final int maxLines;
-  final int? maxLength;
-  final List<TextInputFormatter>? inputFormatters;
   final String? errorText;
   final String? initialValue;
   final bool readOnly;
   final VoidCallback? onTap;
 
   const _InputField({
-    super.key,
+    
     required this.hint,
     this.prefixIcon,
     this.onChanged,
     this.keyboardType = TextInputType.text,
-    this.maxLines = 1,
-    this.maxLength,
-    this.inputFormatters,
     this.errorText,
     this.initialValue,
     this.readOnly = false,
@@ -563,7 +551,6 @@ class _InputFieldState extends State<_InputField> {
     super.initState();
     _controller = TextEditingController(text: widget.initialValue ?? '');
   }
-
   @override
   void didUpdateWidget(covariant _InputField oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -588,9 +575,6 @@ class _InputFieldState extends State<_InputField> {
       onTap: widget.onTap,
       onChanged: widget.onChanged,
       keyboardType: widget.keyboardType,
-      maxLines: widget.maxLines,
-      maxLength: widget.maxLength,
-      inputFormatters: widget.inputFormatters,
       buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
       style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
       decoration: InputDecoration(

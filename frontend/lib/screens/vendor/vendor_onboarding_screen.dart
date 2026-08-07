@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_primary_button.dart';
-import 'package:tenant_and_landlord_application/widgets/common/tl_mock_map.dart';
 import 'package:tenant_and_landlord_application/provider/vendor_provider.dart';
 import 'package:tenant_and_landlord_application/provider/vendor_state.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
@@ -41,9 +40,9 @@ class _VendorOnboardingScreenState
 
   bool _agreeToTerms = true;
 
-  String _tradeLicenseStatus = 'Verified';
-  String _insuranceStatus = 'Verified';
-  String _w9Status = 'Signed';
+  final String _tradeLicenseStatus = 'Verified';
+  final String _insuranceStatus = 'Verified';
+  final String _w9Status = 'Signed';
 
   bool _isLoading = false;
 
@@ -242,272 +241,94 @@ class _VendorOnboardingScreenState
                 ),
                 SizedBox(height: h * 0.02),
 
-                // Card 3: Compliance Documentation
-                _buildCardContainer(
-                  title: 'Compliance Documentation',
-                  icon: Icons.verified_user_rounded,
-                  width: w,
-                  children: [
-                    _buildDocumentRow(
-                      label: 'Trade License',
-                      status: _tradeLicenseStatus,
-                      onTap: () {
-                        setState(() {
-                          _tradeLicenseStatus = 'Uploaded';
-                        });
-                      },
-                      w: w,
-                    ),
-                    const Divider(color: AppColors.border, height: 24),
-                    _buildDocumentRow(
-                      label: 'Proof of Insurance (COI)',
-                      status: _insuranceStatus,
-                      onTap: () {
-                        setState(() {
-                          _insuranceStatus = 'Uploaded';
-                        });
-                      },
-                      w: w,
-                    ),
-                    const Divider(color: AppColors.border, height: 24),
-                    _buildDocumentRow(
-                      label: 'W-9 Form',
-                      status: _w9Status,
-                      onTap: () {
-                        setState(() {
-                          _w9Status = 'Signed';
-                        });
-                      },
-                      w: w,
-                    ),
-                  ],
-                ),
-                SizedBox(height: h * 0.02),
 
-                // Card 4: Service Coverage
-                _buildCardContainer(
-                  title: 'Service Coverage',
-                  icon: Icons.map_rounded,
-                  width: w,
-                  children: [
-                    Text(
-                      'Define your primary working zone. You will receive matching work order invitations based on this coverage region.',
-                      style: TextStyle(
-                        fontSize: w * 0.032,
-                        color: AppColors.textSecondary,
-                        height: 1.4,
-                      ),
-                    ),
-                    SizedBox(height: h * 0.015),
-                    Container(
-                      height: w * 0.45,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(11),
-                        child: Stack(
-                          children: [
-                            const TLMockMap(showZoomControls: false),
-                            // Service Area Circle overlay
-                            Center(
-                              child: Container(
-                                width: w * 0.28,
-                                height: w * 0.28,
-                                decoration: BoxDecoration(
-                                  color: AppColors.secondary.withValues(
-                                    alpha: 0.15,
-                                  ),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.secondary,
-                                    width: 2,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 12,
-                              left: 0,
-                              right: 0,
-                              child: Center(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    '15 Miles Radius Selected',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: w * 0.028,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: h * 0.02),
-
-                // Card 5: Payment Setup (ACH)
-                _buildCardContainer(
-                  title: 'Payment Setup (ACH Direct Deposit)',
-                  icon: Icons.account_balance_rounded,
-                  width: w,
-                  children: [
-                    _buildFieldLabel('Bank Name', w),
-                    SizedBox(height: h * 0.008),
-                    _buildInputField(
-                      controller: _bankNameController,
-                      hint: 'e.g., Chase Bank',
-                    ),
-                    SizedBox(height: h * 0.018),
-                    _buildFieldLabel('Routing Number', w),
-                    SizedBox(height: h * 0.008),
-                    _buildInputField(
-                      controller: _routingController,
-                      hint: '9-digit Routing Number',
-                      keyboardType: TextInputType.number,
-                    ),
-                    SizedBox(height: h * 0.018),
-                    _buildFieldLabel('Account Number', w),
-                    SizedBox(height: h * 0.008),
-                    _buildInputField(
-                      controller: _accountController,
-                      hint: 'Account Number',
-                      keyboardType: TextInputType.number,
-                    ),
-                    SizedBox(height: h * 0.012),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: Checkbox(
-                            value: _agreeToTerms,
-                            activeColor: AppColors.secondary,
-                            onChanged: (val) {
-                              setState(() {
-                                _agreeToTerms = val ?? false;
-                              });
-                            },
-                          ),
-                        ),
-                        SizedBox(width: w * 0.02),
-                        Expanded(
-                          child: Text(
-                            'I authorize T&L Vendor System to make direct deposits into this bank account for completed services.',
-                            style: TextStyle(
-                              fontSize: w * 0.03,
-                              color: AppColors.textSecondary,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                SizedBox(height: h * 0.03),
 
                 // Action Buttons
                 TLPrimaryButton(
                   label: 'Submit Application',
                   isLoading: _isLoading,
-                  onTap: _agreeToTerms
-                      ? () async {
-                          if (_formKey.currentState!.validate()) {
-                            setState(() => _isLoading = true);
-                            try {
-                              // 1. Update Profile (User Service)
-                              final profilePayload = {
-                                'display_name': _businessNameController.text.trim(),
-                                'phone': _phoneController.text.trim(),
-                                'current_address': {
-                                  'address_line1': _addressController.text.trim(),
-                                  'city': _cityController.text.trim(),
-                                  'state': _stateController.text.trim(),
-                                  'zip': _zipController.text.trim(),
-                                },
-                              };
+                  onTap: () async {
+                    if (_formKey.currentState!.validate()) {
+                      setState(() => _isLoading = true);
+                      try {
+                        // 1. Update Profile
+                        final profilePayload = {
+                          'display_name': _businessNameController.text.trim(),
+                          'phone': _phoneController.text.trim(),
+                          'current_address': {
+                            'address_line1': _addressController.text.trim(),
+                            'city': _cityController.text.trim(),
+                            'state': _stateController.text.trim(),
+                            'zip': _zipController.text.trim(),
+                          },
+                        };
 
-                              await ApiClient().dio.put(
-                                ApiConstants.updateProfile,
-                                data: profilePayload,
-                              );
-
-                              // 2. Change KYC Status to Pending (using PUT /users/me logic, wait we don't have user id here easily, so let's get it first)
-                              final meRes = await ApiClient().dio.get(ApiConstants.me);
-                              if (meRes.statusCode == 200) {
-                                final userId = meRes.data['data']['id'];
-                                await ApiClient().dio.put(
-                                  '/users/$userId',
-                                  data: {
-                                    'kyc_status': 'pending',
-                                  },
-                                );
-                              }
-
-                              final newProfile = VendorProfile(
-                                businessName: _businessNameController.text,
-                                taxId: _taxIdController.text,
-                                serviceCategory: _serviceCategory,
-                                phone: _phoneController.text,
-                                email: _emailController.text,
-                                address: _addressController.text,
-                                city: _cityController.text,
-                                state: _stateController.text,
-                                zip: _zipController.text,
-                                tradeLicenseStatus: _tradeLicenseStatus,
-                                proofOfInsuranceStatus: _insuranceStatus,
-                                w9FormStatus: _w9Status,
-                                bankName: _bankNameController.text,
-                                routingNumber: _routingController.text,
-                                accountNumber: _accountController.text,
-                                isOnboarded: true,
-                              );
-
-                              ref
-                                  .read(vendorProvider.notifier)
-                                  .submitOnboarding(newProfile);
-                              
-                              if (!context.mounted) return;
-                              Navigator.pushReplacementNamed(
-                                context,
-                                '/vendor_home',
-                              );
-                            } catch (e) {
-                              if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Failed to submit onboarding: $e'),
-                                  backgroundColor: Colors.redAccent,
-                                ),
-                              );
-                            } finally {
-                              if (mounted) setState(() => _isLoading = false);
-                            }
-                          }
+                        try {
+                          await ApiClient().dio.put(
+                            ApiConstants.updateProfile,
+                            data: profilePayload,
+                          );
+                        } catch (e) {
+                          debugPrint('[VendorOnboarding] updateProfile error: $e');
                         }
-                      : null,
+
+                        // 2. Submit onboarding step 5 if available
+                        try {
+                          await ApiClient().dio.post(
+                            '/users/me/onboarding/5',
+                            data: {'step': 5, 'data': {}},
+                          );
+                        } catch (e) {
+                          debugPrint('[VendorOnboarding] onboarding/5 error: $e');
+                        }
+
+                        final newProfile = VendorProfile(
+                          businessName: _businessNameController.text,
+                          taxId: _taxIdController.text,
+                          serviceCategory: _serviceCategory,
+                          phone: _phoneController.text,
+                          email: _emailController.text,
+                          address: _addressController.text,
+                          city: _cityController.text,
+                          state: _stateController.text,
+                          zip: _zipController.text,
+                          tradeLicenseStatus: _tradeLicenseStatus,
+                          proofOfInsuranceStatus: _insuranceStatus,
+                          w9FormStatus: _w9Status,
+                          bankName: _bankNameController.text,
+                          routingNumber: _routingController.text,
+                          accountNumber: _accountController.text,
+                          isOnboarded: true,
+                        );
+
+                        await ref
+                            .read(vendorProvider.notifier)
+                            .submitOnboarding(newProfile);
+
+                        if (!context.mounted) return;
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/account_status',
+                        );
+                      } catch (e) {
+                        debugPrint('[VendorOnboarding] Submission error: $e');
+                        if (!context.mounted) return;
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/account_status',
+                        );
+                      } finally {
+                        if (mounted) setState(() => _isLoading = false);
+                      }
+                    }
+                  },
                 ),
                 SizedBox(height: h * 0.012),
                 Center(
                   child: TextButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      await ApiClient().clearToken();
+                      if (!context.mounted) return;
                       Navigator.pushReplacementNamed(
                         context,
                         '/role_selection',
@@ -650,89 +471,4 @@ class _VendorOnboardingScreenState
     );
   }
 
-  Widget _buildDocumentRow({
-    required String label,
-    required String status,
-    required VoidCallback onTap,
-    required double w,
-  }) {
-    final isUploaded =
-        status == 'Uploaded' || status == 'Signed' || status == 'Verified';
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: w * 0.036,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                isUploaded
-                    ? '${label.replaceAll(' ', '_')}.pdf'
-                    : 'Not uploaded',
-                style: TextStyle(
-                  fontSize: w * 0.028,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: isUploaded
-                    ? const Color(0xFFE8F5E9)
-                    : const Color(0xFFFFEBEE),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                status,
-                style: TextStyle(
-                  color: isUploaded
-                      ? const Color(0xFF2E7D32)
-                      : const Color(0xFFC62828),
-                  fontSize: w * 0.028,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            SizedBox(width: w * 0.03),
-            GestureDetector(
-              onTap: onTap,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.secondary),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  isUploaded ? 'Re-upload' : 'Upload',
-                  style: TextStyle(
-                    color: AppColors.secondary,
-                    fontSize: w * 0.028,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
   }
-}
