@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tenant_and_landlord_application/provider/auth_provider.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_primary_button.dart';
 
@@ -191,8 +190,6 @@ class WelcomeScreen extends ConsumerWidget {
                   },
                 ),
 
-
-
                 // ── Guest Button ─────────────────────────
                 TextButton.icon(
                   onPressed: () {
@@ -252,62 +249,14 @@ class _FooterLink extends StatelessWidget {
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     return GestureDetector(
-      onTap: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening Terms of Service...'))); },
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Opening $text...')),
+        );
+      },
       child: Text(
         text,
         style: TextStyle(fontSize: w * 0.029, color: AppColors.textHint),
-      ),
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-  final bool isApple;
-
-  const _SocialButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-    this.isApple = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: w * 0.18,
-        height: w * 0.14,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Center(
-          child: isApple
-              ? Icon(Icons.apple_rounded, color: color, size: w * 0.065)
-              : Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: w * 0.065,
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                  ),
-                ),
-        ),
       ),
     );
   }

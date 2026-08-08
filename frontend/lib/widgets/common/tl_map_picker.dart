@@ -5,7 +5,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 
-/// Returns a Map<String, String> with keys:
+/// Returns a `Map<String, String>` with keys:
 ///   street, city, state, postal, country, fullAddress
 class TLMapPicker extends StatefulWidget {
   const TLMapPicker({super.key});

@@ -6,6 +6,7 @@ import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/widgets/common/tl_primary_button.dart';
 import 'package:tenant_and_landlord_application/core/api_client.dart';
 import 'package:tenant_and_landlord_application/core/api_constants.dart';
+import 'package:tenant_and_landlord_application/widgets/common/tl_map_picker.dart';
 
 class LandlordOnboardingScreen extends ConsumerStatefulWidget {
   const LandlordOnboardingScreen({super.key});
@@ -264,13 +265,20 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
     TextInputType keyboardType = TextInputType.text,
     bool readOnly = false,
     VoidCallback? onTap,
+    Widget? labelTrailing,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+              if (labelTrailing != null) labelTrailing,
+            ],
+          ),
           const SizedBox(height: 6),
           TextFormField(
             controller:  controller,
@@ -367,7 +375,35 @@ class _LandlordOnboardingScreenState extends ConsumerState<LandlordOnboardingScr
             onTap: _pickDate,
           ),
           _buildField(label: 'Tax ID / EIN *', hint: 'e.g. 12-3456789', controller: _taxIdController, errorText: _taxIdError),
-          _buildField(label: 'Address Line 1 *', hint: 'e.g. 123 Main St', controller: _addressController, errorText: _addressError),
+          _buildField(
+            label: 'Address Line 1 *', 
+            hint: 'e.g. 123 Main St', 
+            controller: _addressController, 
+            errorText: _addressError,
+            labelTrailing: TextButton.icon(
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              icon: const Icon(Icons.map_rounded, size: 18, color: AppColors.primary),
+              label: const Text('Pick on Map', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
+              onPressed: () async {
+                final addressData = await Navigator.push<Map<String, String>>(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TLMapPicker()),
+                );
+                if (addressData != null) {
+                  setState(() {
+                    _addressController.text = addressData['street'] ?? '';
+                    _cityController.text = addressData['city'] ?? '';
+                    _stateController.text = addressData['state'] ?? '';
+                    _postalController.text = addressData['postal'] ?? '';
+                  });
+                }
+              },
+            ),
+          ),
           _buildField(label: 'City *', hint: 'e.g. New York', controller: _cityController, errorText: _cityError),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,

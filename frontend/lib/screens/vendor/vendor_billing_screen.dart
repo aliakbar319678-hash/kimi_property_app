@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tenant_and_landlord_application/theme/apptheme.dart';
 import 'package:tenant_and_landlord_application/provider/vendor_provider.dart';
@@ -162,7 +162,7 @@ class VendorBillingScreen extends ConsumerWidget {
                       icon: Icons.payment_rounded,
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Direct Deposit: ${state.profile.bankName.isEmpty ? "Chase Bank" : state.profile.bankName}')),
+                          const SnackBar(content: Text('Bank Details Configuration - Coming Soon')),
                         );
                       },
                       w: w,

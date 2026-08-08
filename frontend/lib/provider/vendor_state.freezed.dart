@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$VendorProfile {
 
- String get businessName; String get taxId; String get serviceCategory; String get phone; String get email; String get address; String get city; String get state; String get zip; String get tradeLicenseStatus; String get proofOfInsuranceStatus; String get w9FormStatus; String get bankName; String get routingNumber; String get accountNumber; bool get isOnboarded;
+ String get businessName; String get taxId; String get serviceCategory; String get phone; String get email; String get address; String get city; String get state; String get zip; String get tradeLicenseStatus; String get proofOfInsuranceStatus; String get w9FormStatus; bool get isOnboarded;
 /// Create a copy of VendorProfile
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $VendorProfileCopyWith<VendorProfile> get copyWith => _$VendorProfileCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VendorProfile&&(identical(other.businessName, businessName) || other.businessName == businessName)&&(identical(other.taxId, taxId) || other.taxId == taxId)&&(identical(other.serviceCategory, serviceCategory) || other.serviceCategory == serviceCategory)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.email, email) || other.email == email)&&(identical(other.address, address) || other.address == address)&&(identical(other.city, city) || other.city == city)&&(identical(other.state, state) || other.state == state)&&(identical(other.zip, zip) || other.zip == zip)&&(identical(other.tradeLicenseStatus, tradeLicenseStatus) || other.tradeLicenseStatus == tradeLicenseStatus)&&(identical(other.proofOfInsuranceStatus, proofOfInsuranceStatus) || other.proofOfInsuranceStatus == proofOfInsuranceStatus)&&(identical(other.w9FormStatus, w9FormStatus) || other.w9FormStatus == w9FormStatus)&&(identical(other.bankName, bankName) || other.bankName == bankName)&&(identical(other.routingNumber, routingNumber) || other.routingNumber == routingNumber)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.isOnboarded, isOnboarded) || other.isOnboarded == isOnboarded));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VendorProfile&&(identical(other.businessName, businessName) || other.businessName == businessName)&&(identical(other.taxId, taxId) || other.taxId == taxId)&&(identical(other.serviceCategory, serviceCategory) || other.serviceCategory == serviceCategory)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.email, email) || other.email == email)&&(identical(other.address, address) || other.address == address)&&(identical(other.city, city) || other.city == city)&&(identical(other.state, state) || other.state == state)&&(identical(other.zip, zip) || other.zip == zip)&&(identical(other.tradeLicenseStatus, tradeLicenseStatus) || other.tradeLicenseStatus == tradeLicenseStatus)&&(identical(other.proofOfInsuranceStatus, proofOfInsuranceStatus) || other.proofOfInsuranceStatus == proofOfInsuranceStatus)&&(identical(other.w9FormStatus, w9FormStatus) || other.w9FormStatus == w9FormStatus)&&(identical(other.isOnboarded, isOnboarded) || other.isOnboarded == isOnboarded));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,businessName,taxId,serviceCategory,phone,email,address,city,state,zip,tradeLicenseStatus,proofOfInsuranceStatus,w9FormStatus,bankName,routingNumber,accountNumber,isOnboarded);
+int get hashCode => Object.hash(runtimeType,businessName,taxId,serviceCategory,phone,email,address,city,state,zip,tradeLicenseStatus,proofOfInsuranceStatus,w9FormStatus,isOnboarded);
 
 @override
 String toString() {
-  return 'VendorProfile(businessName: $businessName, taxId: $taxId, serviceCategory: $serviceCategory, phone: $phone, email: $email, address: $address, city: $city, state: $state, zip: $zip, tradeLicenseStatus: $tradeLicenseStatus, proofOfInsuranceStatus: $proofOfInsuranceStatus, w9FormStatus: $w9FormStatus, bankName: $bankName, routingNumber: $routingNumber, accountNumber: $accountNumber, isOnboarded: $isOnboarded)';
+  return 'VendorProfile(businessName: $businessName, taxId: $taxId, serviceCategory: $serviceCategory, phone: $phone, email: $email, address: $address, city: $city, state: $state, zip: $zip, tradeLicenseStatus: $tradeLicenseStatus, proofOfInsuranceStatus: $proofOfInsuranceStatus, w9FormStatus: $w9FormStatus, isOnboarded: $isOnboarded)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $VendorProfileCopyWith<$Res>  {
   factory $VendorProfileCopyWith(VendorProfile value, $Res Function(VendorProfile) _then) = _$VendorProfileCopyWithImpl;
 @useResult
 $Res call({
- String businessName, String taxId, String serviceCategory, String phone, String email, String address, String city, String state, String zip, String tradeLicenseStatus, String proofOfInsuranceStatus, String w9FormStatus, String bankName, String routingNumber, String accountNumber, bool isOnboarded
+ String businessName, String taxId, String serviceCategory, String phone, String email, String address, String city, String state, String zip, String tradeLicenseStatus, String proofOfInsuranceStatus, String w9FormStatus, bool isOnboarded
 });
 
 
@@ -62,7 +62,7 @@ class _$VendorProfileCopyWithImpl<$Res>
 
 /// Create a copy of VendorProfile
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? businessName = null,Object? taxId = null,Object? serviceCategory = null,Object? phone = null,Object? email = null,Object? address = null,Object? city = null,Object? state = null,Object? zip = null,Object? tradeLicenseStatus = null,Object? proofOfInsuranceStatus = null,Object? w9FormStatus = null,Object? bankName = null,Object? routingNumber = null,Object? accountNumber = null,Object? isOnboarded = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? businessName = null,Object? taxId = null,Object? serviceCategory = null,Object? phone = null,Object? email = null,Object? address = null,Object? city = null,Object? state = null,Object? zip = null,Object? tradeLicenseStatus = null,Object? proofOfInsuranceStatus = null,Object? w9FormStatus = null,Object? isOnboarded = null,}) {
   return _then(_self.copyWith(
 businessName: null == businessName ? _self.businessName : businessName // ignore: cast_nullable_to_non_nullable
 as String,taxId: null == taxId ? _self.taxId : taxId // ignore: cast_nullable_to_non_nullable
@@ -76,9 +76,6 @@ as String,zip: null == zip ? _self.zip : zip // ignore: cast_nullable_to_non_nul
 as String,tradeLicenseStatus: null == tradeLicenseStatus ? _self.tradeLicenseStatus : tradeLicenseStatus // ignore: cast_nullable_to_non_nullable
 as String,proofOfInsuranceStatus: null == proofOfInsuranceStatus ? _self.proofOfInsuranceStatus : proofOfInsuranceStatus // ignore: cast_nullable_to_non_nullable
 as String,w9FormStatus: null == w9FormStatus ? _self.w9FormStatus : w9FormStatus // ignore: cast_nullable_to_non_nullable
-as String,bankName: null == bankName ? _self.bankName : bankName // ignore: cast_nullable_to_non_nullable
-as String,routingNumber: null == routingNumber ? _self.routingNumber : routingNumber // ignore: cast_nullable_to_non_nullable
-as String,accountNumber: null == accountNumber ? _self.accountNumber : accountNumber // ignore: cast_nullable_to_non_nullable
 as String,isOnboarded: null == isOnboarded ? _self.isOnboarded : isOnboarded // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -165,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String businessName,  String taxId,  String serviceCategory,  String phone,  String email,  String address,  String city,  String state,  String zip,  String tradeLicenseStatus,  String proofOfInsuranceStatus,  String w9FormStatus,  String bankName,  String routingNumber,  String accountNumber,  bool isOnboarded)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String businessName,  String taxId,  String serviceCategory,  String phone,  String email,  String address,  String city,  String state,  String zip,  String tradeLicenseStatus,  String proofOfInsuranceStatus,  String w9FormStatus,  bool isOnboarded)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VendorProfile() when $default != null:
-return $default(_that.businessName,_that.taxId,_that.serviceCategory,_that.phone,_that.email,_that.address,_that.city,_that.state,_that.zip,_that.tradeLicenseStatus,_that.proofOfInsuranceStatus,_that.w9FormStatus,_that.bankName,_that.routingNumber,_that.accountNumber,_that.isOnboarded);case _:
+return $default(_that.businessName,_that.taxId,_that.serviceCategory,_that.phone,_that.email,_that.address,_that.city,_that.state,_that.zip,_that.tradeLicenseStatus,_that.proofOfInsuranceStatus,_that.w9FormStatus,_that.isOnboarded);case _:
   return orElse();
 
 }
@@ -186,10 +183,10 @@ return $default(_that.businessName,_that.taxId,_that.serviceCategory,_that.phone
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String businessName,  String taxId,  String serviceCategory,  String phone,  String email,  String address,  String city,  String state,  String zip,  String tradeLicenseStatus,  String proofOfInsuranceStatus,  String w9FormStatus,  String bankName,  String routingNumber,  String accountNumber,  bool isOnboarded)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String businessName,  String taxId,  String serviceCategory,  String phone,  String email,  String address,  String city,  String state,  String zip,  String tradeLicenseStatus,  String proofOfInsuranceStatus,  String w9FormStatus,  bool isOnboarded)  $default,) {final _that = this;
 switch (_that) {
 case _VendorProfile():
-return $default(_that.businessName,_that.taxId,_that.serviceCategory,_that.phone,_that.email,_that.address,_that.city,_that.state,_that.zip,_that.tradeLicenseStatus,_that.proofOfInsuranceStatus,_that.w9FormStatus,_that.bankName,_that.routingNumber,_that.accountNumber,_that.isOnboarded);case _:
+return $default(_that.businessName,_that.taxId,_that.serviceCategory,_that.phone,_that.email,_that.address,_that.city,_that.state,_that.zip,_that.tradeLicenseStatus,_that.proofOfInsuranceStatus,_that.w9FormStatus,_that.isOnboarded);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -206,10 +203,10 @@ return $default(_that.businessName,_that.taxId,_that.serviceCategory,_that.phone
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String businessName,  String taxId,  String serviceCategory,  String phone,  String email,  String address,  String city,  String state,  String zip,  String tradeLicenseStatus,  String proofOfInsuranceStatus,  String w9FormStatus,  String bankName,  String routingNumber,  String accountNumber,  bool isOnboarded)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String businessName,  String taxId,  String serviceCategory,  String phone,  String email,  String address,  String city,  String state,  String zip,  String tradeLicenseStatus,  String proofOfInsuranceStatus,  String w9FormStatus,  bool isOnboarded)?  $default,) {final _that = this;
 switch (_that) {
 case _VendorProfile() when $default != null:
-return $default(_that.businessName,_that.taxId,_that.serviceCategory,_that.phone,_that.email,_that.address,_that.city,_that.state,_that.zip,_that.tradeLicenseStatus,_that.proofOfInsuranceStatus,_that.w9FormStatus,_that.bankName,_that.routingNumber,_that.accountNumber,_that.isOnboarded);case _:
+return $default(_that.businessName,_that.taxId,_that.serviceCategory,_that.phone,_that.email,_that.address,_that.city,_that.state,_that.zip,_that.tradeLicenseStatus,_that.proofOfInsuranceStatus,_that.w9FormStatus,_that.isOnboarded);case _:
   return null;
 
 }
@@ -221,7 +218,7 @@ return $default(_that.businessName,_that.taxId,_that.serviceCategory,_that.phone
 
 
 class _VendorProfile implements VendorProfile {
-  const _VendorProfile({this.businessName = '', this.taxId = '', this.serviceCategory = 'Plumbing', this.phone = '', this.email = '', this.address = '', this.city = '', this.state = '', this.zip = '', this.tradeLicenseStatus = 'Upload', this.proofOfInsuranceStatus = 'Upload', this.w9FormStatus = 'Upload', this.bankName = '', this.routingNumber = '', this.accountNumber = '', this.isOnboarded = false});
+  const _VendorProfile({this.businessName = '', this.taxId = '', this.serviceCategory = 'Plumbing', this.phone = '', this.email = '', this.address = '', this.city = '', this.state = '', this.zip = '', this.tradeLicenseStatus = 'Upload', this.proofOfInsuranceStatus = 'Upload', this.w9FormStatus = 'Upload', this.isOnboarded = false});
   
 
 @override@JsonKey() final  String businessName;
@@ -236,9 +233,6 @@ class _VendorProfile implements VendorProfile {
 @override@JsonKey() final  String tradeLicenseStatus;
 @override@JsonKey() final  String proofOfInsuranceStatus;
 @override@JsonKey() final  String w9FormStatus;
-@override@JsonKey() final  String bankName;
-@override@JsonKey() final  String routingNumber;
-@override@JsonKey() final  String accountNumber;
 @override@JsonKey() final  bool isOnboarded;
 
 /// Create a copy of VendorProfile
@@ -251,16 +245,16 @@ _$VendorProfileCopyWith<_VendorProfile> get copyWith => __$VendorProfileCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VendorProfile&&(identical(other.businessName, businessName) || other.businessName == businessName)&&(identical(other.taxId, taxId) || other.taxId == taxId)&&(identical(other.serviceCategory, serviceCategory) || other.serviceCategory == serviceCategory)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.email, email) || other.email == email)&&(identical(other.address, address) || other.address == address)&&(identical(other.city, city) || other.city == city)&&(identical(other.state, state) || other.state == state)&&(identical(other.zip, zip) || other.zip == zip)&&(identical(other.tradeLicenseStatus, tradeLicenseStatus) || other.tradeLicenseStatus == tradeLicenseStatus)&&(identical(other.proofOfInsuranceStatus, proofOfInsuranceStatus) || other.proofOfInsuranceStatus == proofOfInsuranceStatus)&&(identical(other.w9FormStatus, w9FormStatus) || other.w9FormStatus == w9FormStatus)&&(identical(other.bankName, bankName) || other.bankName == bankName)&&(identical(other.routingNumber, routingNumber) || other.routingNumber == routingNumber)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.isOnboarded, isOnboarded) || other.isOnboarded == isOnboarded));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VendorProfile&&(identical(other.businessName, businessName) || other.businessName == businessName)&&(identical(other.taxId, taxId) || other.taxId == taxId)&&(identical(other.serviceCategory, serviceCategory) || other.serviceCategory == serviceCategory)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.email, email) || other.email == email)&&(identical(other.address, address) || other.address == address)&&(identical(other.city, city) || other.city == city)&&(identical(other.state, state) || other.state == state)&&(identical(other.zip, zip) || other.zip == zip)&&(identical(other.tradeLicenseStatus, tradeLicenseStatus) || other.tradeLicenseStatus == tradeLicenseStatus)&&(identical(other.proofOfInsuranceStatus, proofOfInsuranceStatus) || other.proofOfInsuranceStatus == proofOfInsuranceStatus)&&(identical(other.w9FormStatus, w9FormStatus) || other.w9FormStatus == w9FormStatus)&&(identical(other.isOnboarded, isOnboarded) || other.isOnboarded == isOnboarded));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,businessName,taxId,serviceCategory,phone,email,address,city,state,zip,tradeLicenseStatus,proofOfInsuranceStatus,w9FormStatus,bankName,routingNumber,accountNumber,isOnboarded);
+int get hashCode => Object.hash(runtimeType,businessName,taxId,serviceCategory,phone,email,address,city,state,zip,tradeLicenseStatus,proofOfInsuranceStatus,w9FormStatus,isOnboarded);
 
 @override
 String toString() {
-  return 'VendorProfile(businessName: $businessName, taxId: $taxId, serviceCategory: $serviceCategory, phone: $phone, email: $email, address: $address, city: $city, state: $state, zip: $zip, tradeLicenseStatus: $tradeLicenseStatus, proofOfInsuranceStatus: $proofOfInsuranceStatus, w9FormStatus: $w9FormStatus, bankName: $bankName, routingNumber: $routingNumber, accountNumber: $accountNumber, isOnboarded: $isOnboarded)';
+  return 'VendorProfile(businessName: $businessName, taxId: $taxId, serviceCategory: $serviceCategory, phone: $phone, email: $email, address: $address, city: $city, state: $state, zip: $zip, tradeLicenseStatus: $tradeLicenseStatus, proofOfInsuranceStatus: $proofOfInsuranceStatus, w9FormStatus: $w9FormStatus, isOnboarded: $isOnboarded)';
 }
 
 
@@ -271,7 +265,7 @@ abstract mixin class _$VendorProfileCopyWith<$Res> implements $VendorProfileCopy
   factory _$VendorProfileCopyWith(_VendorProfile value, $Res Function(_VendorProfile) _then) = __$VendorProfileCopyWithImpl;
 @override @useResult
 $Res call({
- String businessName, String taxId, String serviceCategory, String phone, String email, String address, String city, String state, String zip, String tradeLicenseStatus, String proofOfInsuranceStatus, String w9FormStatus, String bankName, String routingNumber, String accountNumber, bool isOnboarded
+ String businessName, String taxId, String serviceCategory, String phone, String email, String address, String city, String state, String zip, String tradeLicenseStatus, String proofOfInsuranceStatus, String w9FormStatus, bool isOnboarded
 });
 
 
@@ -288,7 +282,7 @@ class __$VendorProfileCopyWithImpl<$Res>
 
 /// Create a copy of VendorProfile
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? businessName = null,Object? taxId = null,Object? serviceCategory = null,Object? phone = null,Object? email = null,Object? address = null,Object? city = null,Object? state = null,Object? zip = null,Object? tradeLicenseStatus = null,Object? proofOfInsuranceStatus = null,Object? w9FormStatus = null,Object? bankName = null,Object? routingNumber = null,Object? accountNumber = null,Object? isOnboarded = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? businessName = null,Object? taxId = null,Object? serviceCategory = null,Object? phone = null,Object? email = null,Object? address = null,Object? city = null,Object? state = null,Object? zip = null,Object? tradeLicenseStatus = null,Object? proofOfInsuranceStatus = null,Object? w9FormStatus = null,Object? isOnboarded = null,}) {
   return _then(_VendorProfile(
 businessName: null == businessName ? _self.businessName : businessName // ignore: cast_nullable_to_non_nullable
 as String,taxId: null == taxId ? _self.taxId : taxId // ignore: cast_nullable_to_non_nullable
@@ -302,9 +296,6 @@ as String,zip: null == zip ? _self.zip : zip // ignore: cast_nullable_to_non_nul
 as String,tradeLicenseStatus: null == tradeLicenseStatus ? _self.tradeLicenseStatus : tradeLicenseStatus // ignore: cast_nullable_to_non_nullable
 as String,proofOfInsuranceStatus: null == proofOfInsuranceStatus ? _self.proofOfInsuranceStatus : proofOfInsuranceStatus // ignore: cast_nullable_to_non_nullable
 as String,w9FormStatus: null == w9FormStatus ? _self.w9FormStatus : w9FormStatus // ignore: cast_nullable_to_non_nullable
-as String,bankName: null == bankName ? _self.bankName : bankName // ignore: cast_nullable_to_non_nullable
-as String,routingNumber: null == routingNumber ? _self.routingNumber : routingNumber // ignore: cast_nullable_to_non_nullable
-as String,accountNumber: null == accountNumber ? _self.accountNumber : accountNumber // ignore: cast_nullable_to_non_nullable
 as String,isOnboarded: null == isOnboarded ? _self.isOnboarded : isOnboarded // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

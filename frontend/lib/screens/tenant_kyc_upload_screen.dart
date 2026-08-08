@@ -497,10 +497,14 @@ class _TenantKycUploadScreenState extends State<TenantKycUploadScreen> {
 
   IconData _fileIcon(String name) {
     final lower = name.toLowerCase();
-    if (lower.endsWith('.pdf')) return Icons.picture_as_pdf_rounded;
+    if (lower.endsWith('.pdf')) {
+      return Icons.picture_as_pdf_rounded;
+    }
     if (lower.endsWith('.jpg') ||
         lower.endsWith('.jpeg') ||
-        lower.endsWith('.png')) return Icons.image_rounded;
+        lower.endsWith('.png')) {
+      return Icons.image_rounded;
+    }
     return Icons.insert_drive_file_rounded;
   }
 }

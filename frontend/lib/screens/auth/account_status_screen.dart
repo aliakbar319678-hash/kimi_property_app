@@ -18,6 +18,7 @@ class _AccountStatusScreenState extends State<AccountStatusScreen>
     with SingleTickerProviderStateMixin {
   bool _isLoading = true;
   String _kycStatus = 'reviewing';
+  String _userRole = 'tenant';
   String? _rejectionReason;
   String _displayName = '';
   String _email = '';
@@ -57,8 +58,21 @@ class _AccountStatusScreenState extends State<AccountStatusScreen>
         final data = res.data['data'];
         final status = data['kyc_status'] ?? 'reviewing';
         final prevStatus = _kycStatus;
+
+        // Determine user role for navigation decisions
+        String role = 'tenant';
+        final List roles = data['roles'] ?? [];
+        if (roles.isNotEmpty) {
+          final primaryRoleObj = roles.firstWhere(
+            (r) => r['is_primary'] == true,
+            orElse: () => roles.first,
+          );
+          role = primaryRoleObj['role'] ?? 'tenant';
+        }
+
         setState(() {
           _kycStatus = status;
+          _userRole = role;
           _rejectionReason = data['rejection_reason'];
           _displayName = data['display_name'] ?? data['email'] ?? 'User';
           _email = data['email'] ?? '';
@@ -79,15 +93,6 @@ class _AccountStatusScreenState extends State<AccountStatusScreen>
           _pollTimer?.cancel();
           await Future.delayed(const Duration(milliseconds: 1500));
           if (mounted) {
-            final List roles = data['roles'] ?? [];
-            String role = 'tenant';
-            if (roles.isNotEmpty) {
-              final primaryRoleObj = roles.firstWhere(
-                (r) => r['is_primary'] == true,
-                orElse: () => roles.first,
-              );
-              role = primaryRoleObj['role'] ?? 'tenant';
-            }
             if (role == 'landlord' || role == 'property_manager') {
               Navigator.pushNamedAndRemoveUntil(
                   context, '/landlord_home', (r) => false);
@@ -239,19 +244,32 @@ class _AccountStatusScreenState extends State<AccountStatusScreen>
                         // ── Action Buttons ───────────────────────────────
                         if (_kycStatus == 'rejected') ...[
                           _ActionButton(
-                            label: 'Resubmit Documents',
-                            icon: Icons.upload_file_rounded,
+                            label: _userRole == 'vendor'
+                                ? 'Resubmit Application'
+                                : 'Resubmit Documents',
+                            icon: _userRole == 'vendor'
+                                ? Icons.business_center_rounded
+                                : Icons.upload_file_rounded,
                             color: AppColors.primary,
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => TenantKycUploadScreen(
-                                    rejectionReason: _rejectionReason,
-                                    isResubmission: true,
+                              if (_userRole == 'vendor') {
+                                // Vendor goes back to their onboarding form
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  '/vendor_onboarding',
+                                );
+                              } else {
+                                // Tenant / Landlord uploads KYC documents
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => TenantKycUploadScreen(
+                                      rejectionReason: _rejectionReason,
+                                      isResubmission: true,
+                                    ),
                                   ),
-                                ),
-                              ).then((_) => _loadStatus(silent: false));
+                                ).then((_) => _loadStatus(silent: false));
+                              }
                             },
                           ),
                           SizedBox(height: h * 0.015),

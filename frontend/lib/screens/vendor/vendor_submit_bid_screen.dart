@@ -365,7 +365,7 @@ class _VendorSubmitBidScreenState extends ConsumerState<VendorSubmitBidScreen> {
                           final data = res.data['data'];
                           final kycStatus = data['kyc_status'] ?? 'unverified';
                           if (kycStatus != 'verified' && kycStatus != 'approved') {
-                            if (!mounted) return;
+                            if (!context.mounted) return;
                             showModalBottomSheet(
                               context: context,
                               backgroundColor: AppColors.white,
@@ -448,7 +448,7 @@ class _VendorSubmitBidScreenState extends ConsumerState<VendorSubmitBidScreen> {
                         _messageController.text,
                       );
 
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       final nav = Navigator.of(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

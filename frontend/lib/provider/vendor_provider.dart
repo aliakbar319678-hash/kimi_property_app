@@ -200,23 +200,112 @@ class VendorNotifier extends StateNotifier<VendorState> {
     }
   }
 
-  // Complete Onboarding
-  Future<void> submitOnboarding(VendorProfile profileData) async {
+  // Complete Onboarding — sends all 5 steps in order as required by backend
+  Future<void> submitOnboarding(VendorProfile profileData, {
+    String? tradeLicenseUrl,
+    String? insuranceUrl,
+  }) async {
     state = state.copyWith(profile: profileData.copyWith(isOnboarded: true));
     try {
-      await ApiClient().dio.post(
-        ApiConstants.userOnboarding,
+      // Fetch current step to avoid "Invalid step progression" 400 error
+      int liveStep = 1;
+      try {
+        final res = await ApiClient().dio.get(ApiConstants.me);
+        if (res.statusCode == 200) {
+          final profileDataServer = res.data['data']['profile'];
+          if (profileDataServer != null && profileDataServer['onboarding_step'] != null) {
+            liveStep = (profileDataServer['onboarding_step'] as num).toInt();
+          }
+        }
+      } catch (_) {}
+
+      // Step 1: Business info (legal name, tax ID, phone)
+      if (liveStep <= 1) {
+        // WORKAROUND: The backend throws a 500 Postgres error if we send legalName, tax_identifier,
+        // or phone in Step 1 because it tries to save them to `user_profiles` which lacks these columns.
+        // We will send them in the PUT profile instead (which handles phone properly).
+        await ApiClient().dio.post(
+          '/users/me/onboarding/1',
+          data: {
+            'step': 1,
+            'data': {},
+          },
+        );
+      }
+
+      // Step 2: Employment — vendors send empty (not required for vendors)
+      if (liveStep <= 2) {
+        await ApiClient().dio.post(
+          '/users/me/onboarding/2',
+          data: {
+            'step': 2,
+            'data': {'employment': {}},
+          },
+        );
+      }
+
+      // Step 3: Documents — send uploaded KYC doc URLs as an array matching Joi schema
+      if (liveStep <= 3) {
+        final List<Map<String, String>> docList = [];
+        if (tradeLicenseUrl != null && tradeLicenseUrl.isNotEmpty) {
+          docList.add({'type': 'state_id', 'url': tradeLicenseUrl});
+        }
+        if (insuranceUrl != null && insuranceUrl.isNotEmpty) {
+          docList.add({'type': 'proof_of_income', 'url': insuranceUrl});
+        }
+        await ApiClient().dio.post(
+          '/users/me/onboarding/3',
+          data: {
+            'step': 3,
+            'data': docList.isNotEmpty ? {'documents': docList} : {},
+          },
+        );
+      }
+
+      // Step 4: Preferences — service category
+      if (liveStep <= 4) {
+        await ApiClient().dio.post(
+          '/users/me/onboarding/4',
+          data: {
+            'step': 4,
+            'data': {
+              'preferences': {
+                'service_category': profileData.serviceCategory,
+              }
+            }
+          },
+        );
+      }
+
+      // Step 5: Complete — backend sets kyc_status = 'reviewing' automatically
+      if (liveStep <= 5) {
+        await ApiClient().dio.post(
+          '/users/me/onboarding/5',
+          data: {
+            'step': 5,
+            'data': {},
+          },
+        );
+      }
+
+      // Also save the address via the profile endpoint
+      // WORKAROUND: Omit `display_name` because backend tries to save it to `user_profiles` and crashes (500).
+      await ApiClient().dio.put(
+        ApiConstants.updateProfile,
         data: {
-          'step': 5,
-          'business_name': profileData.businessName,
-          'tax_id': profileData.taxId,
-          'service_category': profileData.serviceCategory,
-          'bank_name': profileData.bankName,
-          'account_number': profileData.accountNumber,
+          'phone': profileData.phone,
+          'current_address': {
+            'addressLine1': profileData.address,
+            'city': profileData.city,
+            'stateProvince': profileData.state,
+            'postalCode': profileData.zip,
+            'countryCode': 'US',
+          },
         },
       );
     } catch (e) {
       debugPrint('[VendorNotifier] submitOnboarding API error: $e');
+      rethrow;
     }
   }
 

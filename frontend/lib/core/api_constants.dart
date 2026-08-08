@@ -1,7 +1,7 @@
 class ApiConstants {
   // ── Base URL ────────────────────────────────────────────────────────────────
-  static const String baseUrl = 'http://192.168.1.10:5000/api/v1';
-  static const String socketUrl = 'http://192.168.1.10:5000';
+  static const String baseUrl = 'http://192.168.6.109:5000/api/v1';
+  static const String socketUrl = 'http://192.168.6.109:5000';
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   static const String login = '/auth/login';
@@ -80,6 +80,8 @@ class ApiConstants {
 
   // ── Uploads ──────────────────────────────────────────────────────────────────
   static const String uploadsAvatar = '/uploads/avatar';
+  static const String uploadsGeneric = '/uploads/generic';
+  static String uploadsKycDocument(String docType) => '/uploads/kyc/$docType';
   static String uploadsPropertyImage(String propertyId) =>
       '/uploads/property/$propertyId/image';
   static String uploadsWorkOrderPhoto(String workOrderId) =>
